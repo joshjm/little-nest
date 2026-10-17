@@ -3,6 +3,7 @@ package app.littlenest;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.provider.Settings;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -19,24 +20,28 @@ final class CarePlanUi {
         String id = profile.optString("id");
         long now = System.currentTimeMillis();
         var options = CareReminders.options(activity, id);
-        LinearLayout card = Ui.card(activity, Ui.BLUE);
-        card.addView(Ui.title(activity, "Coming up", 21));
+        body.addView(Ui.section(activity, "Coming up"));
+        LinearLayout card = Ui.panel(activity);
         for (CarePredictor.Window window : CarePredictor.predict(events, options.intervals(), now, ZoneId.systemDefault())) {
             var comparison = CareComparison.predict(events, window.type(), now, ZoneId.systemDefault());
-            LinearLayout row = Ui.column(activity);
-            row.setMinimumHeight(Ui.dp(activity, 60));
+            LinearLayout row = Ui.row(activity); row.setGravity(android.view.Gravity.TOP);
+            row.setMinimumHeight(Ui.dp(activity, 60)); row.setPadding(0, Ui.dp(activity, 8), 0, Ui.dp(activity, 8));
+            row.setBackground(Ui.ripple(activity, android.graphics.Color.TRANSPARENT, 12));
+            android.view.View dot = Ui.dot(activity, window.type().equals("nap") ? Ui.SLEEP : Ui.FEED, 10);
+            ((LinearLayout.LayoutParams) dot.getLayoutParams()).topMargin = Ui.dp(activity, 6); row.addView(dot);
+            LinearLayout column = Ui.column(activity); row.addView(column, new LinearLayout.LayoutParams(0, -2, 1));
             String text = window.title() + " · Compare timings";
-            row.addView(Ui.title(activity, text, 15));
-            row.addView(Ui.text(activity, comparisonLine("Normal schedule", comparison.schedule(), now), 13, Ui.INK));
-            row.addView(Ui.text(activity, comparisonLine("History-adjusted", comparison.adjusted(), now), 13, Ui.INK));
-            if (!comparison.shift().isEmpty()) row.addView(Ui.text(activity, comparison.shift(), 12, Ui.GREEN));
-            row.addView(Ui.text(activity, "Tap for evidence and interval-alert details", 12, Ui.MUTED));
+            column.addView(Ui.medium(activity, text, 16, Ui.INK));
+            column.addView(Ui.figures(Ui.text(activity, comparisonLine("Normal schedule", comparison.schedule(), now), 14, Ui.INK)));
+            column.addView(Ui.figures(Ui.text(activity, comparisonLine("History-adjusted", comparison.adjusted(), now), 14, Ui.INK)));
+            if (!comparison.shift().isEmpty()) column.addView(Ui.text(activity, comparison.shift(), 13, Ui.GREEN));
+            column.addView(Ui.text(activity, "Tap for evidence and interval-alert details", 12, Ui.MUTED));
             row.setOnClickListener(v -> details(activity, profile, window, comparison)); row.setFocusable(true);
             row.setContentDescription(text + ". " + comparisonLine("Normal schedule", comparison.schedule(), now) + ". "
                 + comparisonLine("History-adjusted", comparison.adjusted(), now) + ". " + comparison.shift() + ". Tap for details.");
             card.addView(row); Ui.divider(card);
         }
-        card.addView(Ui.button(activity, "Care plan & advance alerts", () -> settings(activity, profile)));
+        card.addView(Ui.rowButton(activity, "Care plan & advance alerts", () -> settings(activity, profile)));
         card.addView(Ui.text(activity, "Estimates, not deadlines. Adjusted timing learns from similar short/late care, not a measured sleep or food debt. Alerts still use the interval estimate. Follow baby's cues; never delay a feed for a prediction.", 11, Ui.MUTED));
         body.addView(card);
     }
@@ -139,15 +144,17 @@ final class CarePlanUi {
             if (appointment && event.optLong("start") != reminder) upcoming.add(new Upcoming(event.optLong("start"), event, false));
         }
         upcoming.sort(Comparator.comparingLong(Upcoming::when));
-        LinearLayout card = Ui.card(activity, Ui.LAVENDER);
-        card.addView(Ui.title(activity, "Upcoming reminders & plans", 20));
+        body.addView(Ui.section(activity, "Upcoming reminders & plans"));
+        LinearLayout card = Ui.panel(activity);
         if (upcoming.isEmpty()) card.addView(Ui.text(activity, "No scheduled reminders. Add an appointment or a reminder to any care log.", 13, Ui.MUTED));
         for (Upcoming item : upcoming.stream().limit(5).toList()) {
             String title = item.event.optString("name"); if (title.isBlank()) title = Catalog.get(item.event.optString("kind")).title();
-            card.addView(Ui.button(activity, EventEditor.format(item.when) + " · " + title + (item.reminder ? " · reminder" : " · appointment"),
+            card.addView(Ui.rowButton(activity, EventEditor.format(item.when) + " · " + title + (item.reminder ? " · reminder" : " · appointment"),
                 () -> activity.openEditor(Catalog.get(item.event.optString("kind")), item.event)));
         }
-        card.addView(Ui.button(activity, "Add appointment / reminder", () -> activity.openEditor(Catalog.get("appointment"), null)));
+        Button add = Ui.quiet(activity, "Add appointment / reminder", () -> activity.openEditor(Catalog.get("appointment"), null));
+        add.setCompoundDrawables(new NestIcon(activity, "add", Ui.GREEN, android.graphics.Color.TRANSPARENT, 18), null, null, null);
+        add.setCompoundDrawablePadding(Ui.dp(activity, 6)); card.addView(add);
         body.addView(card);
     }
     private CarePlanUi() {}

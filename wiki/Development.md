@@ -121,6 +121,13 @@ python3 scripts/smoke-apk.py emulator-5554 --reset --care-plan
 python3 scripts/smoke-nara-import.py emulator-5554
 ```
 
+To refresh the README and wiki screenshots with synthetic demo data, follow
+[Screenshots](Screenshots.md#make-new-screenshots).
+
+When more than one emulator is connected, set `ANDROID_SERIAL` (for example
+`export ANDROID_SERIAL=emulator-5554`) before running Gradle or adb, so tests
+never install to, or uninstall from, someone else's device.
+
 Use an owned test emulator, not a phone with personal production data.
 Instrumentation tests create test profiles. Depending on Gradle's test runner
 cleanup, the app may be uninstalled after the run.

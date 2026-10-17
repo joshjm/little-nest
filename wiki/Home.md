@@ -17,6 +17,8 @@ Optional OneDrive sharing keeps phones up to date while apart.
    checksums and maintainer release instructions.
 8. **[Growth charts](Growth-Charts.md)** — WHO percentiles, first-entry guides,
    adjusted-age viewing, research and interpretation.
+9. **[Screenshots](Screenshots.md)** — every screen in day and night mode, and
+   how to make new screenshots with synthetic demo data.
 
 ## Important before you start
 
