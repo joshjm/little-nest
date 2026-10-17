@@ -52,6 +52,19 @@ public class NaraImportTest {
             } catch (IOException expected) { assertTrue(expected.getMessage().contains("record 1")); }
         }
     }
+    @Test public void importErrorsAndWarningsUseGenericActivityCopy() throws Exception {
+        try {
+            NaraImport.parse(new StringReader("Type,Other\n"));
+            fail("Missing schema must fail explicitly");
+        } catch (IOException expected) {
+            assertTrue(expected.getMessage().startsWith("Not a supported activity export:"));
+            assertFalse(expected.getMessage().toLowerCase(java.util.Locale.ROOT).contains("nara"));
+        }
+        Map<String, String> pump = row("Pump"); pump.put("Profile Name", ""); pump.put("_profileKey", "");
+        var preview = parse(pump);
+        assertTrue(preview.summary().contains("pumping entries have no profile in the export"));
+        assertFalse(preview.summary().toLowerCase(java.util.Locale.ROOT).contains("nara"));
+    }
     @Test public void mixedBottleRetainsComponentsNotesTimezoneAndSource() throws Exception {
         Map<String, String> row = row("Bottle Feed");
         row.put("[Bottle Feed] Type", "Breast Milk Formula"); row.put("[Bottle Feed] Formula Name", "Test formula");

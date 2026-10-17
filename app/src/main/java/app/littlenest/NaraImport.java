@@ -63,7 +63,7 @@ public final class NaraImport {
             if (header == null) throw new IOException("CSV is empty");
             if (header.stream().distinct().count() != header.size()) throw new IOException("CSV has duplicate column names");
             for (String required : List.of("Type", "Profile Name", "Start Date/time (Epoch)", "_familyKey", "_profileKey", "_activityKey"))
-                if (!header.contains(required)) throw new IOException("Not a supported Nara export: missing " + required);
+                if (!header.contains(required)) throw new IOException("Not a supported activity export: missing " + required);
             Map<String, JSONObject> profileData = new LinkedHashMap<>();
             Map<String, String> profileIds = new LinkedHashMap<>();
             Map<String, Entry> events = new LinkedHashMap<>();
@@ -128,7 +128,7 @@ public final class NaraImport {
                 }
             }
             if (events.isEmpty() && profileData.isEmpty()) throw new IOException("CSV contains no profiles or activities");
-            if (unassignedPumps > 0) warnings.add(unassignedPumps + " pumping entries have no profile in Nara. They will use a separate Pumping profile unless you choose a destination below.");
+            if (unassignedPumps > 0) warnings.add(unassignedPumps + " pumping entries have no profile in the export. They will use a separate Pumping profile unless you choose a destination below.");
             List<Profile> profiles = new ArrayList<>();
             for (Map.Entry<String, JSONObject> profile : profileData.entrySet()) {
                 String profileId = profileIds.get(profile.getKey());

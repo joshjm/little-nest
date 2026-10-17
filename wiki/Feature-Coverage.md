@@ -19,29 +19,22 @@ The primary listing is **documented evidence**, not observed in-app behavior.
 No original Nara APK, account or device session was supplied. No Nara code,
 graphics, private API, account access or subscription bypass was used.
 The user's own CSV export was subsequently inspected locally to build and test
-the [Nara import workflow](Importing-Nara.md), without uploading it.
+the [activity import workflow](Importing-CSV.md), without uploading it.
 Third-party search results were treated as leads rather than proof of Android
 features. Exact UI parity and undocumented/internal Nara behavior are unknown.
 
-### Visual references (version 1.1)
+### Independent visual identity (version 1.4)
 
-The official Google Play screenshot gallery was visually inspected for this
-styling pass, including the activity dashboard, growth/health sections,
-pregnancy log, growth chart and sleep editor. The public references show white
-surfaces, navy type, regular serif headings, thin outline icons, compact activity
-rows, small-radius cards, pastel category headers and circular add controls.
+Earlier styling experiments used public screenshots as visual references.
+Version 1.4 replaces that direction with Little Nest's own design: warm paper
+backgrounds, forest-green navigation, bold sans-serif headings, a woven-nest
+mark and rounded activity tiles. Category colors are small icon accents, not
+full-width pastel bars. Text-labelled Add controls replace circular plus buttons.
+History, charts, forms and settings use the same independent design tokens.
 
-Little Nest now follows that visual direction: yellow Feed, pale-blue Sleep,
-salmon Pump, sand Diaper, green Growth and lavender Health headers; white
-activity cards; profile/date header; icon-and-label bottom navigation; and
-color-matched editor headers. History, charts, fields and settings share the
-same navy/white design tokens. The icons are original geometric drawings; no
-Nara artwork, font files, logo or screenshot pixels are bundled in the APK.
-
-The layouts retain this app's own activity fields and four useful navigation
-destinations rather than introducing Nara's online shop or other online areas.
-This is a close public-screenshot-based styling approximation, not a claim of
-pixel-perfect parity with every Nara screen/version.
+No third-party artwork, font files, logos or screenshot pixels are bundled.
+This is an independent design direction, not a legal opinion or a guarantee
+about trademark, copyright or trade-dress clearance.
 
 REA 6.5.0 was actually installed and executed locally. Its pinned, digest-verified
 JADX 0.7.1 provider inspected **Little Nest's built APK**, including the decoded

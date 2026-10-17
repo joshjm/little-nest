@@ -2,7 +2,7 @@
 
 Version 1.3 adds **Coming up** to each baby's Today screen. Tap **Next milk feed**
 or **Nap sweet spot** to see a suggested window, typical time, the evidence used
-and actions to log care. Existing imported Nara logs count toward learning.
+and actions to log care. Existing imported activity logs count toward learning.
 
 These are personal pattern estimates, not deadlines, medical advice, guaranteed
 predictions or a sleep-training schedule. **Follow hunger and sleep cues; never

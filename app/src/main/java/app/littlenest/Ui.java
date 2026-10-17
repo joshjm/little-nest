@@ -15,17 +15,19 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 final class Ui {
-    static final int BG = Color.WHITE;
-    static final int INK = Color.rgb(24, 56, 94);
-    static final int MUTED = Color.rgb(96, 112, 134);
-    static final int GREEN = Color.rgb(39, 80, 122);
-    static final int SAGE = Color.rgb(178, 220, 151);
-    static final int PEACH = Color.rgb(255, 212, 77);
-    static final int LAVENDER = Color.rgb(207, 206, 239);
-    static final int BLUE = Color.rgb(183, 225, 236);
-    static final int CORAL = Color.rgb(246, 168, 157);
-    static final int SAND = Color.rgb(239, 226, 194);
-    static final int LINE = Color.rgb(232, 232, 233);
+    static final int BG = Color.rgb(247, 244, 236);
+    static final int SURFACE = Color.rgb(255, 253, 248);
+    static final int INK = Color.rgb(38, 53, 44);
+    static final int MUTED = Color.rgb(87, 99, 87);
+    static final int GREEN = Color.rgb(43, 91, 69);
+    static final int SAGE = Color.rgb(225, 235, 219);
+    static final int PEACH = Color.rgb(242, 226, 211);
+    static final int LAVENDER = Color.rgb(232, 226, 235);
+    static final int BLUE = Color.rgb(223, 232, 227);
+    static final int CORAL = Color.rgb(242, 224, 218);
+    static final int SAND = Color.rgb(238, 231, 211);
+    static final int LINE = Color.rgb(221, 224, 212);
+    static final int RIPPLE = 0x242B5B45;
 
     static int activityColor(Catalog.Kind kind) {
         return switch (kind.id()) {
@@ -54,14 +56,13 @@ final class Ui {
         return text;
     }
     static TextView title(Context context, String value, int size) {
-        TextView text = text(context, value, size, INK); text.setTypeface(Typeface.create("serif", Typeface.NORMAL)); return text;
+        TextView text = text(context, value, size, INK); text.setTypeface(Typeface.create("sans-serif", Typeface.BOLD)); return text;
     }
     static Button button(Context context, String label, Runnable action) {
         Button button = new Button(context); button.setText(label); button.setAllCaps(false); button.setTextSize(14);
         button.setTextColor(GREEN); button.setMinHeight(dp(context, 48)); button.setMinimumHeight(dp(context, 48));
-        GradientDrawable background = shape(context, Color.WHITE, 22);
-        background.setStroke(dp(context, 1), LINE);
-        button.setBackground(new RippleDrawable(ColorStateList.valueOf(0x1827507A), background, null));
+        GradientDrawable background = shape(context, SAGE, 12);
+        button.setBackground(new RippleDrawable(ColorStateList.valueOf(RIPPLE), background, null));
         button.setStateListAnimator(null); button.setElevation(0);
         button.setPadding(dp(context, 12), dp(context, 6), dp(context, 12), dp(context, 6));
         button.setOnClickListener(v -> action.run());
@@ -69,9 +70,8 @@ final class Ui {
         return button;
     }
     static LinearLayout card(Context context, int color) {
-        LinearLayout card = column(context); int p = dp(context, 14); card.setPadding(p, p, p, p);
-        GradientDrawable background = shape(context, Color.WHITE, 8);
-        background.setStroke(dp(context, 1), color == Color.WHITE ? LINE : color);
+        LinearLayout card = column(context); int p = dp(context, 16); card.setPadding(p, p, p, p);
+        GradientDrawable background = shape(context, color == Color.WHITE ? SURFACE : color, 20);
         card.setBackground(background);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2); params.setMargins(0, dp(context, 6), 0, dp(context, 12)); card.setLayoutParams(params);
         return card;
@@ -81,12 +81,8 @@ final class Ui {
         edit.setContentDescription(label);
         edit.setTextSize(16); edit.setSingleLine(true); edit.setMinHeight(dp(context, 52));
         edit.setHintTextColor(MUTED);
-        android.graphics.drawable.LayerDrawable background = new android.graphics.drawable.LayerDrawable(
-            new android.graphics.drawable.Drawable[]{
-                new android.graphics.drawable.ColorDrawable(LINE),
-                new android.graphics.drawable.ColorDrawable(BG)
-            });
-        background.setLayerInset(1, 0, 0, 0, dp(context, 1));
+        GradientDrawable background = shape(context, SURFACE, 10);
+        background.setStroke(dp(context, 1), LINE);
         edit.setBackground(background);
         edit.setPadding(dp(context, 12), dp(context, 10), dp(context, 12), dp(context, 10));
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2);
@@ -101,11 +97,14 @@ final class Ui {
         View line = new View(layout.getContext()); line.setBackgroundColor(LINE);
         layout.addView(line, new LinearLayout.LayoutParams(-1, dp(layout.getContext(), 1)));
     }
-    static LinearLayout dialogTitle(Context context, String label, int color) {
-        LinearLayout header = row(context); header.setBackgroundColor(color);
-        header.setPadding(dp(context, 20), dp(context, 10), dp(context, 20), dp(context, 10));
-        TextView title = title(context, label, 23); title.setGravity(Gravity.CENTER);
-        header.addView(title, new LinearLayout.LayoutParams(-1, -2)); return header;
+    static LinearLayout dialogTitle(Context context, String label) {
+        LinearLayout header = row(context); header.setBackgroundColor(SURFACE);
+        header.setPadding(dp(context, 20), dp(context, 18), dp(context, 20), dp(context, 10));
+        View marker = new View(context); marker.setBackground(shape(context, GREEN, 2));
+        LinearLayout.LayoutParams markerParams = new LinearLayout.LayoutParams(dp(context, 4), dp(context, 28));
+        markerParams.setMarginEnd(dp(context, 12)); header.addView(marker, markerParams);
+        TextView title = title(context, label, 23);
+        header.addView(title, new LinearLayout.LayoutParams(0, -2, 1)); return header;
     }
     private Ui() {}
 }

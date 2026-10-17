@@ -7,7 +7,7 @@
 - Google Identity Services `play-services-auth` 22.0.0.
 - Core-library desugaring 2.1.5 for Java collection/string APIs on older Android.
 - Android SQLite, JobScheduler, AlarmManager, document picker and share intents.
-- No WebView, JavaScript app runtime, backend or proprietary Nara dependency.
+- No WebView, JavaScript app runtime, backend or proprietary tracker dependency.
 
 Source layout:
 
@@ -26,7 +26,7 @@ Source layout:
 | `app/src/main/java/app/littlenest/CareReminders.java` | Per-phone options, revalidated alarms, snooze/dismiss |
 | `app/src/main/java/app/littlenest/CarePlanUi.java` | Coming up, settings and upcoming explicit care |
 | `app/src/main/java/app/littlenest/Insights.java` | Unit normalization, daily boundaries and sleep intervals |
-| `app/src/main/java/app/littlenest/NaraImport.java` | Nara CSV mapping, source identities, preview and ongoing sleep recovery |
+| `app/src/main/java/app/littlenest/NaraImport.java` | Activity CSV mapping, stable source identities, preview and ongoing sleep recovery |
 | `app/src/main/java/app/littlenest/CsvReader.java` | Bounded quoted/multiline UTF-8 CSV parsing |
 
 ## Tools installed during development
@@ -141,6 +141,10 @@ source scripts/env.sh
 ./gradlew :app:testDebugUnitTest -PnaraCsv=/absolute/path/to/export.csv
 ```
 
+Importer class names and `nara*` storage/identity keys remain internal compatibility
+details, not visible branding. Keep these stable so repeat imports and existing
+backups remain compatible.
+
 The test compares every nonempty original activity cell against retained
 `naraSource`, exact timestamps and notes, in addition to synthetic field tests.
 The Android acceptance test imports the full dataset twice, pages through all
@@ -183,17 +187,21 @@ Use the executable tests and manual acceptance checks as separate evidence.
 
 Completed on 17 October 2026:
 
-- **50 JVM unit tests:** passed, including local full-export acceptance,
+- **51 JVM unit tests:** passed, including local full-export acceptance,
   source-field retention, parser edge cases, unit mapping, live-sleep recovery
-  and 17 predictor/reminder-timing tests.
-- **25 Android 15 emulator tests:** passed, including SQLite, native UI/timers,
+  and 17 predictor/reminder-timing tests. Import errors and warnings are also
+  checked for generic activity-export wording.
+- **27 Android 15 emulator tests:** passed, including SQLite, native UI/timers,
   category add actions, minimum navigation touch targets and simulated
   two-phone Drive synchronization; also full-data double import, paged history,
   partner database merge, manual per-side duration editing and ongoing-sleep
   preview/finish. Seven care-plan tests cover silent defaults, profile isolation,
   alarm replacement/rearming, parent exclusion, real notification receiver and
   snooze/dismiss actions, stale/deleted-profile guards, native settings,
-  appointments and notification-profile lifecycle restoration.
+  appointments and notification-profile lifecycle restoration. Two identity
+  tests check sans-serif headings, text contrast of at least 4.5:1 across the
+  palette, activity tiles, generic import labels, the version footer and absence
+  of competitor text on the native Today/History/Trends/Family screens.
 - **Android lint:** passed with 0 errors and 2 non-blocking warnings (legacy
   backup configuration guidance and a small drawing-time allocation).
 - **Signed release smoke:** installed the exact deliverable APK and exercised
@@ -203,7 +211,7 @@ Completed on 17 October 2026:
   The care-plan smoke saved native settings, received a real alarm notification,
   checked the manual-window basis and dismissed the cycle.
 - **APK signature/integrity:** `apksigner verify` and SHA-256 verification passed.
-- **REA/JADX:** actual package/decoded-manifest, Drive, Nara importer, predictor
+- **REA/JADX:** actual package/decoded-manifest, Drive, CSV importer, predictor
   and care-reminder class inspections executed; evidence retained with the APK.
 - **Wiki links and shell helper syntax:** checked.
 - **Version 1.0 → 1.1 upgrade:** existing profile and bottle logs retained when
@@ -213,9 +221,16 @@ Completed on 17 October 2026:
   bottle history survived the database/index migration.
 - **Version 1.2 → 1.3 upgrade:** installed the same-key care-plan release over
   signed 1.2 sample history and verified the existing profile and bottle logs.
-- **Visual review:** refreshed release screenshots compared with Nara's public
-  Android gallery; white/navy palette, serif text, category strips, original
-  outline icons, compact forms and navigation verified on the emulator.
+- **Version 1.3 → 1.4 upgrade:** installed the signed identity refresh over
+  signed 1.3 sample history without clearing data; existing profiles and bottle
+  logs survived, and timers, care alarms and document-picker imports passed.
+- **Version 1.4 visual identity:** warm paper backgrounds, forest-green selected
+  navigation, bold sans-serif headings, an original woven-nest mark and rounded
+  activity tiles replace the earlier styling. Text-labelled Add controls and
+  small icon badges replace circular plus controls and colored section strips.
+  The signed APK was reviewed on Today, History, Trends, Family, activity forms
+  and care details, with additional 150%/200% font-scale screen checks.
+  This is an independent visual direction, not a claim of legal clearance.
 
 Automated checks cover:
 

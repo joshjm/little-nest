@@ -102,7 +102,7 @@ public final class Store extends SQLiteOpenHelper {
                     if (entry.data().optBoolean("running")) {
                         for (JSONObject existing : events(entry.data().optString("profileId")))
                             if (existing.optBoolean("running") && existing.optString("kind").equals(entry.data().optString("kind")))
-                                throw new IllegalArgumentException("A sleep timer is already running in this profile. Finish it first, or import the unfinished Nara sleep for review instead.");
+                                throw new IllegalArgumentException("A sleep timer is already running in this profile. Finish it first, or import the unfinished sleep for review instead.");
                     }
                 }
                 apply(db, NaraImport.operation(entry)); added++;

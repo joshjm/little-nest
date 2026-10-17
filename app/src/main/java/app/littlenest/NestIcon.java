@@ -24,9 +24,16 @@ final class NestIcon extends Drawable {
     @Override public void draw(Canvas canvas) {
         canvas.save(); canvas.translate(getBounds().left, getBounds().top);
         canvas.scale(getBounds().width() / 24f, getBounds().height() / 24f);
-        paint.setColor(color); paint.setStyle(Paint.Style.STROKE); paint.setStrokeWidth(1);
+        paint.setColor(color); paint.setStyle(Paint.Style.STROKE); paint.setStrokeWidth(1.8f);
         paint.setStrokeCap(Paint.Cap.ROUND); paint.setStrokeJoin(Paint.Join.ROUND);
         switch (name) {
+            case "nest" -> {
+                fill(canvas, 8, 5, 16, 15, 4);
+                canvas.drawOval(8, 5, 16, 15, paint);
+                canvas.drawArc(2, 6, 22, 22, 0, 180, false, paint);
+                canvas.drawArc(4, 9, 20, 23, 0, 180, false, paint);
+                line(canvas, 3, 14, 8, 17); line(canvas, 21, 14, 16, 17);
+            }
             case "bottle", "hydration" -> {
                 fill(canvas, 7, 10, 17, 21, 2);
                 canvas.drawRoundRect(7, 7, 17, 22, 2, 2, paint);

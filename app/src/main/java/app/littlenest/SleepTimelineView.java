@@ -31,7 +31,7 @@ public final class SleepTimelineView extends View {
             long start = day.atStartOfDay(zone).toInstant().toEpochMilli(), end = day.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli();
             float y = top + i * row;
             paint.setColor(Ui.MUTED); canvas.drawText(day.format(DateTimeFormatter.ofPattern("d/M")), 0, y + row * .65f, paint);
-            paint.setColor(0xFFF3F5F7); canvas.drawRect(left, y + row * .2f, left + width, y + row * .8f, paint);
+            paint.setColor(Ui.BLUE); canvas.drawRect(left, y + row * .2f, left + width, y + row * .8f, paint);
             paint.setColor(Ui.GREEN);
             for (JSONObject event : events) {
                 if (!List.of("sleep", "parentSleep").contains(event.optString("kind"))) continue;

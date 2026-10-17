@@ -122,14 +122,14 @@ final class EventEditor {
         if (kind.id().equals("medicine") || kind.id().equals("temperature") || kind.group().equals("Parent"))
             content.addView(Ui.text(activity, "A personal log, not medical advice. Contact a clinician for health concerns.", 12, Ui.MUTED));
         ScrollView scroll = new ScrollView(activity); scroll.addView(content);
-        AlertDialog.Builder builder = new AlertDialog.Builder(activity).setCustomTitle(Ui.dialogTitle(activity, kind.title(), Ui.activityColor(kind))).setView(scroll)
+        AlertDialog.Builder builder = new AlertDialog.Builder(activity).setCustomTitle(Ui.dialogTitle(activity, kind.title())).setView(scroll)
             .setPositiveButton("Save", null).setNegativeButton("Cancel", (d, w) -> activity.editor = null);
         if (kind.timer() && !source.has("id")) builder.setNeutralButton("Start timer", null);
         dialog = builder.create(); dialog.setOnDismissListener(d -> { if (activity.editor == this) activity.editor = null; });
         dialog.show();
         if (dialog.getWindow() != null) {
             dialog.getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
-            dialog.getWindow().setBackgroundDrawable(Ui.shape(activity, Ui.BG, 10));
+            dialog.getWindow().setBackgroundDrawable(Ui.shape(activity, Ui.SURFACE, 20));
         }
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> save(false));
         if (kind.timer() && !source.has("id")) dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v -> save(true));

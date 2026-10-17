@@ -11,8 +11,8 @@ android {
         applicationId 'app.littlenest'
         minSdk 28
         targetSdk 35
-        versionCode 4
-        versionName '1.3.0'
+        versionCode 5
+        versionName '1.4.0'
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
     signingConfigs {
@@ -31,6 +31,7 @@ android {
             if (hasReleaseKey) signingConfig signingConfigs.localRelease
         }
     }
+    buildFeatures { buildConfig true }
     compileOptions {
         coreLibraryDesugaringEnabled true
         sourceCompatibility JavaVersion.VERSION_17

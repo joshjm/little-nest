@@ -1,22 +1,28 @@
-# Import your Nara Baby export
+# Import activity CSV data
+
+Use a supported activity-export CSV. The importer expects `Type`, `Profile Name`,
+`Start Date/time (Epoch)`, `_familyKey`, `_profileKey` and `_activityKey` columns,
+plus the activity-specific columns described below. It does not accept arbitrary
+spreadsheet layouts. Little Nest's own summary CSV is a readable report, not a
+restorable backup; use JSON backup/restore to move Little Nest records.
 
 ## On your phone
 
-1. Install Little Nest **1.2.0 or newer** over the existing installation. Export
+1. Install Little Nest **1.4.0 or newer** over the existing installation. Export
    a complete JSON backup first if you already have Little Nest data.
-2. Copy the original Nara **CSV export** to the phone, for example into Downloads.
+2. Copy the original **CSV export** to the phone, for example into Downloads.
    Do not resave it through a spreadsheet: that can change timestamps and IDs.
-3. Open **Family → Import Nara Baby CSV**, then choose the file in Android's
+3. Open **Family → Import activity CSV**, then choose the file in Android's
    document picker. Parsing and validation happen locally.
 4. Review the activity counts, warnings and destination profiles:
    - Keep **Create imported profile** for a new baby.
    - If that baby already exists in Little Nest, select **Use [name]** instead
      of creating a duplicate. Baby/Parent types must agree.
-   - Nara's family-level pumping rows may have **no profile name or profile
+   - Family-level pumping rows may have **no profile name or profile
      key**. These go into a separate **Pumping** parent profile by default.
      You can instead choose an existing baby or parent as their destination.
 5. If the baby is still sleeping, check **Continue ongoing sleep timer(s)**.
-   The timer continues from the **original Nara start**, including time after
+   The timer continues from the **original activity start**, including time after
    export. Finish it on **Today** when the baby wakes. Recent unfinished sleeps
    (less than 24 hours old) default to checked; older/future entries do not.
    If you are importing an old export, leave this unchecked, then correct the
@@ -32,7 +38,7 @@
 
 All imported profiles and source details are shared with your partner when Drive
 is connected, including parent pumping logs. The private CSV is not bundled in
-the APK, and importing does not contact Nara or upload data to an app server.
+the APK, and importing does not contact the source app or upload data to an app server.
 
 ## What is preserved
 
@@ -41,8 +47,8 @@ the APK, and importing does not contact Nara or upload data to an app server.
 - Sleep and pumping durations in seconds, converted to exact milliseconds.
   Zero-duration pump entries remain valid manual volume records.
 - Breastfeeding beginning and ending sides, separate left/right seconds, and
-  Nara's manual-entry marker. Side ordering within a timer is not exported by
-  Nara, so the importer does not invent detailed segments.
+  the source manual-entry marker. Side ordering within a timer is not present in
+  the supported export, so the importer does not invent detailed segments.
 - Bottle breast milk and formula components, their independent units, formula
   name, mixed feeds and legacy total-only feeds.
 - Pump left/right quantities with independent ml/fl oz units, or total-only
@@ -73,7 +79,7 @@ Source family/profile/activity keys produce stable record identities. Reimportin
 the same export does **not duplicate activities**, restart finished timers,
 overwrite Little Nest edits, or resurrect deletions. New source activity IDs
 are added. Existing records are skipped **even if their contents changed in a
-later Nara export**. This is a migration tool, not ongoing two-way Nara sync.
+later export**. This is a migration tool, not ongoing two-way sync with another app.
 Blank profile metadata can be filled in, but existing names/dates/values stay.
 
 Use the same destination choices if you import another export. Import once and
@@ -82,7 +88,7 @@ imported a sleep for review, reimport does not turn it into a live timer; correc
 its end time in History instead.
 
 Limits: UTF-8 CSV (optional BOM), 25 MB file, 100,000 records, 300 columns and
-2 MB per CSV record. Quoted multiline cells, escaped quotes, CRLF/LF and Nara's
+2 MB per CSV record. Quoted multiline cells, escaped quotes, CRLF/LF and a
 short profile-footer row are supported. Unknown activity types, unsupported enum
 values, malformed rows, missing required identities, invalid units and negative
 amounts produce explicit errors. Conflicting duplicate activity IDs reject the

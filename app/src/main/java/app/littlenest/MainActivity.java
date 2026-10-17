@@ -178,14 +178,17 @@ public final class MainActivity extends Activity {
         setContentView(root);
         LinearLayout header = Ui.column(this);
         header.setPadding(Ui.dp(this, 18), Ui.dp(this, 8), Ui.dp(this, 18), Ui.dp(this, 10));
+        LinearLayout masthead = Ui.row(this);
+        ImageView mark = new ImageView(this); mark.setImageDrawable(new NestIcon(this, "nest", Ui.GREEN, Ui.PEACH, 26));
+        mark.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        LinearLayout.LayoutParams markParams = new LinearLayout.LayoutParams(Ui.dp(this, 26), Ui.dp(this, 30));
+        markParams.setMarginEnd(Ui.dp(this, 10)); masthead.addView(mark, markParams);
+        masthead.addView(Ui.title(this, "Little Nest", 16), new LinearLayout.LayoutParams(0, -2, 1));
+        TextView offline = Ui.text(this, prefs.getString("folder", "").isEmpty() ? "ON THIS PHONE" : "SHARED NEST", 10, Ui.GREEN);
+        masthead.addView(offline); header.addView(masthead);
         LinearLayout branding = Ui.row(this);
         JSONObject profile = profile();
         if (profile != null) {
-            ImageView avatar = new ImageView(this);
-            avatar.setImageDrawable(new NestIcon(this, "profile", Ui.INK, Ui.BLUE, 36));
-            avatar.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-            LinearLayout.LayoutParams avatarParams = new LinearLayout.LayoutParams(Ui.dp(this, 36), Ui.dp(this, 36));
-            avatarParams.setMarginEnd(Ui.dp(this, 12)); branding.addView(avatar, avatarParams);
             LinearLayout identity = Ui.column(this);
             TextView name = Ui.title(this, profile.optString("name") + "  \u2304", 23);
             name.setPadding(0, 0, 0, 0); identity.addView(name);
@@ -196,12 +199,10 @@ public final class MainActivity extends Activity {
             branding.setContentDescription("Switch profile: " + profile.optString("name"));
             branding.setOnClickListener(v -> chooseProfile());
         } else {
-            branding.addView(Ui.title(this, "little nest", 25), new LinearLayout.LayoutParams(0, -2, 1));
+            branding.addView(Ui.text(this, "A shared place for everyday care", 13, Ui.MUTED));
         }
-        TextView offline = Ui.text(this, prefs.getString("folder", "").isEmpty() ? "LOCAL" : "LINKED", 9, Ui.GREEN);
-        branding.addView(offline); header.addView(branding);
+        header.addView(branding);
         root.addView(header);
-        Ui.divider(root);
         ScrollView scroll = new ScrollView(this); scroll.setFillViewport(true);
         mainScroll = scroll;
         body = Ui.column(this); body.setPadding(Ui.dp(this, 16), Ui.dp(this, 8), Ui.dp(this, 16), Ui.dp(this, 20)); scroll.addView(body);
@@ -213,14 +214,16 @@ public final class MainActivity extends Activity {
             case "Family" -> family();
             default -> today();
         }
-        Ui.divider(root);
-        LinearLayout nav = Ui.row(this); nav.setPadding(Ui.dp(this, 4), Ui.dp(this, 3), Ui.dp(this, 4), Ui.dp(this, 3));
+        LinearLayout nav = Ui.row(this); nav.setBackgroundColor(Ui.SURFACE);
+        nav.setPadding(Ui.dp(this, 6), Ui.dp(this, 6), Ui.dp(this, 6), Ui.dp(this, 6));
         for (String item : List.of("Today", "History", "Trends", "Family")) {
             Button button = Ui.button(this, item, () -> { tab = item; filter = ""; historyPage = 0; render(); });
-            button.setTextColor(tab.equals(item) ? Ui.GREEN : Ui.MUTED);
-            button.setTextSize(10);
-            button.setBackground(new android.graphics.drawable.RippleDrawable(android.content.res.ColorStateList.valueOf(0x1827507A), Ui.shape(this, Ui.BG, 0), null));
-            button.setCompoundDrawables(null, new NestIcon(this, item, tab.equals(item) ? Ui.GREEN : Ui.MUTED, Ui.BG, 22), null, null);
+            button.setTextColor(tab.equals(item) ? android.graphics.Color.WHITE : Ui.MUTED);
+            button.setTextSize(11);
+            button.setBackground(new android.graphics.drawable.RippleDrawable(android.content.res.ColorStateList.valueOf(Ui.RIPPLE),
+                Ui.shape(this, tab.equals(item) ? Ui.GREEN : Ui.SURFACE, 14), null));
+            button.setCompoundDrawables(null, new NestIcon(this, item, tab.equals(item) ? android.graphics.Color.WHITE : Ui.MUTED,
+                tab.equals(item) ? Ui.GREEN : Ui.SURFACE, 20), null, null);
             button.setCompoundDrawablePadding(Ui.dp(this, 3));
             button.setPadding(0, Ui.dp(this, 5), 0, Ui.dp(this, 3));
             button.setSelected(tab.equals(item));
@@ -304,55 +307,55 @@ public final class MainActivity extends Activity {
     private void activityCard(String title, List<Catalog.Kind> kinds, List<JSONObject> events) {
         int accent = Ui.activityColor(kinds.get(0));
         LinearLayout card = Ui.column(this);
-        android.graphics.drawable.GradientDrawable background = Ui.shape(this, Ui.BG, 7);
-        background.setStroke(Ui.dp(this, 1), Ui.LINE);
-        card.setBackground(background); card.setClipToOutline(true);
-        card.setElevation(Ui.dp(this, 1));
         LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(-1, -2);
         cardParams.setMargins(0, Ui.dp(this, 4), 0, Ui.dp(this, 14)); card.setLayoutParams(cardParams);
-        LinearLayout heading = Ui.row(this); heading.setBackgroundColor(accent);
-        heading.setPadding(Ui.dp(this, 12), 0, Ui.dp(this, 4), 0);
+        LinearLayout heading = Ui.row(this);
         heading.addView(Ui.title(this, title, 20), new LinearLayout.LayoutParams(0, -2, 1));
-        Button add = Ui.button(this, "+", () -> {
+        Button add = Ui.button(this, "Add", () -> {
             if (kinds.size() == 1) openEditor(kinds.get(0), null);
             else new AlertDialog.Builder(this).setTitle("Log " + title.toLowerCase(Locale.ROOT))
                 .setItems(kinds.stream().map(Catalog.Kind::title).toArray(String[]::new),
                     (dialog, which) -> openEditor(kinds.get(which), null)).show();
         });
         add.setContentDescription("Add " + title.toLowerCase(Locale.ROOT));
-        add.setTextSize(23); add.setTextColor(android.graphics.Color.WHITE);
-        add.setBackground(new android.graphics.drawable.RippleDrawable(android.content.res.ColorStateList.valueOf(0x3027507A),
-            new android.graphics.drawable.InsetDrawable(Ui.shape(this, Ui.GREEN, 24), Ui.dp(this, 9)), null));
-        add.setPadding(0, 0, 0, 0);
-        heading.addView(add, new LinearLayout.LayoutParams(Ui.dp(this, 48), Ui.dp(this, 48)));
+        add.setPadding(Ui.dp(this, 8), Ui.dp(this, 6), Ui.dp(this, 8), Ui.dp(this, 6));
+        heading.addView(add, new LinearLayout.LayoutParams(Ui.dp(this, 68), -2));
         card.addView(heading);
+        LinearLayout tiles = null;
+        int index = 0;
         for (Catalog.Kind kind : kinds) {
+            if (index % 2 == 0) {
+                tiles = Ui.row(this); tiles.setGravity(android.view.Gravity.TOP); card.addView(tiles);
+            }
+            LinearLayout tile = Ui.column(this);
+            int pad = Ui.dp(this, 12); tile.setPadding(pad, pad, pad, pad);
+            tile.setMinimumHeight(Ui.dp(this, 128));
+            tile.setBackground(new android.graphics.drawable.RippleDrawable(android.content.res.ColorStateList.valueOf(Ui.RIPPLE), Ui.shape(this, Ui.SURFACE, 18), null));
             LinearLayout row = Ui.row(this);
-            row.setPadding(Ui.dp(this, 13), Ui.dp(this, 7), Ui.dp(this, 13), Ui.dp(this, 7));
-            row.setMinimumHeight(Ui.dp(this, 62));
-            row.setBackground(new android.graphics.drawable.RippleDrawable(android.content.res.ColorStateList.valueOf(0x1827507A), Ui.shape(this, Ui.BG, 0), null));
             ImageView icon = new ImageView(this); icon.setImageDrawable(new NestIcon(this, kind.id(), Ui.INK, accent, 27));
             icon.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-            LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(Ui.dp(this, 27), Ui.dp(this, 30));
-            iconParams.setMarginEnd(Ui.dp(this, 12)); row.addView(icon, iconParams);
-            LinearLayout text = Ui.column(this);
-            TextView label = Ui.title(this, kind.title(), 16); label.setPadding(0, 0, 0, 0); text.addView(label);
+            icon.setBackground(Ui.shape(this, accent, 10)); icon.setPadding(Ui.dp(this, 5), Ui.dp(this, 5), Ui.dp(this, 5), Ui.dp(this, 5));
+            row.addView(icon, new LinearLayout.LayoutParams(Ui.dp(this, 36), Ui.dp(this, 36)));
+            TextView log = Ui.text(this, "LOG", 10, Ui.GREEN); log.setGravity(android.view.Gravity.END);
+            row.addView(log, new LinearLayout.LayoutParams(0, -2, 1)); tile.addView(row);
+            TextView label = Ui.title(this, kind.title(), 15); tile.addView(label);
             JSONObject latest = events.stream().filter(e -> e.optString("kind").equals(kind.id())).findFirst().orElse(null);
             String detail = latest == null ? "Tap to add" : latest.optBoolean("running") ? "Timer running"
                 : Insights.duration(System.currentTimeMillis() - latest.optLong("start")) + " ago";
-            TextView last = Ui.text(this, detail, 11, Ui.MUTED); last.setPadding(0, Ui.dp(this, 4), 0, 0); text.addView(last);
-            row.addView(text, new LinearLayout.LayoutParams(0, -2, 1));
-            String value = latest == null ? "+" : latest.optBoolean("importIncomplete") ? "Review"
+            tile.addView(Ui.text(this, detail, 11, Ui.MUTED));
+            String value = latest == null ? "Ready to log" : latest.optBoolean("importIncomplete") ? "Review"
                 : kind.id().equals("bottle") ? milk(Insights.bottleMl(latest))
                 : kind.id().equals("pump") ? milk(Insights.pumpMl(latest))
                 : kind.timer() ? Insights.duration(Records.duration(latest, System.currentTimeMillis()))
-                : kind.id().equals("diaper") ? latest.optString("diaper") : "\u203a";
-            TextView amount = Ui.title(this, value, 20);
-            amount.setMaxWidth(Ui.dp(this, 100)); row.addView(amount);
-            row.setOnClickListener(v -> openEditor(kind, null));
-            row.setFocusable(true); row.setContentDescription("Log " + kind.title() + ". " + detail);
-            card.addView(row); Ui.divider(card);
+                : kind.id().equals("diaper") ? latest.optString("diaper") : "View activity";
+            tile.addView(Ui.text(this, value, 12, Ui.GREEN));
+            tile.setOnClickListener(v -> openEditor(kind, null));
+            tile.setFocusable(true); tile.setContentDescription("Log " + kind.title() + ". " + detail);
+            LinearLayout.LayoutParams tileParams = new LinearLayout.LayoutParams(0, -2, 1);
+            tileParams.setMargins(index % 2 == 0 ? 0 : Ui.dp(this, 5), Ui.dp(this, 5), index % 2 == 0 ? Ui.dp(this, 5) : 0, Ui.dp(this, 5));
+            tiles.addView(tile, tileParams); index++;
         }
+        if (index % 2 != 0 && index > 1) tiles.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
         body.addView(card);
     }
 
@@ -436,7 +439,7 @@ public final class MainActivity extends Activity {
     private String summary(JSONObject event) {
         Catalog.Kind kind = Catalog.get(event.optString("kind"));
         List<String> parts = new ArrayList<>();
-        if (event.optBoolean("importIncomplete")) parts.add("NEEDS REVIEW: Nara did not export a completed duration. Not a live timer.");
+        if (event.optBoolean("importIncomplete")) parts.add("NEEDS REVIEW: No completed duration was exported. Not a live timer.");
         for (Catalog.Field field : kind.fields()) {
             String value = event.optString(field.key());
             if (!value.isBlank()) parts.add(field.label() + ": " + value.replace("|", ", "));
@@ -452,7 +455,7 @@ public final class MainActivity extends Activity {
         if (!event.optString("photo").isEmpty()) parts.add("Photo attached");
         if (event.optLong("remindAt") > 0) parts.add("Reminder: " + EventEditor.format(event.optLong("remindAt")));
         if (event.has("naraSource")) {
-            parts.add("Imported from Nara; original time zone: " + event.optString("sourceTimeZone"));
+            parts.add("Imported activity; original time zone: " + event.optString("sourceTimeZone"));
             parts.add("Last updated by: " + event.optString("updatedBy"));
         }
         return String.join("\n", parts);
@@ -683,7 +686,7 @@ public final class MainActivity extends Activity {
         body.addView(drive);
         LinearLayout data = Ui.card(this, Ui.PEACH);
         data.addView(Ui.title(this, "Keep a copy", 20));
-        data.addView(Ui.button(this, importing ? "Import in progress..." : "Import Nara Baby CSV", () -> {
+        data.addView(Ui.button(this, importing ? "Import in progress..." : "Import activity CSV", () -> {
             if (importing) { error("Wait for the current import to finish."); return; }
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("*/*").addCategory(Intent.CATEGORY_OPENABLE);
             startActivityForResult(intent, IMPORT_NARA);
@@ -702,7 +705,7 @@ public final class MainActivity extends Activity {
         if (!prefs.getString("reminderError", "").isEmpty()) reminders.addView(Ui.text(this, prefs.getString("reminderError", ""), 13, Ui.INK));
         reminders.addView(Ui.text(this, "Add reminders inside any activity. Android may delay them during battery-saving modes. They are not suitable for time-critical medication alarms.", 13, Ui.MUTED));
         body.addView(reminders);
-        body.addView(Ui.text(this, "Little Nest 1.1 / independent, original app\nInspired by publicly documented baby-tracking workflows. Not affiliated with Nara. No ads, analytics, subscriptions, or non-Google servers.", 12, Ui.MUTED));
+        body.addView(Ui.text(this, "Little Nest " + BuildConfig.VERSION_NAME + "\nA shared place for everyday care. No ads, analytics, subscriptions, or app backend.", 12, Ui.MUTED));
     }
 
     private void chooseActivities() {
@@ -884,7 +887,7 @@ public final class MainActivity extends Activity {
     private void readNara(Uri uri) {
         if (importing) { error("Wait for the current import to finish."); return; }
         importing = true;
-        AlertDialog progress = new AlertDialog.Builder(this).setTitle("Reading Nara CSV")
+        AlertDialog progress = new AlertDialog.Builder(this).setTitle("Reading activity CSV")
             .setMessage("Validating all records locally. Nothing has been saved yet.").setCancelable(false).show();
         executor.execute(() -> {
             try (InputStream input = getContentResolver().openInputStream(uri)) {
@@ -912,7 +915,7 @@ public final class MainActivity extends Activity {
             continueSleep.setChecked(preview.events().stream().filter(entry -> entry.data().optString("kind").equals("sleep") && entry.data().optBoolean("importIncomplete"))
                 .allMatch(entry -> entry.data().optLong("start") <= now && now - entry.data().optLong("start") < 86_400_000));
             content.addView(continueSleep);
-            content.addView(Ui.text(this, "Use this if the baby is still sleeping. Elapsed time includes time since the original Nara start, including time after export. For an old export, leave unchecked and correct the end time in History.", 13, Ui.MUTED));
+            content.addView(Ui.text(this, "Use this if the baby is still sleeping. Elapsed time includes time since the original activity start, including time after export. For an old export, leave unchecked and correct the end time in History.", 13, Ui.MUTED));
         }
         content.addView(Ui.text(this, "\nChoose where each profile belongs. Existing activities, edits and deletions are never overwritten on reimport. Blank profile metadata can be filled in; existing names and values stay unchanged.\n\nAll imported data will sync to your partner if Drive is linked. Import once on one phone, then sync. Large histories can take time to upload.", 13, Ui.MUTED));
         List<JSONObject> existing = store.records("profile");
@@ -927,7 +930,7 @@ public final class MainActivity extends Activity {
             content.addView(destination); choices.put(profile.id(), destination);
         }
         ScrollView scroll = new ScrollView(this); scroll.addView(content);
-        AlertDialog confirm = new AlertDialog.Builder(this).setTitle("Import Nara Baby CSV").setView(scroll)
+        AlertDialog confirm = new AlertDialog.Builder(this).setTitle("Import activity CSV").setView(scroll)
             .setPositiveButton("Import", null).setNegativeButton("Cancel", (d, w) -> importing = false).create();
         confirm.setOnCancelListener(d -> importing = false); confirm.show();
         confirm.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {

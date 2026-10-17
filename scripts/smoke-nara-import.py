@@ -16,7 +16,7 @@ SERIAL = sys.argv[1] if len(sys.argv) > 1 else "emulator-5554"
 if not SERIAL.startswith("emulator-"):
     raise SystemExit("This test creates sample data. Use only a disposable emulator.")
 ADB = str(Path(os.environ.get("ANDROID_HOME", Path.home() / ".local/share/baby-app-tools/android-sdk")) / "platform-tools/adb")
-REMOTE = "/sdcard/Download/little-nest-nara-smoke.csv"
+REMOTE = "/sdcard/Download/little-nest-csv-smoke.csv"
 HIERARCHY = "/sdcard/little-nest-import-smoke.xml"
 
 
@@ -59,17 +59,17 @@ def wait(text, seconds=20, contains=False):
 def import_csv():
     tap("Family")
     for _ in range(12):
-        if find("Import Nara Baby CSV") is not None:
+        if find("Import activity CSV") is not None:
             break
         adb("shell", "input", "swipe", "500", "1800", "500", "500", "250")
-    tap("Import Nara Baby CSV")
+    tap("Import activity CSV")
     if find("Show roots", "content-desc") is not None:
         tap("Show roots", "content-desc")
         wait("Downloads")
         tap("Downloads")
-    wait("little-nest-nara-smoke.csv")
-    tap("little-nest-nara-smoke.csv")
-    wait("Import Nara Baby CSV")
+    wait("little-nest-csv-smoke.csv")
+    tap("little-nest-csv-smoke.csv")
+    wait("Import activity CSV")
     checkbox = find("Continue 1 ongoing sleep timer", contains=True)
     assert checkbox is not None and checkbox.get("checked") == "true", "Recent ongoing sleep must be offered for continuation"
     tap("android:id/button1", "resource-id")
@@ -112,7 +112,7 @@ writer.writerows(rows)
 
 try:
     with tempfile.TemporaryDirectory(prefix="little-nest-import-") as directory:
-        file = Path(directory) / "little-nest-nara-smoke.csv"
+        file = Path(directory) / "little-nest-csv-smoke.csv"
         file.write_text(buffer.getvalue(), encoding="utf-8")
         adb("push", str(file), REMOTE)
     adb("shell", "am", "start", "-W", "-S", "-n", "app.littlenest/.MainActivity")

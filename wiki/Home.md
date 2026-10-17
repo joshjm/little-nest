@@ -9,7 +9,7 @@ and synchronization.
 3. **[Feature coverage](Feature-Coverage.md)** — research, included features,
    deliberate differences and limitations.
 4. **[Development](Development.md)** — tools, builds, signing, tests and REA.
-5. **[Import Nara data](Importing-Nara.md)** — CSV migration, ongoing sleep,
+5. **[Import activity data](Importing-CSV.md)** — CSV migration, ongoing sleep,
    source-field coverage and repeat-import behavior.
 6. **[Feed and nap planning](Care-Plan.md)** — personalized windows, upcoming
    care, manual intervals and opt-in advance alerts.
@@ -26,7 +26,7 @@ and synchronization.
 - Sync is eventual, not a live messaging service. Check **Family → Sync now**
   on both phones before a caregiver handoff.
 - Keep complete JSON backups somewhere safe. Little Nest's own CSV is a readable
-  report, not a restorable backup; Nara's original CSV has a separate importer.
+  report, not a restorable backup; supported activity CSVs have a separate importer.
 - An entry deleted in the app is hidden on both phones after syncing, but its
   historical revisions remain in the immutable Drive log and JSON backups.
 - A lost phone can retain offline data. Remove its Google access and use the

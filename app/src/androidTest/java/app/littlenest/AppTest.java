@@ -5,6 +5,8 @@ import android.content.Intent;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.uiautomator.By;
+import androidx.test.uiautomator.BySelector;
+import androidx.test.uiautomator.UiObject2;
 import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.Until;
 import org.json.JSONObject;
@@ -17,6 +19,15 @@ import static org.junit.Assert.*;
 @RunWith(AndroidJUnit4.class)
 public class AppTest {
     private Context context() { return InstrumentationRegistry.getInstrumentation().getTargetContext(); }
+    private UiObject2 activityControl(UiDevice device, BySelector selector) {
+        UiObject2 found = device.wait(Until.findObject(selector), 3000);
+        for (int i = 0; found == null && i < 5; i++) {
+            device.swipe(device.getDisplayWidth() / 2, device.getDisplayHeight() * 3 / 4,
+                device.getDisplayWidth() / 2, device.getDisplayHeight() / 3, 20);
+            found = device.wait(Until.findObject(selector), 1500);
+        }
+        assertNotNull("Missing activity control: " + selector, found); return found;
+    }
 
     @Test public void sqliteMergeIsIdempotentAndTombstoneSurvivesStaleReplay() {
         Store store = Store.get(context());
@@ -49,7 +60,7 @@ public class AppTest {
         assertNotNull(launch); launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK); context().startActivity(launch);
         UiDevice device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         assertTrue(device.wait(Until.hasObject(By.text("A day at a time")), 10_000));
-        device.findObject(By.text("Bottle")).click();
+        activityControl(device, By.text("Bottle")).click();
         assertTrue(device.wait(Until.hasObject(By.res("android:id/button1")), 5000));
         device.findObject(By.desc("Amount")).setText("120");
         device.findObject(By.res("android:id/button1")).click();
@@ -71,8 +82,7 @@ public class AppTest {
         Intent launch = context().getPackageManager().getLaunchIntentForPackage(context().getPackageName());
         assertNotNull(launch); launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK); context().startActivity(launch);
         UiDevice device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
-        assertTrue(device.wait(Until.hasObject(By.text("Breastfeeding")), 5000));
-        device.findObject(By.text("Breastfeeding")).click();
+        activityControl(device, By.text("Breastfeeding")).click();
         assertTrue(device.wait(Until.hasObject(By.res("android:id/button3")), 5000));
         device.findObject(By.res("android:id/button3")).click();
         assertTrue(device.wait(Until.hasObject(By.text("Pause")), 5000));
@@ -99,8 +109,7 @@ public class AppTest {
         Intent launch = context().getPackageManager().getLaunchIntentForPackage(context().getPackageName());
         assertNotNull(launch); launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK); context().startActivity(launch);
         UiDevice device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
-        assertTrue(device.wait(Until.hasObject(By.desc("Add feed")), 5000));
-        device.findObject(By.desc("Add feed")).click();
+        activityControl(device, By.desc("Add feed")).click();
         assertTrue(device.wait(Until.hasObject(By.text("Log feed")), 5000));
         device.findObject(By.text("Solids")).click();
         assertTrue(device.wait(Until.hasObject(By.res("android:id/button1")), 5000));

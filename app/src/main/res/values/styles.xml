@@ -1,27 +1,28 @@
 <resources>
     <style name="AppTheme" parent="android:style/Theme.Material.Light.NoActionBar">
-        <item name="android:fontFamily">sans</item>
-        <item name="android:colorAccent">#27507A</item>
-        <item name="android:textColorPrimary">#18385E</item>
-        <item name="android:textColorSecondary">#607086</item>
-        <item name="android:windowBackground">#FFFFFF</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:colorAccent">#2B5B45</item>
+        <item name="android:textColorPrimary">#26352C</item>
+        <item name="android:textColorSecondary">#576357</item>
+        <item name="android:windowBackground">#F7F4EC</item>
         <item name="android:alertDialogTheme">@style/NestDialog</item>
         <item name="android:windowLightStatusBar">true</item>
-        <item name="android:statusBarColor">#FFFFFF</item>
-        <item name="android:navigationBarColor">#FFFFFF</item>
+        <item name="android:statusBarColor">#F7F4EC</item>
+        <item name="android:navigationBarColor">#F7F4EC</item>
         <item name="android:windowLightNavigationBar">true</item>
         <item name="android:windowActionModeOverlay">true</item>
     </style>
     <style name="NestDialog" parent="android:style/Theme.Material.Light.Dialog.Alert">
-        <item name="android:colorAccent">#27507A</item>
-        <item name="android:textColorPrimary">#18385E</item>
-        <item name="android:textColorSecondary">#607086</item>
-        <item name="android:windowBackground">#FFFFFF</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:colorAccent">#2B5B45</item>
+        <item name="android:textColorPrimary">#26352C</item>
+        <item name="android:textColorSecondary">#576357</item>
+        <item name="android:windowBackground">#FFFDF8</item>
         <item name="android:buttonStyle">@style/NestDialogButton</item>
     </style>
     <style name="NestDialogButton" parent="android:style/Widget.Material.Light.Button.Borderless">
         <item name="android:textAllCaps">false</item>
-        <item name="android:textColor">#27507A</item>
+        <item name="android:textColor">#2B5B45</item>
         <item name="android:textSize">14sp</item>
     </style>
 </resources>

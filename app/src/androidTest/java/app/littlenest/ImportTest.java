@@ -122,10 +122,10 @@ public class ImportTest {
         var device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
             scenario.onActivity(activity -> activity.onActivityResult(105, android.app.Activity.RESULT_OK, new Intent().setData(android.net.Uri.fromFile(file))));
-            assertTrue(device.wait(Until.hasObject(By.text("Import Nara Baby CSV")), 20_000));
+            assertTrue(device.wait(Until.hasObject(By.text("Import activity CSV")), 20_000));
             click(device, By.res("android:id/button2"));
             scenario.onActivity(activity -> activity.onActivityResult(105, android.app.Activity.RESULT_OK, new Intent().setData(android.net.Uri.fromFile(file))));
-            assertTrue(device.wait(Until.hasObject(By.text("Import Nara Baby CSV")), 20_000));
+            assertTrue(device.wait(Until.hasObject(By.text("Import activity CSV")), 20_000));
             click(device, By.res("android:id/button1"));
             assertTrue(device.wait(Until.hasObject(By.text("Import complete")), 20_000));
             click(device, By.res("android:id/button1"));
@@ -143,7 +143,7 @@ public class ImportTest {
         var device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
             scenario.onActivity(activity -> activity.onActivityResult(105, android.app.Activity.RESULT_OK, new Intent().setData(android.net.Uri.fromFile(file))));
-            assertTrue(device.wait(Until.hasObject(By.text("Import Nara Baby CSV")), 20_000));
+            assertTrue(device.wait(Until.hasObject(By.text("Import activity CSV")), 20_000));
             var checkbox = device.wait(Until.findObject(By.textStartsWith("Continue 1 ongoing sleep")), 5000);
             assertNotNull(checkbox); assertFalse(checkbox.isChecked()); checkbox.click();
             click(device, By.res("android:id/button1"));

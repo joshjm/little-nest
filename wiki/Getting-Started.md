@@ -40,8 +40,8 @@ Birth/due date is optional. Parent stages are pregnancy, postpartum and parent.
 Use the profile selector at the top to switch between children, twins and parents.
 Set your name under **Family → Caregiver name** on each phone.
 
-Already using Nara? Use **Family → Import Nara Baby CSV** before creating duplicate
-profiles. Follow the [import guide](Importing-Nara.md), including the option to
+Have a supported activity export? Use **Family → Import activity CSV** before creating duplicate
+profiles. Follow the [import guide](Importing-CSV.md), including the option to
 continue the baby's current sleep from its original start time.
 
 If you are joining your partner, pair and sync before creating profiles to avoid
@@ -153,14 +153,16 @@ Delete a profile from **Family** only after exporting anything you want to keep.
 The profile and its current logs are deleted locally and shared as deletions.
 This is not a forensic erasure of Drive history or older backups.
 
-## Version 1.1 appearance
+## Little Nest appearance
 
-Today groups activities into colored **Feed, Sleep, Pump, Diaper, Growth,
-Health, Routines and Memories** sections. Tap a row to log that activity, or the
-round **+** in its header to choose an activity from that section. Hidden
+Today groups activities into **Feed, Sleep, Pump, Diaper, Growth,
+Health, Routines and Memories** sections. Tap an activity tile to log care, or
+**Add** next to a section heading to choose an activity. Hidden
 activities stay hidden. Parent profiles have the corresponding parent sections.
 The bottom navigation keeps the same Today, History, Trends and Family screens,
-now with outline icons. Profile switching is in the avatar/name header.
+with a forest-green selected tab. Profile switching is in the name header below
+the Little Nest masthead. The warm paper palette, bold sans-serif type, woven-nest
+mark and rounded activity tiles are Little Nest's own visual identity.
 
 The visual refresh does not migrate the database, change sharing or require
 Google reauthorization. Install the update directly over the existing app.
