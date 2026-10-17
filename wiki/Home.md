@@ -15,6 +15,8 @@ Optional OneDrive sharing keeps phones up to date while apart.
    care, manual intervals and opt-in advance alerts.
 7. **[GitHub / Obtainium releases](Releases.md)** — downloads, updates,
    checksums and maintainer release instructions.
+8. **[Growth charts](Growth-Charts.md)** — WHO percentiles, first-entry guides,
+   adjusted-age viewing, research and interpretation.
 
 ## Important before you start
 

@@ -56,7 +56,7 @@ not reverse-engineering observations of Nara. See [verification](Development.md)
 | Nap/night sleep timer and manual sessions | Sleep type, timer, manual start/end, persisted paused intervals |
 | Sleep patterns by day/week | Seven-day charts, 24-hour sleep timeline, previous-week totals |
 | Wake windows | Time since latest sleep ended, learned nap windows and optional advance alerts |
-| Weight, height and head circumference | Dated unit-aware measurements and plots |
+| Weight, height and head circumference | Dated unit-aware plots, WHO birth-to-five percentile curves and first-entry percentile guide; see [growth charts](Growth-Charts.md) |
 | Developmental milestones by age | Dated milestone categories, profile birth date and journal notes |
 | Medical records, medication and vaccines | Doctor visit, medication/dose/route, vaccine/lot/provider, temperature |
 | Tummy time, bath, story, custom routines | Dedicated logs plus named timed custom routines |
@@ -99,7 +99,7 @@ not reverse-engineering observations of Nara. See [verification](Development.md)
   for Android and some require online features excluded by the request.
 - No Android home-screen widget or wearable companion. Public research did not
   establish these as part of Nara's Android feature set.
-- No clinician portal, medical recommendations, percentile reference database,
+- No clinician portal, medical recommendations,
   age-based milestone recommendations, automatic scheduling, PDF report or AI.
 - No multi-grandparent sharing, chat, social features, ads, analytics,
   subscriptions, push service or backend.

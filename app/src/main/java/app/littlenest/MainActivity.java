@@ -552,23 +552,8 @@ public final class MainActivity extends Activity {
             }
             body.addView(comparison);
         }
-        List<JSONObject> growth = events.stream().filter(e -> e.optString("kind").equals("growth")).sorted((a, b) -> Long.compare(a.optLong("start"), b.optLong("start"))).toList();
-        for (String measure : List.of("weight", "height", "head")) {
-            List<ChartView.Point> points = new ArrayList<>();
-            boolean imperial = prefs.getBoolean("imperial", false);
-            for (JSONObject event : growth) {
-                if (event.optString(measure).isBlank()) continue;
-                double value = event.optDouble(measure);
-                boolean weight = measure.equals("weight");
-                if (weight && event.optString("weightUnit").equals("lb")) value *= .45359237;
-                if (!weight && event.optString(measure.equals("head") ? "headUnit" : "lengthUnit", event.optString("lengthUnit")).equals("in")) value *= 2.54;
-                if (imperial) value /= weight ? .45359237 : 2.54;
-                points.add(new ChartView.Point(Insights.date(event.optLong("start")).format(DateTimeFormatter.ofPattern("d/M")), value));
-            }
-            if (!points.isEmpty()) addChart((measure.equals("head") ? "Head circumference" : measure.equals("weight") ? "Weight" : "Length") + " / "
-                + (measure.equals("weight") ? imperial ? "lb" : "kg" : imperial ? "in" : "cm"), points.subList(Math.max(0, points.size() - 7), points.size()), Ui.SAGE, true);
-        }
-        body.addView(Ui.text(this, "Charts show your entries, not medical targets or growth percentiles. Sleep is split at midnight; overlapping logs are counted separately. No automatic diagnoses or age-based advice.", 12, Ui.MUTED));
+        GrowthUi.add(this, body, profile(), events, prefs.getBoolean("imperial", false), () -> profileEditor(profile()));
+        body.addView(Ui.text(this, "Sleep is split at midnight; overlapping logs are counted separately. No automatic diagnoses or age-based advice.", 12, Ui.MUTED));
     }
     private void addChart(String title, List<ChartView.Point> points, int color) {
         addChart(title, points, color, false);
