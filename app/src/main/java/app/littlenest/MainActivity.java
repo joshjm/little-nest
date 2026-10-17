@@ -64,6 +64,7 @@ public final class MainActivity extends Activity {
     private LinearLayout body;
     private String profileId = "", tab = "Today", filter = "";
     private ScrollView mainScroll;
+    private boolean scrollTop;
     private String renderedTab = "";
     private LocalDate historyDay;
     private int historyPage;
@@ -153,6 +154,8 @@ public final class MainActivity extends Activity {
     }
     @Override protected void onDestroy() { executor.shutdown(); authorization.dispose(); super.onDestroy(); }
 
+    /** After the user logs care on Today, show the top so the new entry is visible in the weave. */
+    void logged() { scrollTop = true; changed(); }
     void changed() {
         render();
         CareReminders.refresh(this);
@@ -184,8 +187,10 @@ public final class MainActivity extends Activity {
     private void selectProfile(String id) { profileId = id; historyPage = 0; prefs.edit().putString("profile", id).apply(); }
 
     private void render() {
-        int scrollPosition = mainScroll != null && renderedTab.equals(tab) ? mainScroll.getScrollY() : 0;
+        int scrollPosition = mainScroll != null && renderedTab.equals(tab) && !(scrollTop && tab.equals("Today")) ? mainScroll.getScrollY() : 0;
+        scrollTop = false;
         renderedTab = tab;
+        Ui.apply(this);
         timerLabels.clear(); timerEvents.clear();
         LinearLayout root = Ui.column(this); root.setBackgroundColor(Ui.BG);
         root.setOnApplyWindowInsetsListener((view, insets) -> {
@@ -197,36 +202,51 @@ public final class MainActivity extends Activity {
         });
         setContentView(root);
         LinearLayout header = Ui.column(this);
-        header.setPadding(Ui.dp(this, 18), Ui.dp(this, 8), Ui.dp(this, 18), Ui.dp(this, 10));
+        header.setPadding(Ui.dp(this, 20), Ui.dp(this, 10), Ui.dp(this, 14), Ui.dp(this, 6));
         LinearLayout masthead = Ui.row(this);
-        ImageView mark = new ImageView(this); mark.setImageDrawable(new NestIcon(this, "nest", Ui.GREEN, Ui.PEACH, 26));
+        ImageView mark = new ImageView(this); mark.setImageDrawable(new NestIcon(this, "nest", Ui.GREEN, Ui.PEACH, 24));
         mark.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-        LinearLayout.LayoutParams markParams = new LinearLayout.LayoutParams(Ui.dp(this, 26), Ui.dp(this, 30));
-        markParams.setMarginEnd(Ui.dp(this, 10)); masthead.addView(mark, markParams);
-        masthead.addView(Ui.title(this, "Little Nest", 16), new LinearLayout.LayoutParams(0, -2, 1));
-        TextView offline = Ui.text(this, prefs.getString("oneDriveFolder", "").isEmpty() && prefs.getString("localPeer", "").isEmpty()
-            ? "ON THIS PHONE" : "SHARING ENABLED", 10, Ui.GREEN);
-        masthead.addView(offline); header.addView(masthead);
+        LinearLayout.LayoutParams markParams = new LinearLayout.LayoutParams(Ui.dp(this, 24), Ui.dp(this, 24));
+        markParams.setMarginEnd(Ui.dp(this, 8)); masthead.addView(mark, markParams);
+        TextView wordmark = Ui.title(this, "Little Nest", 15); wordmark.setTextColor(Ui.GREEN);
+        masthead.addView(wordmark, new LinearLayout.LayoutParams(0, -2, 1));
+        boolean shared = !prefs.getString("oneDriveFolder", "").isEmpty() || !prefs.getString("localPeer", "").isEmpty();
+        boolean syncProblem = (!prefs.getString("oneDriveFolder", "").isEmpty() && !prefs.getString("syncError", "").isEmpty())
+            || (!prefs.getString("localPeer", "").isEmpty() && !prefs.getString("localError", "").isEmpty());
+        LinearLayout status = Ui.row(this);
+        status.setPadding(Ui.dp(this, 12), 0, Ui.dp(this, 14), 0); status.setMinimumHeight(Ui.dp(this, 48));
+        status.addView(Ui.dot(this, syncProblem ? Ui.DANGER : shared ? Ui.HEALTH : Ui.MUTED, 8));
+        status.addView(Ui.medium(this, syncProblem ? "Sync needs attention" : shared ? "Shared nest" : "On this phone", 13, syncProblem ? Ui.DANGER : Ui.MUTED));
+        status.setBackground(Ui.ripple(this, android.graphics.Color.TRANSPARENT, 24));
+        status.setOnClickListener(v -> { tab = "Family"; render(); });
+        status.setContentDescription((syncProblem ? "Sync needs attention" : shared ? "Shared nest" : "Stored on this phone only") + ". Open sharing settings.");
+        masthead.addView(status); header.addView(masthead);
         LinearLayout branding = Ui.row(this);
         JSONObject profile = profile();
         if (profile != null) {
             LinearLayout identity = Ui.column(this);
-            TextView name = Ui.title(this, profile.optString("name") + "  \u2304", 23);
+            TextView name = Ui.title(this, profile.optString("name") + "  \u2304", 28);
+            android.text.SpannableString chevron = new android.text.SpannableString(name.getText());
+            int caret = chevron.length() - 1;
+            chevron.setSpan(new android.text.style.RelativeSizeSpan(.6f), caret, caret + 1, 0);
+            chevron.setSpan(new android.text.style.ForegroundColorSpan(Ui.MUTED), caret, caret + 1, 0);
+            chevron.setSpan(new android.text.style.SuperscriptSpan(), caret, caret + 1, 0);
+            name.setText(chevron);
             name.setPadding(0, 0, 0, 0); identity.addView(name);
-            TextView date = Ui.text(this, age(profile) + "  \u00b7  " + LocalDate.now().format(DateTimeFormatter.ofPattern("EEE, MMM d", Locale.getDefault())), 11, Ui.MUTED);
-            date.setPadding(0, Ui.dp(this, 2), 0, 0); identity.addView(date);
+            TextView date = Ui.text(this, age(profile) + "  \u00b7  " + LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.getDefault())), 14, Ui.MUTED);
+            date.setPadding(0, 0, 0, 0); identity.addView(date);
             branding.addView(identity, new LinearLayout.LayoutParams(0, -2, 1));
-            branding.setMinimumHeight(Ui.dp(this, 52));
+            branding.setMinimumHeight(Ui.dp(this, 64));
+            branding.setPadding(0, Ui.dp(this, 4), 0, Ui.dp(this, 6));
+            branding.setBackground(Ui.ripple(this, android.graphics.Color.TRANSPARENT, 16));
             branding.setContentDescription("Switch profile: " + profile.optString("name"));
             branding.setOnClickListener(v -> chooseProfile());
-        } else {
-            branding.addView(Ui.text(this, "A shared place for everyday care", 13, Ui.MUTED));
+            header.addView(branding);
         }
-        header.addView(branding);
         root.addView(header);
         ScrollView scroll = new ScrollView(this); scroll.setFillViewport(true);
         mainScroll = scroll;
-        body = Ui.column(this); body.setPadding(Ui.dp(this, 16), Ui.dp(this, 8), Ui.dp(this, 16), Ui.dp(this, 20)); scroll.addView(body);
+        body = Ui.column(this); body.setPadding(Ui.dp(this, 16), Ui.dp(this, 4), Ui.dp(this, 16), Ui.dp(this, 28)); scroll.addView(body);
         root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
         if (profile == null && !tab.equals("Family")) welcome();
         else switch (tab) {
@@ -235,20 +255,30 @@ public final class MainActivity extends Activity {
             case "Family" -> family();
             default -> today();
         }
+        View navEdge = new View(this); navEdge.setBackgroundColor(Ui.LINE);
+        root.addView(navEdge, new LinearLayout.LayoutParams(-1, Ui.dp(this, 1)));
         LinearLayout nav = Ui.row(this); nav.setBackgroundColor(Ui.SURFACE);
-        nav.setPadding(Ui.dp(this, 6), Ui.dp(this, 6), Ui.dp(this, 6), Ui.dp(this, 6));
+        nav.setPadding(Ui.dp(this, 4), Ui.dp(this, 10), Ui.dp(this, 4), Ui.dp(this, 12));
         for (String item : List.of("Today", "History", "Trends", "Family")) {
-            Button button = Ui.button(this, item, () -> { tab = item; filter = ""; historyPage = 0; render(); });
-            button.setTextColor(tab.equals(item) ? android.graphics.Color.WHITE : Ui.MUTED);
-            button.setTextSize(11);
-            button.setBackground(new android.graphics.drawable.RippleDrawable(android.content.res.ColorStateList.valueOf(Ui.RIPPLE),
-                Ui.shape(this, tab.equals(item) ? Ui.GREEN : Ui.SURFACE, 14), null));
-            button.setCompoundDrawables(null, new NestIcon(this, item, tab.equals(item) ? android.graphics.Color.WHITE : Ui.MUTED,
-                tab.equals(item) ? Ui.GREEN : Ui.SURFACE, 20), null, null);
-            button.setCompoundDrawablePadding(Ui.dp(this, 3));
-            button.setPadding(0, Ui.dp(this, 5), 0, Ui.dp(this, 3));
-            button.setSelected(tab.equals(item));
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, -2, 1); params.setMargins(Ui.dp(this, 2), 0, Ui.dp(this, 2), 0); nav.addView(button, params);
+            boolean selected = tab.equals(item);
+            Button button = new Button(this); button.setText(item); button.setAllCaps(false); button.setTextSize(12);
+            button.setOnClickListener(v -> { tab = item; filter = ""; historyPage = 0; render(); });
+            button.setTypeface(android.graphics.Typeface.create("sans-serif-medium", selected ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL));
+            button.setTextColor(selected ? Ui.INK : Ui.MUTED);
+            button.setBackground(new android.graphics.drawable.RippleDrawable(android.content.res.ColorStateList.valueOf(Ui.RIPPLE), null,
+                Ui.shape(this, android.graphics.Color.BLACK, 16)));
+            button.setStateListAnimator(null);
+            android.graphics.drawable.GradientDrawable pill = Ui.shape(this, selected ? Ui.SAGE : android.graphics.Color.TRANSPARENT, 16);
+            android.graphics.drawable.LayerDrawable indicator = new android.graphics.drawable.LayerDrawable(new android.graphics.drawable.Drawable[]{
+                pill, new NestIcon(this, item, selected ? Ui.GREEN : Ui.MUTED, selected ? Ui.SAGE : Ui.SURFACE, 22)});
+            int iconInsetX = Ui.dp(this, 21), iconInsetY = Ui.dp(this, 5);
+            indicator.setLayerInset(1, iconInsetX, iconInsetY, iconInsetX, iconInsetY);
+            indicator.setBounds(0, 0, Ui.dp(this, 64), Ui.dp(this, 32));
+            button.setCompoundDrawables(null, indicator, null, null);
+            button.setCompoundDrawablePadding(Ui.dp(this, 4));
+            button.setPadding(0, 0, 0, 0); button.setMinHeight(Ui.dp(this, 56)); button.setMinimumHeight(Ui.dp(this, 56));
+            button.setSelected(selected);
+            nav.addView(button, new LinearLayout.LayoutParams(0, -2, 1));
         }
         root.addView(nav);
         scroll.post(() -> scroll.scrollTo(0, scrollPosition));
@@ -266,40 +296,57 @@ public final class MainActivity extends Activity {
     }
 
     private void welcome() {
-        Ui.gap(body, 22);
-        body.addView(Ui.title(this, "Small moments.\nA little more peace.", 30));
-        body.addView(Ui.text(this, "A calm place for feeds, sleep, little firsts, and you. Private, offline, and shared with just your person.", 17, Ui.MUTED));
-        LinearLayout card = Ui.card(this, Ui.SAGE);
-        card.addView(Ui.title(this, "Welcome to your nest", 22));
-        card.addView(Ui.text(this, "Start with a baby or parent profile. Add twins and other children whenever you need.", 15, Ui.MUTED));
-        card.addView(Ui.button(this, "Create a profile", () -> profileEditor(null)));
-        card.addView(Ui.button(this, "Join partner's nest", () -> { tab = "Family"; render(); }));
-        body.addView(card);
-        body.addView(Ui.text(this, "No ads. No tracking servers. Your data stays here unless you enable local or OneDrive sync.", 13, Ui.MUTED));
+        Ui.gap(body, 28);
+        ImageView mark = new ImageView(this); mark.setImageDrawable(new NestIcon(this, "nest", Ui.GREEN, Ui.PEACH, 64));
+        mark.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        body.addView(mark, new LinearLayout.LayoutParams(Ui.dp(this, 64), Ui.dp(this, 64)));
+        Ui.gap(body, 12);
+        body.addView(Ui.title(this, "Small moments.\nA little more peace.", 32));
+        TextView intro = Ui.text(this, "A calm place for feeds, sleep, little firsts, and you. Private, offline, and shared with just your person.", 17, Ui.MUTED);
+        body.addView(intro);
+        Ui.gap(body, 18);
+        body.addView(Ui.primary(this, "Create a profile", () -> profileEditor(null)));
+        body.addView(Ui.button(this, "Join partner's nest", () -> { tab = "Family"; render(); }));
+        Ui.gap(body, 8);
+        body.addView(Ui.text(this, "Start with a baby or parent profile. Add twins and other children whenever you need.", 14, Ui.MUTED));
+        Ui.stitch(body);
+        body.addView(Ui.text(this, "No ads. No tracking servers. Your data stays here unless you enable local or OneDrive sync.", 14, Ui.MUTED));
     }
 
     private void today() {
         JSONObject profile = profile(); if (profile == null) { welcome(); return; }
         List<JSONObject> events = store.events(profileId);
-        body.addView(Ui.title(this, "A day at a time", 18));
-        Insights.Day day = Insights.day(events, LocalDate.now(), ZoneId.systemDefault(), System.currentTimeMillis());
-        LinearLayout summary = Ui.column(this);
-        summary.setPadding(0, 0, 0, Ui.dp(this, 8));
+        long now = System.currentTimeMillis();
         boolean parent = profile.optString("role").equals("Parent");
-        summary.addView(Ui.text(this, parent ? events.stream().filter(e -> Insights.date(e.optLong("start")).equals(LocalDate.now())).count() + " moments logged  /  " + Insights.duration(day.sleepMs()) + " sleep"
-            : day.feeds() + " feeds   \u00b7   " + day.wet() + " wet, " + day.dirty() + " dirty   \u00b7   " + Insights.duration(day.sleepMs()) + " sleep   \u00b7   " + milk(day.milkMl()), 12, Ui.MUTED));
+        TextView heading = Ui.title(this, "A day at a time", 22);
+        heading.setPadding(0, Ui.dp(this, 6), 0, Ui.dp(this, 2)); body.addView(heading);
+        for (JSONObject event : events) if (event.optBoolean("running") || event.optBoolean("timerPaused")) timerCard(event);
+        Insights.Day day = Insights.day(events, LocalDate.now(), ZoneId.systemDefault(), now);
+        List<CarePredictor.Window> plans = parent ? List.of()
+            : CarePredictor.predict(events, CareReminders.options(this, profileId).intervals(), now, ZoneId.systemDefault());
+        LinearLayout weave = Ui.panel(this);
+        weave.addView(new DayWeaveView(this, events, plans, now), new LinearLayout.LayoutParams(-1, Ui.dp(this, 112)));
+        weave.addView(legend(DayWeaveView.visible(events, now)));
+        Ui.divider(weave); Ui.gap(weave, 4);
         if (!parent) {
+            JSONObject feed = events.stream().filter(e -> List.of("breast", "bottle", "solids").contains(e.optString("kind")) && !e.optBoolean("importIncomplete")).findFirst().orElse(null);
             JSONObject latestBreast = events.stream().filter(e -> e.optString("kind").equals("breast")).findFirst().orElse(null);
-            if (latestBreast != null) summary.addView(Ui.text(this, "Last breast side: " + latestBreast.optString("side", "Not recorded"), 11, Ui.MUTED));
+            LinearLayout feedFact = fact(weave, Ui.FEED, feed == null ? "No feeds logged yet"
+                : feed.optBoolean("running") ? "Feeding now" : now - feed.optLong("start") < 60_000 ? "Fed just now" : "Fed " + Insights.duration(now - feed.optLong("start")) + " ago");
+            if (latestBreast != null) feedFact.addView(Ui.text(this, "Last breast side: " + latestBreast.optString("side", "Not recorded"), 13, Ui.MUTED));
             JSONObject sleep = events.stream().filter(e -> e.optString("kind").equals("sleep") && !e.optBoolean("importIncomplete")).findFirst().orElse(null);
-            if (sleep != null) summary.addView(Ui.text(this, sleep.optBoolean("running") ? "Sleeping now" : "Awake for " + Insights.duration(System.currentTimeMillis() - sleep.optLong("end")), 11, Ui.MUTED));
+            fact(weave, Ui.SLEEP, sleep == null ? "No sleep logged yet" : sleep.optBoolean("running") ? "Sleeping now" : "Awake for " + Insights.duration(now - sleep.optLong("end")));
+            fact(weave, Ui.DIAPER, day.wet() + " wet, " + day.dirty() + " dirty today");
         }
-        body.addView(summary);
-        CarePlanUi.addToday(this, body, profile, events);
+        TextView totals = Ui.figures(Ui.text(this, parent
+            ? events.stream().filter(e -> Insights.date(e.optLong("start")).equals(LocalDate.now())).count() + " moments logged today  \u00b7  " + Insights.duration(day.sleepMs()) + " sleep"
+            : "Today  " + day.feeds() + " feeds  \u00b7  " + milk(day.milkMl()) + " bottle  \u00b7  " + Insights.duration(day.sleepMs()) + " sleep", 13, Ui.MUTED));
+        totals.setPadding(0, Ui.dp(this, 8), 0, 0); weave.addView(totals);
+        body.addView(weave);
         if ((!prefs.getString("oneDriveFolder", "").isEmpty() && !prefs.getString("syncError", "").isEmpty())
             || (!prefs.getString("localPeer", "").isEmpty() && !prefs.getString("localError", "").isEmpty()))
             body.addView(Ui.button(this, "Sync needs attention - open Family", () -> { tab = "Family"; render(); }));
-        for (JSONObject event : events) if (event.optBoolean("running") || event.optBoolean("timerPaused")) timerCard(event);
+        CarePlanUi.addToday(this, body, profile, events);
         Set<String> hidden = prefs.getStringSet("hidden", Set.of());
         List<Catalog.Kind> visible = Catalog.KINDS.stream().filter(k -> !hidden.contains(k.id())
             && (parent ? k.group().equals("Parent") || List.of("pump", "journal", "appointment", "routine", "medical", "medicine", "vaccine", "temperature").contains(k.id())
@@ -310,10 +357,41 @@ public final class MainActivity extends Activity {
             if (!kinds.isEmpty()) activityCard(group, kinds, events);
         }
         CarePlanUi.addUpcoming(this, body, events);
-        body.addView(Ui.title(this, "Recent moments", 21));
+        body.addView(Ui.section(this, "Recent moments"));
         List<JSONObject> recent = events.stream().filter(e -> Insights.date(e.optLong("start")).equals(LocalDate.now())).limit(6).toList();
         if (recent.isEmpty()) body.addView(Ui.text(this, "A fresh page. Your first log will appear here.", 15, Ui.MUTED));
-        for (JSONObject event : recent) eventCard(body, event);
+        LinearLayout list = Ui.panel(this);
+        for (JSONObject event : recent) eventCard(list, event);
+        if (!recent.isEmpty()) body.addView(list);
+    }
+    /** One dot per thread colour actually drawn in the weave, so the key never claims a lane is a single colour. */
+    private TextView legend(List<JSONObject> shown) {
+        java.util.LinkedHashMap<Integer, String> threads = new java.util.LinkedHashMap<>();
+        for (JSONObject event : shown) {
+            Catalog.Kind kind = Catalog.get(event.optString("kind"));
+            threads.putIfAbsent(Ui.thread(kind), Ui.threadLabel(kind));
+        }
+        android.text.SpannableStringBuilder key = new android.text.SpannableStringBuilder();
+        for (var thread : threads.entrySet()) {
+            if (key.length() > 0) key.append("    ");
+            int start = key.length(); key.append("\u25cf");
+            key.setSpan(new android.text.style.ForegroundColorSpan(thread.getKey()), start, start + 1, 0);
+            key.append("\u00a0").append(thread.getValue().replace(" ", "\u00a0"));
+        }
+        if (key.length() == 0) key.append("Nothing logged in the last 18 hours");
+        TextView legend = Ui.text(this, "", 12, Ui.MUTED); legend.setText(key);
+        legend.setLineSpacing(Ui.dp(this, 4), 1); legend.setPadding(0, Ui.dp(this, 6), 0, Ui.dp(this, 6));
+        return legend;
+    }
+    private LinearLayout fact(LinearLayout target, int color, String value) {
+        LinearLayout row = Ui.row(this); row.setGravity(Gravity.TOP); row.setPadding(0, Ui.dp(this, 4), 0, Ui.dp(this, 4));
+        View dot = Ui.dot(this, color, 10); ((LinearLayout.LayoutParams) dot.getLayoutParams()).topMargin = Ui.dp(this, 10);
+        ((LinearLayout.LayoutParams) dot.getLayoutParams()).setMarginEnd(Ui.dp(this, 12));
+        row.addView(dot);
+        LinearLayout text = Ui.column(this);
+        text.addView(Ui.figures(Ui.medium(this, value, 17, Ui.INK)));
+        row.addView(text, new LinearLayout.LayoutParams(0, -2, 1));
+        target.addView(row); return text;
     }
 
     private String activitySection(Catalog.Kind kind) {
@@ -327,50 +405,54 @@ public final class MainActivity extends Activity {
     }
 
     private void activityCard(String title, List<Catalog.Kind> kinds, List<JSONObject> events) {
-        int accent = Ui.activityColor(kinds.get(0));
         LinearLayout card = Ui.column(this);
         LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(-1, -2);
-        cardParams.setMargins(0, Ui.dp(this, 4), 0, Ui.dp(this, 14)); card.setLayoutParams(cardParams);
+        cardParams.setMargins(0, Ui.dp(this, 10), 0, Ui.dp(this, 4)); card.setLayoutParams(cardParams);
         LinearLayout heading = Ui.row(this);
-        heading.addView(Ui.title(this, title, 20), new LinearLayout.LayoutParams(0, -2, 1));
-        Button add = Ui.button(this, "Add", () -> {
+        heading.addView(Ui.title(this, title, 19), new LinearLayout.LayoutParams(0, -2, 1));
+        Button add = Ui.quiet(this, "Add", () -> {
             if (kinds.size() == 1) openEditor(kinds.get(0), null);
             else new AlertDialog.Builder(this).setTitle("Log " + title.toLowerCase(Locale.ROOT))
                 .setItems(kinds.stream().map(Catalog.Kind::title).toArray(String[]::new),
                     (dialog, which) -> openEditor(kinds.get(which), null)).show();
         });
         add.setContentDescription("Add " + title.toLowerCase(Locale.ROOT));
-        add.setPadding(Ui.dp(this, 8), Ui.dp(this, 6), Ui.dp(this, 8), Ui.dp(this, 6));
-        heading.addView(add, new LinearLayout.LayoutParams(Ui.dp(this, 68), -2));
+        add.setCompoundDrawables(new NestIcon(this, "add", Ui.GREEN, android.graphics.Color.TRANSPARENT, 18), null, null, null);
+        add.setCompoundDrawablePadding(Ui.dp(this, 4));
+        heading.addView(add);
         card.addView(heading);
         LinearLayout tiles = null;
         int index = 0;
+        long now = System.currentTimeMillis();
         for (Catalog.Kind kind : kinds) {
             if (index % 2 == 0) {
                 tiles = Ui.row(this); tiles.setGravity(android.view.Gravity.TOP); card.addView(tiles);
             }
+            int thread = Ui.thread(kind);
             LinearLayout tile = Ui.column(this);
-            int pad = Ui.dp(this, 12); tile.setPadding(pad, pad, pad, pad);
-            tile.setMinimumHeight(Ui.dp(this, 128));
-            tile.setBackground(new android.graphics.drawable.RippleDrawable(android.content.res.ColorStateList.valueOf(Ui.RIPPLE), Ui.shape(this, Ui.SURFACE, 18), null));
-            LinearLayout row = Ui.row(this);
-            ImageView icon = new ImageView(this); icon.setImageDrawable(new NestIcon(this, kind.id(), Ui.INK, accent, 27));
-            icon.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-            icon.setBackground(Ui.shape(this, accent, 10)); icon.setPadding(Ui.dp(this, 5), Ui.dp(this, 5), Ui.dp(this, 5), Ui.dp(this, 5));
-            row.addView(icon, new LinearLayout.LayoutParams(Ui.dp(this, 36), Ui.dp(this, 36)));
-            TextView log = Ui.text(this, "LOG", 10, Ui.GREEN); log.setGravity(android.view.Gravity.END);
-            row.addView(log, new LinearLayout.LayoutParams(0, -2, 1)); tile.addView(row);
-            TextView label = Ui.title(this, kind.title(), 15); tile.addView(label);
+            int pad = Ui.dp(this, 14); tile.setPadding(pad, Ui.dp(this, 12), pad, Ui.dp(this, 12));
+            tile.setMinimumHeight(Ui.dp(this, 112));
+            android.graphics.drawable.GradientDrawable face = Ui.shape(this, Ui.SURFACE, 20);
+            if (!Ui.night) face.setStroke(Ui.dp(this, 1), Ui.LINE);
+            tile.setBackground(new android.graphics.drawable.RippleDrawable(android.content.res.ColorStateList.valueOf(Ui.RIPPLE), face, null));
             JSONObject latest = events.stream().filter(e -> e.optString("kind").equals(kind.id())).findFirst().orElse(null);
-            String detail = latest == null ? "Tap to add" : latest.optBoolean("running") ? "Timer running"
-                : Insights.duration(System.currentTimeMillis() - latest.optLong("start")) + " ago";
-            tile.addView(Ui.text(this, detail, 11, Ui.MUTED));
-            String value = latest == null ? "Ready to log" : latest.optBoolean("importIncomplete") ? "Review"
+            LinearLayout top = Ui.row(this);
+            ImageView icon = new ImageView(this); icon.setImageDrawable(new NestIcon(this, kind.id(), thread, Ui.activityColor(kind), 22));
+            icon.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+            icon.setBackground(Ui.shape(this, Ui.activityColor(kind), 12)); icon.setPadding(Ui.dp(this, 7), Ui.dp(this, 7), Ui.dp(this, 7), Ui.dp(this, 7));
+            top.addView(icon, new LinearLayout.LayoutParams(Ui.dp(this, 36), Ui.dp(this, 36)));
+            String value = latest == null ? "" : latest.optBoolean("importIncomplete") ? "Review"
                 : kind.id().equals("bottle") ? milk(Insights.bottleMl(latest))
                 : kind.id().equals("pump") ? milk(Insights.pumpMl(latest))
-                : kind.timer() ? Insights.duration(Records.duration(latest, System.currentTimeMillis()))
-                : kind.id().equals("diaper") ? latest.optString("diaper") : "View activity";
-            tile.addView(Ui.text(this, value, 12, Ui.GREEN));
+                : kind.timer() ? Insights.duration(Records.duration(latest, now))
+                : kind.id().equals("diaper") ? latest.optString("diaper") : "";
+            TextView amount = Ui.figures(Ui.medium(this, value, 13, Ui.GREEN)); amount.setGravity(android.view.Gravity.END);
+            top.addView(amount, new LinearLayout.LayoutParams(0, -2, 1)); tile.addView(top);
+            Ui.gap(tile, 6);
+            TextView label = Ui.title(this, kind.title(), 16); label.setPadding(0, 0, 0, 0); tile.addView(label);
+            String detail = latest == null ? "Not logged yet" : latest.optBoolean("running") ? "Timer running"
+                : Insights.duration(now - latest.optLong("start")) + " ago";
+            TextView when = Ui.figures(Ui.text(this, detail, 13, Ui.MUTED)); when.setPadding(0, Ui.dp(this, 2), 0, 0); tile.addView(when);
             tile.setOnClickListener(v -> openEditor(kind, null));
             tile.setFocusable(true); tile.setContentDescription("Log " + kind.title() + ". " + detail);
             LinearLayout.LayoutParams tileParams = new LinearLayout.LayoutParams(0, -2, 1);
@@ -386,19 +468,27 @@ public final class MainActivity extends Activity {
             : String.format(Locale.getDefault(), "%.0f ml", ml);
     }
     private void timerCard(JSONObject event) {
-        LinearLayout card = Ui.card(this, Ui.activityColor(Catalog.get(event.optString("kind"))));
-        card.addView(Ui.title(this, Catalog.get(event.optString("kind")).title() + (event.optBoolean("running") ? " / running" : " / paused"), 18));
-        TextView label = Ui.title(this, timerText(event), 30); card.addView(label);
+        Catalog.Kind kind = Catalog.get(event.optString("kind"));
+        boolean running = event.optBoolean("running");
+        LinearLayout card = Ui.card(this, Ui.activityColor(kind));
+        LinearLayout heading = Ui.row(this);
+        heading.addView(Ui.dot(this, Ui.thread(kind), 10));
+        heading.addView(Ui.medium(this, kind.title() + (running ? " \u00b7 running" : " \u00b7 paused"), 16, Ui.INK));
+        card.addView(heading);
+        TextView label = Ui.figures(Ui.title(this, timerText(event), 40)); label.setLetterSpacing(-0.02f); card.addView(label);
         timerLabels.add(label); timerEvents.add(event);
         LinearLayout controls = Ui.row(this);
-        addControl(controls, event.optBoolean("running") ? "Pause" : "Resume", () -> updateTimer(event, "toggle"));
+        addControl(controls, running ? "Pause" : "Resume", () -> updateTimer(event, "toggle"));
         if (List.of("breast", "pump").contains(event.optString("kind"))) addControl(controls, "Switch side", () -> updateTimer(event, "side"));
-        addControl(controls, "Finish", () -> updateTimer(event, "finish"));
+        Button finish = Ui.primary(this, "Finish", () -> updateTimer(event, "finish"));
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, -2, 1); params.setMargins(Ui.dp(this, 3), 0, Ui.dp(this, 3), 0);
+        controls.addView(finish, params);
         card.addView(controls); body.addView(card);
     }
     private void addControl(LinearLayout row, String label, Runnable action) {
-        Button button = Ui.button(this, label, action);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, -2, 1); params.setMargins(Ui.dp(this, 2), 0, Ui.dp(this, 2), 0); row.addView(button, params);
+        Button button = Ui.button(this, label, () -> { scrollTop = true; action.run(); });
+        if (Ui.SURFACE != Ui.BG) button.setBackground(Ui.ripple(this, Ui.SURFACE, 24));
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, -2, 1); params.setMargins(Ui.dp(this, 3), 0, Ui.dp(this, 3), 0); row.addView(button, params);
     }
     private String timerText(JSONObject event) {
         long duration = Records.duration(event, System.currentTimeMillis());
@@ -423,19 +513,33 @@ public final class MainActivity extends Activity {
     }
 
     private void history() {
-        body.addView(Ui.title(this, "The story so far", 24));
+        TextView heading = Ui.title(this, "The story so far", 26); heading.setPadding(0, Ui.dp(this, 6), 0, 0); body.addView(heading);
         body.addView(Ui.text(this, "Tap a moment to edit, see details, or remove it.", 14, Ui.MUTED));
-        LinearLayout dates = Ui.row(this);
-        addControl(dates, "<", () -> { historyDay = historyDay == null ? LocalDate.now().minusDays(1) : historyDay.minusDays(1); historyPage = 0; render(); });
-        addControl(dates, historyDay == null ? "All dates" : historyDay.format(DateTimeFormatter.ofPattern("d MMM yy")), () -> {
+        LinearLayout dates = Ui.row(this); dates.setPadding(0, Ui.dp(this, 8), 0, Ui.dp(this, 4));
+        Button previous = Ui.chip(this, "\u2039", false, () -> { historyDay = historyDay == null ? LocalDate.now().minusDays(1) : historyDay.minusDays(1); historyPage = 0; render(); });
+        previous.setContentDescription("Previous day"); previous.setTextSize(20);
+        dates.addView(previous, new LinearLayout.LayoutParams(Ui.dp(this, 48), Ui.dp(this, 48)));
+        Button picker = Ui.chip(this, historyDay == null ? "All dates" : dayLabel(historyDay), historyDay != null, () -> {
             LocalDate initial = historyDay == null ? LocalDate.now() : historyDay;
             new DatePickerDialog(this, (v, y, m, d) -> { historyDay = LocalDate.of(y, m + 1, d); historyPage = 0; render(); },
                 initial.getYear(), initial.getMonthValue() - 1, initial.getDayOfMonth()).show();
         });
-        addControl(dates, ">", () -> { historyDay = historyDay == null ? LocalDate.now() : historyDay.plusDays(1); historyPage = 0; render(); });
+        picker.setContentDescription((historyDay == null ? "All dates" : dayLabel(historyDay)) + ". Choose a date");
+        LinearLayout.LayoutParams pickerParams = new LinearLayout.LayoutParams(0, Ui.dp(this, 48), 1);
+        pickerParams.setMargins(Ui.dp(this, 6), 0, Ui.dp(this, 6), 0); dates.addView(picker, pickerParams);
+        Button next = Ui.chip(this, "\u203a", false, () -> { historyDay = historyDay == null ? LocalDate.now() : historyDay.plusDays(1); historyPage = 0; render(); });
+        next.setContentDescription("Next day"); next.setTextSize(20);
+        dates.addView(next, new LinearLayout.LayoutParams(Ui.dp(this, 48), Ui.dp(this, 48)));
+        if (historyDay != null) {
+            Button all = Ui.quiet(this, "Show all", () -> { historyDay = null; historyPage = 0; render(); });
+            all.setContentDescription("Show all dates"); dates.addView(all);
+        }
         body.addView(dates);
-        body.addView(Ui.button(this, "Show all dates", () -> { historyDay = null; historyPage = 0; render(); }));
-        EditText search = Ui.input(this, "Search activity, notes, food, caregiver...", filter, false); body.addView(search);
+        EditText search = Ui.input(this, "Search activity, notes, food, caregiver...", filter, false);
+        search.setBackground(Ui.shape(this, Ui.night ? Ui.SURFACE : Ui.SAGE, 24));
+        search.setCompoundDrawables(new NestIcon(this, "search", Ui.MUTED, android.graphics.Color.TRANSPARENT, 20), null, null, null);
+        search.setCompoundDrawablePadding(Ui.dp(this, 10)); search.setPadding(Ui.dp(this, 16), Ui.dp(this, 10), Ui.dp(this, 16), Ui.dp(this, 10));
+        body.addView(search);
         LinearLayout list = Ui.column(this); body.addView(list);
         populateHistory(list);
         search.addTextChangedListener(new TextWatcher() {
@@ -444,17 +548,33 @@ public final class MainActivity extends Activity {
             @Override public void afterTextChanged(Editable s) {}
         });
     }
+    private String dayLabel(LocalDate date) {
+        if (date.equals(LocalDate.now())) return "Today";
+        if (date.equals(LocalDate.now().minusDays(1))) return "Yesterday";
+        return date.format(DateTimeFormatter.ofPattern(date.getYear() == LocalDate.now().getYear() ? "EEE d MMM" : "EEE d MMM yyyy", Locale.getDefault()));
+    }
     private void populateHistory(LinearLayout list) {
         list.removeAllViews();
         long from = historyDay == null ? 0 : historyDay.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
         long to = historyDay == null ? 253402300800000L : historyDay.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
         List<JSONObject> events = store.eventPage(profileId, filter, from, to, historyPage * 100);
-        for (JSONObject event : events.subList(0, Math.min(100, events.size()))) eventCard(list, event);
+        LocalDate shown = null; LinearLayout group = null;
+        for (JSONObject event : events.subList(0, Math.min(100, events.size()))) {
+            LocalDate date = Insights.date(event.optLong("start"));
+            if (!date.equals(shown) || group == null) {
+                shown = date;
+                TextView label = Ui.medium(this, dayLabel(date), 14, Ui.MUTED);
+                label.setPadding(Ui.dp(this, 4), Ui.dp(this, 14), 0, 0); list.addView(label);
+                group = Ui.panel(this); list.addView(group);
+            }
+            eventCard(group, event);
+        }
         if (events.isEmpty()) list.addView(Ui.text(this, "No moments match. Try a different date or search.", 15, Ui.MUTED));
-        LinearLayout pages = Ui.row(this);
-        if (historyPage > 0) addControl(pages, "Previous 100", () -> { historyPage--; populateHistory(list); mainScroll.smoothScrollTo(0, 0); });
-        pages.addView(Ui.text(this, "Page " + (historyPage + 1), 12, Ui.MUTED));
-        if (events.size() > 100) addControl(pages, "Next 100", () -> { historyPage++; populateHistory(list); mainScroll.smoothScrollTo(0, 0); });
+        LinearLayout pages = Ui.row(this); pages.setGravity(Gravity.CENTER);
+        if (historyPage > 0) pages.addView(Ui.quiet(this, "Previous 100", () -> { historyPage--; populateHistory(list); mainScroll.smoothScrollTo(0, 0); }));
+        TextView page = Ui.text(this, "Page " + (historyPage + 1), 13, Ui.MUTED); page.setPadding(Ui.dp(this, 12), 0, Ui.dp(this, 12), 0);
+        pages.addView(page);
+        if (events.size() > 100) pages.addView(Ui.quiet(this, "Next 100", () -> { historyPage++; populateHistory(list); mainScroll.smoothScrollTo(0, 0); }));
         list.addView(pages);
     }
 
@@ -484,19 +604,24 @@ public final class MainActivity extends Activity {
     }
     private void eventCard(LinearLayout target, JSONObject event) {
         Catalog.Kind kind = Catalog.get(event.optString("kind"));
-        LinearLayout card = Ui.card(this, android.graphics.Color.WHITE);
-        LinearLayout heading = Ui.row(this);
-        ImageView icon = new ImageView(this); icon.setImageDrawable(new NestIcon(this, kind.id(), Ui.INK, Ui.activityColor(kind), 25));
-        icon.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(Ui.dp(this, 25), Ui.dp(this, 28));
-        iconParams.setMarginEnd(Ui.dp(this, 10)); heading.addView(icon, iconParams);
-        heading.addView(Ui.title(this, kind.title() + (event.optBoolean("running") ? " - running" : ""), 17),
-            new LinearLayout.LayoutParams(0, -2, 1));
-        heading.addView(Ui.text(this, "\u203a", 22, Ui.MUTED));
-        card.addView(heading);
-        card.addView(Ui.text(this, EventEditor.format(event.optLong("start")) + "  /  " + event.optString("caregiver", "Caregiver"), 12, Ui.MUTED));
+        LinearLayout card = Ui.row(this); card.setGravity(Gravity.TOP);
+        card.setPadding(0, Ui.dp(this, 10), Ui.dp(this, 2), Ui.dp(this, 10)); card.setMinimumHeight(Ui.dp(this, 56));
+        card.setBackground(Ui.ripple(this, android.graphics.Color.TRANSPARENT, 12));
+        if (target.getChildCount() > 0) Ui.divider(target);
+        TextView time = Ui.figures(Ui.medium(this, java.time.Instant.ofEpochMilli(event.optLong("start")).atZone(ZoneId.systemDefault())
+            .format(DateTimeFormatter.ofPattern("HH:mm")), 14, Ui.INK));
+        card.addView(time, new LinearLayout.LayoutParams(Ui.dp(this, 50), -2));
+        View dot = Ui.dot(this, Ui.thread(kind), 10);
+        ((LinearLayout.LayoutParams) dot.getLayoutParams()).topMargin = Ui.dp(this, 9); card.addView(dot);
+        LinearLayout content = Ui.column(this);
+        content.addView(Ui.medium(this, kind.title() + (event.optBoolean("running") ? " \u00b7 running" : ""), 16, Ui.INK));
         String summary = summary(event);
-        TextView detail = Ui.text(this, summary, 14, Ui.INK); detail.setMaxLines(4); card.addView(detail);
+        TextView detail = Ui.text(this, summary, 14, Ui.MUTED); detail.setMaxLines(3);
+        detail.setEllipsize(android.text.TextUtils.TruncateAt.END); detail.setPadding(0, 0, 0, 0);
+        if (!summary.isBlank()) content.addView(detail);
+        TextView who = Ui.text(this, event.optString("caregiver", "Caregiver"), 12, Ui.MUTED); who.setPadding(0, Ui.dp(this, 2), 0, 0);
+        content.addView(who);
+        card.addView(content, new LinearLayout.LayoutParams(0, -2, 1));
         card.setOnClickListener(v -> {
             AlertDialog dialog = new AlertDialog.Builder(this).setTitle(kind.title()).setMessage(summary)
                 .setPositiveButton("Edit", (d, w) -> {
@@ -516,51 +641,81 @@ public final class MainActivity extends Activity {
     }
 
     private void trends() {
-        body.addView(Ui.title(this, "Find your rhythm", 24));
-        body.addView(Ui.text(this, "Last 7 days / local calendar days", 14, Ui.MUTED));
+        TextView heading = Ui.title(this, "Find your rhythm", 26); heading.setPadding(0, Ui.dp(this, 6), 0, 0); body.addView(heading);
+        body.addView(Ui.text(this, "Last 7 days, by local calendar day", 14, Ui.MUTED));
         List<JSONObject> events = store.events(profileId);
         List<Insights.Day> days = new ArrayList<>();
         for (int i = 6; i >= 0; i--) days.add(Insights.day(events, LocalDate.now().minusDays(i), ZoneId.systemDefault(), System.currentTimeMillis()));
-        LinearLayout rhythm = Ui.card(this, android.graphics.Color.WHITE);
-        rhythm.addView(Ui.title(this, "Sleep pattern / 24 hours", 18));
-        rhythm.addView(new SleepTimelineView(this, events), new LinearLayout.LayoutParams(-1, Ui.dp(this, 230)));
-        body.addView(rhythm);
         long weekSleep = days.stream().mapToLong(Insights.Day::sleepMs).sum(), previousSleep = 0;
         int weekFeeds = days.stream().mapToInt(Insights.Day::feeds).sum(), previousFeeds = 0;
         for (int i = 7; i < 14; i++) {
             Insights.Day previous = Insights.day(events, LocalDate.now().minusDays(i), ZoneId.systemDefault(), System.currentTimeMillis());
             previousSleep += previous.sleepMs(); previousFeeds += previous.feeds();
         }
-        body.addView(Ui.text(this, "This week: " + weekFeeds + " feeds / " + Insights.duration(weekSleep) + " sleep\nPrevious week: "
-            + previousFeeds + " feeds / " + Insights.duration(previousSleep) + " sleep", 14, Ui.MUTED));
-        addChart("Sleep / hours", days.stream().map(d -> new ChartView.Point(d.date().format(DateTimeFormatter.ofPattern("EE")), d.sleepMs() / 3_600_000.0)).toList(), Ui.LAVENDER);
-        addChart("Feeds / count", days.stream().map(d -> new ChartView.Point(d.date().format(DateTimeFormatter.ofPattern("EE")), d.feeds())).toList(), Ui.PEACH);
-        addChart("Bottle milk / " + (prefs.getBoolean("imperial", false) ? "fl oz" : "ml"),
-            days.stream().map(d -> new ChartView.Point(d.date().format(DateTimeFormatter.ofPattern("EE")), d.milkMl() / (prefs.getBoolean("imperial", false) ? 29.5735295625 : 1))).toList(), Ui.BLUE);
-        LinearLayout table = Ui.card(this, Ui.SAGE);
-        table.addView(Ui.title(this, "Daily comparison", 19));
-        for (Insights.Day day : days) table.addView(Ui.text(this, day.date().format(DateTimeFormatter.ofPattern("d MMM")) + "   " + day.feeds() + " feeds   " + day.wet() + " wet   " + day.dirty() + " dirty   " + Insights.duration(day.sleepMs()) + " sleep", 13, Ui.INK));
+        LinearLayout week = Ui.panel(this);
+        LinearLayout weekRow = Ui.row(this); weekRow.setGravity(Gravity.TOP);
+        weekStat(weekRow, "This week", weekFeeds + " feeds", Insights.duration(weekSleep) + " sleep");
+        weekStat(weekRow, "Previous week", previousFeeds + " feeds", Insights.duration(previousSleep) + " sleep");
+        week.addView(weekRow); body.addView(week);
+        LinearLayout rhythm = Ui.panel(this);
+        rhythm.addView(chartTitle("Sleep pattern", "24 hours, midnight to midnight", Ui.SLEEP));
+        rhythm.addView(new SleepTimelineView(this, events), new LinearLayout.LayoutParams(-1, Ui.dp(this, 220)));
+        body.addView(rhythm);
+        addChart("Sleep", "hours", days.stream().map(d -> new ChartView.Point(d.date().format(DateTimeFormatter.ofPattern("EE")), d.sleepMs() / 3_600_000.0)).toList(), Ui.SLEEP, false);
+        addChart("Feeds", "count", days.stream().map(d -> new ChartView.Point(d.date().format(DateTimeFormatter.ofPattern("EE")), d.feeds())).toList(), Ui.FEED, false);
+        addChart("Bottle milk", prefs.getBoolean("imperial", false) ? "fl oz" : "ml",
+            days.stream().map(d -> new ChartView.Point(d.date().format(DateTimeFormatter.ofPattern("EE")), d.milkMl() / (prefs.getBoolean("imperial", false) ? 29.5735295625 : 1))).toList(), Ui.FEED, false);
+        LinearLayout table = Ui.panel(this);
+        table.addView(chartTitle("Daily comparison", "per day", Ui.DIAPER));
+        tableRow(table, true, "Day", "Feeds", "Wet", "Dirty", "Sleep");
+        for (int i = days.size() - 1; i >= 0; i--) {
+            Insights.Day day = days.get(i);
+            tableRow(table, false, day.date().format(DateTimeFormatter.ofPattern("EEE d", Locale.getDefault())), Integer.toString(day.feeds()),
+                Integer.toString(day.wet()), Integer.toString(day.dirty()), Insights.duration(day.sleepMs()));
+        }
         body.addView(table);
         List<JSONObject> babies = store.records("profile").stream().filter(p -> p.optString("role").equals("Baby")).toList();
         if (babies.size() > 1) {
-            LinearLayout comparison = Ui.card(this, Ui.PEACH);
-            comparison.addView(Ui.title(this, "Children / today", 19));
+            LinearLayout comparison = Ui.panel(this);
+            comparison.addView(chartTitle("Children", "Today", Ui.MEMORY));
+            tableRow(comparison, true, "Name", "Feeds", "Wet", "Dirty", "Sleep");
             for (JSONObject baby : babies) {
                 Insights.Day stats = Insights.day(store.events(baby.optString("id")), LocalDate.now(), ZoneId.systemDefault(), System.currentTimeMillis());
-                comparison.addView(Ui.text(this, baby.optString("name") + ": " + stats.feeds() + " feeds / " + stats.wet() + " wet / "
-                    + stats.dirty() + " dirty / " + Insights.duration(stats.sleepMs()) + " sleep", 14, Ui.INK));
+                tableRow(comparison, false, baby.optString("name"), Integer.toString(stats.feeds()), Integer.toString(stats.wet()),
+                    Integer.toString(stats.dirty()), Insights.duration(stats.sleepMs()));
             }
             body.addView(comparison);
         }
         GrowthUi.add(this, body, profile(), events, prefs.getBoolean("imperial", false), () -> profileEditor(profile()));
         body.addView(Ui.text(this, "Sleep is split at midnight; overlapping logs are counted separately. No automatic diagnoses or age-based advice.", 12, Ui.MUTED));
     }
-    private void addChart(String title, List<ChartView.Point> points, int color) {
-        addChart(title, points, color, false);
+    private void weekStat(LinearLayout row, String label, String first, String second) {
+        LinearLayout column = Ui.column(this);
+        column.addView(Ui.text(this, label, 13, Ui.MUTED));
+        column.addView(Ui.figures(Ui.title(this, first, 20)));
+        column.addView(Ui.figures(Ui.medium(this, second, 15, Ui.INK)));
+        row.addView(column, new LinearLayout.LayoutParams(0, -2, 1));
     }
-    private void addChart(String title, List<ChartView.Point> points, int color, boolean connected) {
-        LinearLayout card = Ui.card(this, color); card.addView(Ui.title(this, title, 18));
-        card.addView(new ChartView(this, points, connected), new LinearLayout.LayoutParams(-1, Ui.dp(this, 180))); body.addView(card);
+    private LinearLayout chartTitle(String title, String unit, int thread) {
+        LinearLayout row = Ui.row(this); row.setPadding(0, 0, 0, Ui.dp(this, 6));
+        row.addView(Ui.dot(this, thread, 10));
+        row.addView(Ui.title(this, title, 17));
+        TextView detail = Ui.text(this, "  " + unit, 13, Ui.MUTED); row.addView(detail, new LinearLayout.LayoutParams(0, -2, 1));
+        return row;
+    }
+    private void tableRow(LinearLayout table, boolean header, String... cells) {
+        if (!header) Ui.divider(table);
+        LinearLayout row = Ui.row(this); row.setMinimumHeight(Ui.dp(this, header ? 32 : 40));
+        for (int i = 0; i < cells.length; i++) {
+            TextView cell = Ui.figures(header ? Ui.text(this, cells[i], 12, Ui.MUTED) : Ui.text(this, cells[i], 14, Ui.INK));
+            if (i > 0) cell.setGravity(Gravity.END);
+            row.addView(cell, new LinearLayout.LayoutParams(0, -2, i == 0 ? 1.5f : i == cells.length - 1 ? 1.4f : 0.9f));
+        }
+        table.addView(row);
+    }
+    private void addChart(String title, String unit, List<ChartView.Point> points, int color, boolean connected) {
+        LinearLayout card = Ui.panel(this); card.addView(chartTitle(title, unit, color));
+        card.addView(new ChartView(this, points, connected, color), new LinearLayout.LayoutParams(-1, Ui.dp(this, 170))); body.addView(card);
     }
 
     private void chooseProfile() {
@@ -621,21 +776,28 @@ public final class MainActivity extends Activity {
     }
 
     private void family() {
-        body.addView(Ui.title(this, "Your people. Your data.", 24));
+        TextView heading = Ui.title(this, "Your people. Your data.", 26); heading.setPadding(0, Ui.dp(this, 6), 0, 0); body.addView(heading);
         body.addView(Ui.text(this, "Two caregivers, one private nest. Pair over Wi-Fi without an account, or use optional OneDrive sharing. No app backend.", 15, Ui.MUTED));
-        LinearLayout people = Ui.card(this, Ui.SAGE);
-        people.addView(Ui.title(this, "Profiles & preferences", 20));
-        people.addView(Ui.button(this, "Add baby or parent", () -> profileEditor(null)));
+        body.addView(Ui.section(this, "Profiles & preferences"));
+        LinearLayout people = Ui.panel(this);
+        people.addView(Ui.rowButton(this, "Add baby or parent", () -> profileEditor(null)));
         if (profile() != null && profile().optString("role").equals("Baby"))
-            people.addView(Ui.button(this, "Care plan & advance alerts", () -> CarePlanUi.settings(this, profile())));
+            people.addView(Ui.rowButton(this, "Care plan & advance alerts", () -> CarePlanUi.settings(this, profile())));
         if (!CareReminders.error(this).isEmpty()) people.addView(Ui.text(this, CareReminders.error(this), 14, Ui.INK));
-        if (profile() != null && !profile().optString("sex").isBlank()) people.addView(Ui.text(this, "Sex: " + profile().optString("sex"), 13, Ui.MUTED));
-        if (profile() != null && !profile().optString("adjustedDob").isBlank()) {
-            JSONObject adjustedProfile = Records.copy(profile()); Records.put(adjustedProfile, "dob", adjustedProfile.optString("adjustedDob"));
-            people.addView(Ui.text(this, "Adjusted birth date: " + profile().optString("adjustedDob") + " / adjusted age: " + age(adjustedProfile), 13, Ui.MUTED));
+        if (profile() != null) {
+            people.addView(Ui.rowButton(this, "Edit " + profile().optString("name"), () -> profileEditor(profile())));
+            List<String> facts = new ArrayList<>();
+            if (!profile().optString("sex").isBlank()) facts.add("Sex: " + profile().optString("sex"));
+            if (!profile().optString("adjustedDob").isBlank()) {
+                JSONObject adjustedProfile = Records.copy(profile()); Records.put(adjustedProfile, "dob", adjustedProfile.optString("adjustedDob"));
+                facts.add("Adjusted birth date: " + profile().optString("adjustedDob") + " / adjusted age: " + age(adjustedProfile));
+            }
+            if (!facts.isEmpty()) {
+                TextView detail = Ui.text(this, String.join("\n", facts), 13, Ui.MUTED);
+                detail.setPadding(Ui.dp(this, 4), 0, Ui.dp(this, 4), Ui.dp(this, 8)); people.addView(detail);
+            }
         }
-        if (profile() != null) people.addView(Ui.button(this, "Edit " + profile().optString("name"), () -> profileEditor(profile())));
-        if (profile() != null) people.addView(Ui.button(this, "Delete current profile", () -> {
+        if (profile() != null) people.addView(Ui.rowButton(this, "Delete current profile", () -> {
             JSONObject selected = profile();
             new AlertDialog.Builder(this).setTitle("Delete " + selected.optString("name") + "?")
                 .setMessage("This removes the profile and its logs from both phones after sync. Historical revisions remain in backups and the sync log. Export a backup first.")
@@ -646,18 +808,18 @@ public final class MainActivity extends Activity {
                     store.save(selected.optString("id"), selected, true); selectProfile(""); changed();
                 }).setNegativeButton("Cancel", null).show();
         }));
-        people.addView(Ui.button(this, "Caregiver name: " + prefs.getString("caregiver", "Caregiver"), () -> prompt("Your caregiver name", "Shown on new logs", prefs.getString("caregiver", ""), value -> {
+        people.addView(Ui.rowButton(this, "Caregiver name: " + prefs.getString("caregiver", "Caregiver"), () -> prompt("Your caregiver name", "Shown on new logs", prefs.getString("caregiver", ""), value -> {
             if (value.isBlank()) { error("Enter a caregiver name"); return; }
             prefs.edit().putString("caregiver", value.trim()).apply(); render();
         })));
-        people.addView(Ui.button(this, prefs.getBoolean("imperial", false) ? "Display units: imperial" : "Display units: metric", () -> {
+        people.addView(Ui.rowButton(this, prefs.getBoolean("imperial", false) ? "Display units: imperial" : "Display units: metric", () -> {
             prefs.edit().putBoolean("imperial", !prefs.getBoolean("imperial", false)).apply(); render();
         }));
-        people.addView(Ui.button(this, "Choose visible activities", this::chooseActivities));
+        people.addView(Ui.rowButton(this, "Choose visible activities", this::chooseActivities));
         body.addView(people);
         localSyncCard();
-        LinearLayout drive = Ui.card(this, Ui.BLUE);
-        drive.addView(Ui.title(this, "OneDrive sync", 20));
+        body.addView(Ui.section(this, "OneDrive sync"));
+        LinearLayout drive = Ui.panel(this);
         if (prefs.getBoolean("googleSyncRemoved", false))
             drive.addView(Ui.text(this, "Google sync was removed. Your local records are unchanged. Export a backup, then connect OneDrive or pair locally. Your old Google folder and permissions have not been changed.", 14, Ui.INK));
         String folder = prefs.getString("oneDriveFolder", "");
@@ -671,24 +833,24 @@ public final class MainActivity extends Activity {
         }
         if (!prefs.getString("syncError", "").isEmpty()) drive.addView(Ui.text(this, "Needs attention: " + prefs.getString("syncError", ""), 14, Ui.INK));
         if (working || authorizing) drive.addView(Ui.text(this, "Working with OneDrive...", 14, Ui.GREEN));
-        drive.addView(Ui.button(this, "Connect / reconnect OneDrive", () -> signIn(() -> {
+        drive.addView(Ui.rowButton(this, "Connect / reconnect OneDrive", () -> signIn(() -> {
             Toast.makeText(this, "OneDrive connected", Toast.LENGTH_SHORT).show();
             if (!prefs.getString("oneDriveFolder", "").isEmpty()) sync(); else render();
         })));
         if (folder.isEmpty()) {
-            drive.addView(Ui.button(this, "1. Create a shared nest", () -> authorize(true, this::createNest)));
-            drive.addView(Ui.button(this, "Or join partner's nest", this::joinNest));
+            drive.addView(Ui.rowButton(this, "1. Create a shared nest", () -> authorize(true, this::createNest)));
+            drive.addView(Ui.rowButton(this, "Or join partner's nest", this::joinNest));
             if (OneDriveAuth.connected(this))
-                drive.addView(Ui.button(this, "Sign out of OneDrive on this phone", this::disconnectOneDrive));
+                drive.addView(Ui.rowButton(this, "Sign out of OneDrive on this phone", this::disconnectOneDrive));
         } else {
-            drive.addView(Ui.button(this, "2. Invite partner by Microsoft email", () -> prompt("Invite your partner", "Their personal Microsoft account email. Only two accounts are permitted.", "", email ->
+            drive.addView(Ui.rowButton(this, "2. Invite partner by Microsoft email", () -> prompt("Invite your partner", "Their personal Microsoft account email. Only two accounts are permitted.", "", email ->
                 authorize(true, () -> runDrive(() -> { oneDrive().invite(folder, email.trim()); return "Partner invited. Ask them to accept the email invitation, then send the nest code."; }, this::render)))));
-            drive.addView(Ui.button(this, "Copy OneDrive nest code", () -> {
+            drive.addView(Ui.rowButton(this, "Copy OneDrive nest code", () -> {
                 getSystemService(ClipboardManager.class).setPrimaryClip(ClipData.newPlainText("Little Nest folder", folder));
                 Toast.makeText(this, "Nest code copied. Your partner must also accept the email invitation.", Toast.LENGTH_LONG).show();
             }));
-            drive.addView(Ui.button(this, "Sync now", () -> authorize(true, this::sync)));
-            drive.addView(Ui.button(this, "Disconnect OneDrive on this phone", () -> new AlertDialog.Builder(this).setTitle("Disconnect OneDrive?")
+            drive.addView(Ui.rowButton(this, "Sync now", () -> authorize(true, this::sync)));
+            drive.addView(Ui.rowButton(this, "Disconnect OneDrive on this phone", () -> new AlertDialog.Builder(this).setTitle("Disconnect OneDrive?")
                 .setMessage("Local logs and local pairing stay here. This does not remove anyone's folder access. Remove access in OneDrive if needed. Do not connect another family without exporting and clearing app storage.")
                 .setPositiveButton("Disconnect", (d, w) -> {
                     disconnectOneDrive();
@@ -696,28 +858,30 @@ public final class MainActivity extends Activity {
         }
         drive.addView(Ui.text(this, "Both caregivers can read all profiles, parent logs, photos and revisions. Files in OneDrive are not end-to-end encrypted by Little Nest. Foreground checks every minute; background sync is best-effort, typically 15+ minutes. Local and OneDrive sync can run together for the same nest.", 12, Ui.MUTED));
         body.addView(drive);
-        LinearLayout data = Ui.card(this, Ui.PEACH);
-        data.addView(Ui.title(this, "Keep a copy", 20));
-        data.addView(Ui.button(this, importing ? "Import in progress..." : "Import activity CSV", () -> {
+        body.addView(Ui.section(this, "Keep a copy"));
+        LinearLayout data = Ui.panel(this);
+        data.addView(Ui.rowButton(this, importing ? "Import in progress..." : "Import activity CSV", () -> {
             if (importing) { error("Wait for the current import to finish."); return; }
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("*/*").addCategory(Intent.CATEGORY_OPENABLE);
             startActivityForResult(intent, IMPORT_NARA);
         }));
-        data.addView(Ui.button(this, "Export this profile as CSV", () -> export(false)));
-        data.addView(Ui.button(this, "Export complete JSON backup", () -> export(true)));
-        data.addView(Ui.button(this, "Restore / merge JSON backup", () -> {
+        data.addView(Ui.rowButton(this, "Export this profile as CSV", () -> export(false)));
+        data.addView(Ui.rowButton(this, "Export complete JSON backup", () -> export(true)));
+        data.addView(Ui.rowButton(this, "Restore / merge JSON backup", () -> {
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("application/json").addCategory(Intent.CATEGORY_OPENABLE);
             startActivityForResult(intent, IMPORT);
         }));
         data.addView(Ui.text(this, "Exports contain private health information. JSON includes photos and deleted historical revisions. Share only with people you trust.", 12, Ui.MUTED));
         body.addView(data);
-        LinearLayout reminders = Ui.card(this, Ui.LAVENDER);
-        reminders.addView(Ui.title(this, "Reminders", 19));
-        reminders.addView(Ui.button(this, "Enable notifications", this::requestNotifications));
+        body.addView(Ui.section(this, "Reminders"));
+        LinearLayout reminders = Ui.panel(this);
+        reminders.addView(Ui.rowButton(this, "Enable notifications", this::requestNotifications));
         if (!prefs.getString("reminderError", "").isEmpty()) reminders.addView(Ui.text(this, prefs.getString("reminderError", ""), 13, Ui.INK));
         reminders.addView(Ui.text(this, "Add reminders inside any activity. Android may delay them during battery-saving modes. They are not suitable for time-critical medication alarms.", 13, Ui.MUTED));
         body.addView(reminders);
-        body.addView(Ui.text(this, "Little Nest " + BuildConfig.VERSION_NAME + "\nA shared place for everyday care. No ads, analytics, subscriptions, or app backend.", 12, Ui.MUTED));
+        Ui.stitch(body);
+        TextView footer = Ui.text(this, "Little Nest " + BuildConfig.VERSION_NAME + "\nA shared place for everyday care. No ads, analytics, subscriptions, or app backend.", 12, Ui.MUTED);
+        footer.setGravity(Gravity.CENTER); footer.setPadding(0, Ui.dp(this, 8), 0, Ui.dp(this, 8)); body.addView(footer);
     }
 
     private void chooseActivities() {
@@ -773,8 +937,8 @@ public final class MainActivity extends Activity {
     }
 
     private void localSyncCard() {
-        LinearLayout card = Ui.card(this, Ui.SAGE);
-        card.addView(Ui.title(this, "Local Wi-Fi sync", 20));
+        body.addView(Ui.section(this, "Local Wi-Fi sync"));
+        LinearLayout card = Ui.panel(this);
         boolean paired = !prefs.getString("localPeer", "").isEmpty();
         card.addView(Ui.text(this, paired
             ? "Partner paired. Open both apps on the same private Wi-Fi or hotspot to reconnect automatically."
@@ -783,19 +947,19 @@ public final class MainActivity extends Activity {
             long last = prefs.getLong("localLastSync", 0);
             card.addView(Ui.text(this, last == 0 ? "Waiting for first local sync" : "Last local sync: " + EventEditor.format(last), 13, Ui.MUTED));
             card.addView(Ui.text(this, store.pending("local:" + prefs.getString("localPeer", "")) + " changes waiting for partner", 13, Ui.INK));
-            card.addView(Ui.button(this, "Sync locally now", () -> {
+            card.addView(Ui.rowButton(this, "Sync locally now", () -> {
                 if (localSync == null) { error("Open the app to start local sync."); return; }
                 if (localSync.busy()) { error("Local sync is already running."); return; }
                 localSync.sync();
             }));
-            card.addView(Ui.button(this, "Disconnect local partner", () -> new AlertDialog.Builder(this)
+            card.addView(Ui.rowButton(this, "Disconnect local partner", () -> new AlertDialog.Builder(this)
                 .setTitle("Disconnect local sync?").setMessage("Local records and OneDrive sharing are kept. Disconnect on both phones before pairing again. A previously paired phone retains its copy of your data.")
                 .setPositiveButton("Disconnect", (dialog, which) -> {
                     try { if (localSync != null) localSync.disconnect(); render(); }
                     catch (Exception e) { error("Cannot disconnect local sync: " + e.getMessage()); }
                 }).setNegativeButton("Cancel", null).show()));
         } else {
-            card.addView(Ui.button(this, "1. Show local pairing QR", () -> {
+            card.addView(Ui.rowButton(this, "1. Show local pairing QR", () -> {
                 LocalSync local = localSync;
                 if (local == null) { error("Local sync is not running. Reopen the app."); return; }
                 local.invitation(code -> runOnUiThread(() -> {
@@ -818,10 +982,10 @@ public final class MainActivity extends Activity {
                     }
                 }));
             }));
-            card.addView(Ui.button(this, "2. Scan partner's local QR", () -> new IntentIntegrator(this)
+            card.addView(Ui.rowButton(this, "2. Scan partner's local QR", () -> new IntentIntegrator(this)
                 .setDesiredBarcodeFormats(IntentIntegrator.QR_CODE).setPrompt("Scan your partner's Little Nest pairing code")
                 .setBeepEnabled(false).setOrientationLocked(false).initiateScan()));
-            card.addView(Ui.button(this, "Or paste a local pairing code", () ->
+            card.addView(Ui.rowButton(this, "Or paste a local pairing code", () ->
                 prompt("Local pairing code", "Paste the private code copied by your partner. Do not use a OneDrive nest code here.", "", this::confirmLocalJoin)));
         }
         if (!prefs.getString("localError", "").isEmpty())
