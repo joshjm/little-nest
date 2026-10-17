@@ -33,11 +33,11 @@ restorable backup; use JSON backup/restore to move Little Nest records.
    unresolved entries, open **Edit**, correct their times / side durations and
    uncheck **Imported entry still needs review** when satisfied.
 8. Import on **one phone only**, then sync that phone and your partner's phone
-   using the same shared Drive folder. The initial upload of thousands of
+   using local pairing or the same shared OneDrive nest. The initial transfer of thousands of
    immutable records can take a long time; use **Sync now** again if interrupted.
 
-All imported profiles and source details are shared with your partner when Drive
-is connected, including parent pumping logs. The private CSV is not bundled in
+All imported profiles and source details are shared with your partner when sync
+is enabled, including parent pumping logs. The private CSV is not bundled in
 the APK, and importing does not contact the source app or upload data to an app server.
 
 ## What is preserved

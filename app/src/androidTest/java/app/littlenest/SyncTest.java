@@ -16,44 +16,45 @@ import static org.junit.Assert.*;
 
 @RunWith(AndroidJUnit4.class)
 public class SyncTest {
-    private static final String FOLDER = "family_folder_12345";
+    private static final String FOLDER = "drive123|folder123";
+    private static final String FAMILY = "10bcce6b-6f26-45ea-bd56-24f6967a556d";
 
-    private static final class FakeDrive implements DriveApi.Transport {
+    private static final class FakeDrive implements OneDriveApi.Transport {
         final Map<String, JSONObject> files = new LinkedHashMap<>();
         boolean rejectWrites, loseUploadReply;
         int memberCount = 2, fileCounter;
         @Override public byte[] send(String method, String address, byte[] body, String contentType, int limit) throws IOException {
             try {
-                if (address.contains("/upload/")) {
+                if (method.equals("PUT") && address.contains("nest-op-")) {
                     if (rejectWrites) throw new IOException("Offline");
-                    String multipart = new String(body, StandardCharsets.UTF_8);
-                    String[] sections = multipart.split("\r\n\r\n");
-                    String json = sections[2].substring(0, sections[2].lastIndexOf("\r\n--"));
-                    JSONObject op = new JSONObject(json);
+                    JSONObject op = new JSONObject(new String(body, StandardCharsets.UTF_8));
                     String id = "remote_file_" + ++fileCounter;
                     files.put(id, op);
                     if (loseUploadReply) { loseUploadReply = false; throw new IOException("Upload completed but reply was lost"); }
                     return bytes(new JSONObject().put("id", id));
                 }
-                if (address.endsWith("?alt=media")) {
-                    String id = address.substring(address.lastIndexOf('/') + 1).split("\\?")[0];
+                if (address.contains("nest-family.json")) return bytes(new JSONObject().put("schema", 1).put("family", FAMILY));
+                if (address.endsWith("/content")) {
+                    String[] segments = address.split("/");
+                    String id = segments[segments.length - 2];
                     return bytes(files.get(id));
                 }
                 if (address.contains("/permissions")) {
                     JSONArray permissions = new JSONArray();
-                    for (int i = 0; i < memberCount; i++) permissions.put(new JSONObject().put("type", "user").put("role", i == 0 ? "owner" : "writer"));
-                    return bytes(new JSONObject().put("permissions", permissions));
+                    for (int i = 0; i < memberCount; i++) permissions.put(new JSONObject()
+                        .put("roles", new JSONArray().put(i == 0 ? "owner" : "write"))
+                        .put("grantedToV2", new JSONObject().put("user", new JSONObject().put("id", "member" + i))));
+                    return bytes(new JSONObject().put("value", permissions));
                 }
-                if (address.contains("/files?q=")) {
+                if (address.contains("/children?")) {
                     JSONArray list = new JSONArray();
                     for (Map.Entry<String, JSONObject> file : files.entrySet())
                         list.put(new JSONObject().put("id", file.getKey()).put("name", "nest-op-" + file.getValue().getString("opId") + ".json")
-                            .put("size", file.getValue().toString().getBytes(StandardCharsets.UTF_8).length));
-                    return bytes(new JSONObject().put("files", list));
+                            .put("size", file.getValue().toString().getBytes(StandardCharsets.UTF_8).length)
+                            .put("parentReference", new JSONObject().put("driveId", "drive123")));
+                    return bytes(new JSONObject().put("value", list));
                 }
-                return bytes(new JSONObject().put("mimeType", "application/vnd.google-apps.folder").put("trashed", false)
-                    .put("appProperties", new JSONObject().put("littleNestSchema", "1"))
-                    .put("capabilities", new JSONObject().put("canAddChildren", true)));
+                return bytes(new JSONObject().put("folder", new JSONObject()));
             } catch (org.json.JSONException e) { throw new IOException(e); }
         }
         private byte[] bytes(JSONObject json) { return json.toString().getBytes(StandardCharsets.UTF_8); }
@@ -75,7 +76,7 @@ public class SyncTest {
     @Test public void twoOfflinePhonesExchangeEditsPhotosTimersAndDeletions() throws Exception {
         Store one = db(), two = db();
         try {
-            FakeDrive remote = new FakeDrive(); DriveApi api = new DriveApi("test-only", remote);
+            FakeDrive remote = new FakeDrive(); OneDriveApi api = new OneDriveApi("test-only", FAMILY, remote);
             String child = one.save(null, profile("Shared baby"), false);
             SyncEngine.transfer(api, one, FOLDER); SyncEngine.transfer(api, two, FOLDER);
             assertEquals(1, two.records("profile").size());
@@ -100,7 +101,7 @@ public class SyncTest {
     @Test public void lostUploadResponseRetriesWithoutDuplicateLogicalRecords() throws Exception {
         Store one = db(), two = db();
         try {
-            FakeDrive remote = new FakeDrive(); DriveApi api = new DriveApi("test-only", remote);
+            FakeDrive remote = new FakeDrive(); OneDriveApi api = new OneDriveApi("test-only", FAMILY, remote);
             one.save(null, profile("Retry baby"), false);
             remote.loseUploadReply = true;
             assertThrows(IOException.class, () -> SyncEngine.transfer(api, one, FOLDER));
@@ -113,12 +114,12 @@ public class SyncTest {
     @Test public void failedSyncKeepsPendingChangesAndThirdAccountBlocksWrites() throws Exception {
         Store one = db();
         try {
-            FakeDrive remote = new FakeDrive(); DriveApi api = new DriveApi("test-only", remote);
+            FakeDrive remote = new FakeDrive(); OneDriveApi api = new OneDriveApi("test-only", FAMILY, remote);
             one.save(null, profile("Offline baby"), false); remote.rejectWrites = true;
             assertThrows(IOException.class, () -> SyncEngine.transfer(api, one, FOLDER));
             assertEquals(1, one.records("profile").size()); assertEquals(0, remote.files.size());
             remote.rejectWrites = false; remote.memberCount = 3;
-            assertThrows(IllegalArgumentException.class, () -> SyncEngine.transfer(api, one, FOLDER));
+            assertThrows(IOException.class, () -> SyncEngine.transfer(api, one, FOLDER));
             assertEquals(0, remote.files.size());
             remote.memberCount = 2; SyncEngine.transfer(api, one, FOLDER); assertEquals(1, remote.files.size());
         } finally { remove(one); }
@@ -126,7 +127,7 @@ public class SyncTest {
     @Test public void cancelledTransferDoesNotUploadOrDiscardPendingData() throws Exception {
         Store one = db();
         try {
-            FakeDrive remote = new FakeDrive(); DriveApi api = new DriveApi("test-only", remote);
+            FakeDrive remote = new FakeDrive(); OneDriveApi api = new OneDriveApi("test-only", FAMILY, remote);
             one.save(null, profile("Cancelled baby"), false);
             Thread.currentThread().interrupt();
             try { assertThrows(java.io.InterruptedIOException.class, () -> SyncEngine.transfer(api, one, FOLDER)); }

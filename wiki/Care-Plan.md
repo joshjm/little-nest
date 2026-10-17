@@ -166,7 +166,7 @@ rechecks the current logs before notifying. Today refreshes while open.
 
 **Settings and snooze/dismiss state are per baby, per phone.** They are not synced
 to your partner or included in JSON backups. The history is shared through
-Drive, so each phone independently learns from its current synced copy. Configure
+local or OneDrive sync, so each phone independently learns from its current synced copy. Configure
 alerts on each phone where you want them; both may notify. Parent profiles do not
 get baby feed/nap suggestions.
 

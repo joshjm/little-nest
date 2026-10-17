@@ -6,15 +6,9 @@ import android.app.job.JobScheduler;
 import android.app.job.JobService;
 import android.content.ComponentName;
 import android.content.Context;
-import com.google.android.gms.auth.api.identity.AuthorizationRequest;
-import com.google.android.gms.auth.api.identity.Identity;
-import com.google.android.gms.common.api.Scope;
-import com.google.android.gms.tasks.Tasks;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 public final class SyncJob extends JobService {
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -37,11 +31,8 @@ public final class SyncJob extends JobService {
         run.future = executor.submit(() -> {
             boolean retry = false;
             try {
-                if (!getSharedPreferences("settings", MODE_PRIVATE).getString("folder", "").isEmpty()) {
-                    var request = AuthorizationRequest.builder().setRequestedScopes(List.of(new Scope(DriveApi.SCOPE))).build();
-                    var result = Tasks.await(Identity.getAuthorizationClient(this).authorize(request), 60, TimeUnit.SECONDS);
-                    if (result.hasResolution()) throw new IllegalStateException("Open Family and reconnect Google Drive to resume sync.");
-                    SyncEngine.sync(this, result.getAccessToken());
+                if (!getSharedPreferences("settings", MODE_PRIVATE).getString("oneDriveFolder", "").isEmpty()) {
+                    SyncEngine.sync(this);
                 }
             } catch (Exception e) {
                 getSharedPreferences("settings", MODE_PRIVATE).edit().putString("syncError",

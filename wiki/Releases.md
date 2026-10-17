@@ -8,8 +8,9 @@ the browser/file manager you use to open it. No Play Store subscription or
 developer account is needed by the recipient.
 
 The APK contains the application, not the developer's personal records. Offline
-tracking works immediately; optional Drive sync needs the separate
-[Google setup](Google-Drive-Setup.md).
+tracking works immediately. The 1.6 source adds account-free local sync and
+optional OneDrive sharing; see [sync setup](Sync-Setup.md). Older published
+releases still use the historical Google integration.
 
 ## Obtainium
 

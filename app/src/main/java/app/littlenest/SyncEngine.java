@@ -10,15 +10,15 @@ public final class SyncEngine {
     private static final AtomicBoolean ACTIVE = new AtomicBoolean();
     public static boolean active() { return ACTIVE.get(); }
 
-    public static String sync(Context context, String token) throws Exception {
+    public static String sync(Context context) throws Exception {
         if (!ACTIVE.compareAndSet(false, true)) return "Sync already in progress";
         SharedPreferences prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE);
         try {
-            String folder = prefs.getString("folder", "");
+            String folder = prefs.getString("oneDriveFolder", "");
             if (folder.isEmpty()) throw new IllegalStateException("Connect a family folder first");
-            DriveApi drive = new DriveApi(token);
+            OneDriveApi drive = new OneDriveApi(OneDriveAuth.token(context), SyncFamily.ensure(context));
             Store store = Store.get(context);
-            String result = transfer(drive, store, folder);
+            String result = transfer(drive, store, "onedrive:" + folder, folder);
             Reminders.scheduleAll(context);
             prefs.edit().putLong("lastSync", System.currentTimeMillis()).putString("syncError", "").apply();
             return result;
@@ -28,31 +28,34 @@ public final class SyncEngine {
         } finally { ACTIVE.set(false); }
     }
 
-    static String transfer(DriveApi drive, Store store, String folder) throws Exception {
+    static String transfer(SyncTransport drive, Store store, String folder) throws Exception {
+        return transfer(drive, store, "onedrive:" + folder, folder);
+    }
+    private static String transfer(SyncTransport drive, Store store, String checkpoint, String folder) throws Exception {
         drive.validateFolder(folder);
-        int downloaded = pull(drive, store, folder), uploaded = 0;
+        int downloaded = pull(drive, store, checkpoint, folder), uploaded = 0;
         for (JSONObject operation : store.operations()) {
             String opId = operation.optString("opId");
-            if (!store.marked("uploaded", folder, opId)) {
+            if (!store.marked("uploaded", checkpoint, opId)) {
                 String file = drive.upload(folder, operation);
-                store.mark("uploaded", folder, opId);
-                store.mark("downloaded", folder, file);
+                store.mark("uploaded", checkpoint, opId);
+                store.mark("downloaded", checkpoint, file);
                 uploaded++;
             }
         }
-        downloaded += pull(drive, store, folder);
+        downloaded += pull(drive, store, checkpoint, folder);
         return "Synced: " + uploaded + " sent, " + downloaded + " received";
     }
 
-    private static int pull(DriveApi drive, Store store, String folder) throws Exception {
+    private static int pull(SyncTransport drive, Store store, String checkpoint, String folder) throws Exception {
         int count = 0;
         for (JSONObject file : drive.list(folder)) {
             String fileId = file.optString("id");
-            if (store.marked("downloaded", folder, fileId)) continue;
+            if (store.marked("downloaded", checkpoint, fileId)) continue;
             JSONObject operation = drive.download(file);
             store.merge(List.of(operation));
-            store.mark("uploaded", folder, operation.optString("opId"));
-            store.mark("downloaded", folder, fileId);
+            store.mark("uploaded", checkpoint, operation.optString("opId"));
+            store.mark("downloaded", checkpoint, fileId);
             count++;
         }
         return count;

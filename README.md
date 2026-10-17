@@ -8,6 +8,7 @@ private shared nest.
 
 Android screenshots of the **1.4 design**, using synthetic demo data only.
 Version 1.5 retains this design and adds the planning comparisons described below.
+The Family screenshot predates the 1.6 sync changes described below.
 Select a screenshot to view it full-size.
 
 | Today & activity tiles | Activity history | Sleep trends |
@@ -28,15 +29,18 @@ Send the same file to both phones and open it to install. Requires Android 9+
 Stable releases contain one universal APK. See
 [installation, updates and release maintenance](wiki/Releases.md).
 
-**Tracking works immediately without an account. Drive sync requires a one-time
-Google Cloud/OAuth setup for your two Google accounts.** No credentials or
-Google project have been supplied, so live Google consent and account-to-account
-sync cannot be preconfigured or claimed as verified.
+**Tracking and local Wi-Fi sync need no account.** In the 1.6 source build,
+pair once using a private QR code and keep both apps open on the same Wi-Fi or
+hotspot for automatic encrypted transfers. Optional OneDrive sync works while
+apart and when the phones connect at different times. Its Microsoft app
+registration is maintained once by the app publisher, not by each family.
+Builds without that registration explicitly disable Microsoft sign-in.
+Google Drive integration and the Google Play services dependency are removed.
 
 Start with the **[small wiki](wiki/Home.md)**:
 
 - [Install and everyday use](wiki/Getting-Started.md)
-- [Google Drive setup and partner pairing](wiki/Google-Drive-Setup.md)
+- [Local pairing, OneDrive and maintainer setup](wiki/Sync-Setup.md)
 - [Import activity CSV data](wiki/Importing-CSV.md)
 - [Feed/nap windows and advance alerts](wiki/Care-Plan.md)
 - [Feature research and coverage](wiki/Feature-Coverage.md)
@@ -58,11 +62,32 @@ Start with the **[small wiki](wiki/Home.md)**:
 - Multiple baby/parent profiles, child comparison and caregiver attribution.
 - Editable history, search, local reminders, CSV export and JSON backup/restore.
 - Activity CSV import with preview, duplicate prevention and ongoing sleep recovery.
-- Two-Google-account Drive folder sharing; offline operations merge without
+- Two-caregiver local Wi-Fi pairing and optional personal-account OneDrive
+  sharing, usable together for the same nest. Offline operations merge without
   replacing the other phone's complete dataset.
 
 No ads, analytics, app backend, remote notifications, public feeds or subscriptions.
 Parent logs are shared with your partner too.
+
+## Version 1.6: local and OneDrive sync
+
+Local pairing uses mutual TLS, pinned device certificates and a private,
+five-minute QR invitation (with copy/paste fallback). Paired phones reconnect
+through local discovery and check every 15 seconds while the app is open.
+Family shows pending local changes, last successful transfer and explicit errors.
+There is no always-on local background service.
+
+OneDrive uses browser-based Microsoft sign-in with PKCE and device-keystore
+protected credentials. The maintainer supplies the public application client ID
+at build time; no client secret is used. OneDrive files are not end-to-end
+encrypted by Little Nest. Personal Microsoft accounts are supported, not
+work/school accounts. Cloud background jobs remain best-effort, not instant push.
+
+Existing Google users keep all local data but must pair locally or connect a
+new OneDrive nest. Old Google files and sharing permissions are not deleted.
+Sync both old installations and export a backup before updating. See
+[setup and two-phone acceptance](wiki/Sync-Setup.md); live Microsoft sign-in,
+invitations and real-account transfer require a registered build and two accounts.
 
 ## Version 1.4: Little Nest's own look
 

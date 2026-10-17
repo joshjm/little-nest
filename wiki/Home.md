@@ -1,11 +1,11 @@
 # Little Nest wiki
 
 A private baby and parent tracker you can install on both partners' Android
-phones. Everything works offline except Google Drive authorization, invitations
-and synchronization.
+phones. Tracking and local Wi-Fi sync work without accounts or internet.
+Optional OneDrive sharing keeps phones up to date while apart.
 
 1. **[Getting started](Getting-Started.md)** — APK installation and daily use.
-2. **[Drive setup](Google-Drive-Setup.md)** — Google project, two accounts, pairing.
+2. **[Sync setup](Sync-Setup.md)** — local QR pairing, OneDrive and publisher setup.
 3. **[Feature coverage](Feature-Coverage.md)** — research, included features,
    deliberate differences and limitations.
 4. **[Development](Development.md)** — tools, builds, signing, tests and REA.
@@ -19,15 +19,17 @@ and synchronization.
 ## Important before you start
 
 - Install the **same signed APK** on both phones.
-- Use **one family folder**, created by one partner; do not create a folder on
-  each phone.
-- The owner invites the second Google account as an editor.
+- Pair locally once. For cloud sharing, use **one OneDrive nest**, created by
+  one partner; do not create separate nests on each phone.
+- The owner invites the second personal Microsoft account as an editor.
 - Both people can see **all profiles, photos, pregnancy and postpartum logs**.
-- Sync is eventual, not a live messaging service. Check **Family → Sync now**
-  on both phones before a caregiver handoff.
+- Sync is eventual, not a live messaging service. Open both apps and check
+  **Family** before a caregiver handoff. Local sync requires both apps open on
+  the same reachable Wi-Fi/hotspot.
 - Keep complete JSON backups somewhere safe. Little Nest's own CSV is a readable
   report, not a restorable backup; supported activity CSVs have a separate importer.
 - An entry deleted in the app is hidden on both phones after syncing, but its
-  historical revisions remain in the immutable Drive log and JSON backups.
-- A lost phone can retain offline data. Remove its Google access and use the
+  historical revisions remain in the immutable operation log and JSON backups.
+- A lost phone can retain offline data. Disconnect local pairing, remove its
+  OneDrive access and use the
   device's remote-lock/erase facilities if available.

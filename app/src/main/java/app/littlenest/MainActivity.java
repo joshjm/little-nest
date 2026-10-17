@@ -32,12 +32,12 @@ import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
-import com.google.android.gms.auth.api.identity.AuthorizationRequest;
-import com.google.android.gms.auth.api.identity.AuthorizationResult;
-import com.google.android.gms.auth.api.identity.ClearTokenRequest;
-import com.google.android.gms.auth.api.identity.Identity;
-import com.google.android.gms.common.api.ApiException;
-import com.google.android.gms.common.api.Scope;
+import net.openid.appauth.AuthorizationService;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.MultiFormatWriter;
+import com.journeyapps.barcodescanner.BarcodeEncoder;
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
@@ -68,8 +68,9 @@ public final class MainActivity extends Activity {
     private LocalDate historyDay;
     private int historyPage;
     private boolean importing;
-    private String token;
-    private long tokenAt;
+    private AuthorizationService authorization;
+    private LocalSync localSync;
+    private String pendingPairing;
     private boolean authorizing, working;
     private Runnable afterAuthorization;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -87,9 +88,15 @@ public final class MainActivity extends Activity {
     };
     private final Runnable autoSync = new Runnable() {
         @Override public void run() {
-            if (!prefs.getString("folder", "").isEmpty() && !working && !authorizing && !importing && editor == null)
+            if (!prefs.getString("oneDriveFolder", "").isEmpty() && !working && !authorizing && !importing && editor == null)
                 authorize(false, () -> sync(false));
             handler.postDelayed(this, 60_000);
+        }
+    };
+    private final Runnable localTick = new Runnable() {
+        @Override public void run() {
+            if (localSync != null && !importing && editor == null) localSync.sync();
+            handler.postDelayed(this, 15_000);
         }
     };
     private final Runnable careTick = new Runnable() {
@@ -102,6 +109,11 @@ public final class MainActivity extends Activity {
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         store = Store.get(this); prefs = getSharedPreferences("settings", MODE_PRIVATE);
+        authorization = new AuthorizationService(this);
+        if (prefs.contains("folder")) {
+            getSystemService(JobScheduler.class).cancel(7);
+            prefs.edit().remove("folder").remove("lastSync").remove("syncError").putBoolean("googleSyncRemoved", true).apply();
+        }
         profileId = prefs.getString("profile", "");
         if (savedInstanceState != null) {
             tab = savedInstanceState.getString("tab", "Today");
@@ -126,18 +138,26 @@ public final class MainActivity extends Activity {
     }
     @Override protected void onResume() {
         super.onResume(); handler.post(ticker); handler.postDelayed(autoSync, 1500);
+        localSync = new LocalSync(this, () -> runOnUiThread(() -> {
+            if (!isDestroyed() && localSync != null && editor == null && !importing && !working) render();
+        }));
+        localSync.start(); handler.postDelayed(localTick, 1500);
+        if (pendingPairing != null) { localSync.join(pendingPairing); pendingPairing = null; }
         CareReminders.refresh(this);
         handler.postDelayed(careTick, 60_000);
     }
     @Override protected void onPause() {
-        handler.removeCallbacks(ticker); handler.removeCallbacks(autoSync); handler.removeCallbacks(careTick); super.onPause();
+        handler.removeCallbacks(ticker); handler.removeCallbacks(autoSync); handler.removeCallbacks(careTick); handler.removeCallbacks(localTick);
+        if (localSync != null) { localSync.close(); localSync = null; }
+        super.onPause();
     }
-    @Override protected void onDestroy() { executor.shutdown(); super.onDestroy(); }
+    @Override protected void onDestroy() { executor.shutdown(); authorization.dispose(); super.onDestroy(); }
 
     void changed() {
         render();
         CareReminders.refresh(this);
-        if (!prefs.getString("folder", "").isEmpty()) {
+        if (localSync != null) { handler.removeCallbacks(localTick); handler.postDelayed(localTick, 1500); }
+        if (!prefs.getString("oneDriveFolder", "").isEmpty()) {
             handler.removeCallbacks(autoSync); handler.postDelayed(autoSync, 1500);
         }
     }
@@ -184,7 +204,8 @@ public final class MainActivity extends Activity {
         LinearLayout.LayoutParams markParams = new LinearLayout.LayoutParams(Ui.dp(this, 26), Ui.dp(this, 30));
         markParams.setMarginEnd(Ui.dp(this, 10)); masthead.addView(mark, markParams);
         masthead.addView(Ui.title(this, "Little Nest", 16), new LinearLayout.LayoutParams(0, -2, 1));
-        TextView offline = Ui.text(this, prefs.getString("folder", "").isEmpty() ? "ON THIS PHONE" : "SHARED NEST", 10, Ui.GREEN);
+        TextView offline = Ui.text(this, prefs.getString("oneDriveFolder", "").isEmpty() && prefs.getString("localPeer", "").isEmpty()
+            ? "ON THIS PHONE" : "SHARING ENABLED", 10, Ui.GREEN);
         masthead.addView(offline); header.addView(masthead);
         LinearLayout branding = Ui.row(this);
         JSONObject profile = profile();
@@ -254,7 +275,7 @@ public final class MainActivity extends Activity {
         card.addView(Ui.button(this, "Create a profile", () -> profileEditor(null)));
         card.addView(Ui.button(this, "Join partner's nest", () -> { tab = "Family"; render(); }));
         body.addView(card);
-        body.addView(Ui.text(this, "No ads. No tracking servers. Your data stays here unless you connect Google Drive.", 13, Ui.MUTED));
+        body.addView(Ui.text(this, "No ads. No tracking servers. Your data stays here unless you enable local or OneDrive sync.", 13, Ui.MUTED));
     }
 
     private void today() {
@@ -275,7 +296,8 @@ public final class MainActivity extends Activity {
         }
         body.addView(summary);
         CarePlanUi.addToday(this, body, profile, events);
-        if (!prefs.getString("folder", "").isEmpty() && !prefs.getString("syncError", "").isEmpty())
+        if ((!prefs.getString("oneDriveFolder", "").isEmpty() && !prefs.getString("syncError", "").isEmpty())
+            || (!prefs.getString("localPeer", "").isEmpty() && !prefs.getString("localError", "").isEmpty()))
             body.addView(Ui.button(this, "Sync needs attention - open Family", () -> { tab = "Family"; render(); }));
         for (JSONObject event : events) if (event.optBoolean("running") || event.optBoolean("timerPaused")) timerCard(event);
         Set<String> hidden = prefs.getStringSet("hidden", Set.of());
@@ -482,7 +504,7 @@ public final class MainActivity extends Activity {
                     else openEditor(kind, event);
                 })
                 .setNeutralButton("Delete", (d, w) -> new AlertDialog.Builder(this).setTitle("Delete this moment?")
-                    .setMessage("Deletion will sync to your partner. Historical revisions remain in backups and Drive.")
+                    .setMessage("Deletion will sync to your partner. Historical revisions remain in backups and the sync log.")
                     .setPositiveButton("Delete", (confirm, which) -> {
                         store.save(event.optString("id"), event, true); Reminders.cancel(this, event.optString("id")); changed();
                     }).setNegativeButton("Cancel", null).show())
@@ -615,7 +637,7 @@ public final class MainActivity extends Activity {
 
     private void family() {
         body.addView(Ui.title(this, "Your people. Your data.", 24));
-        body.addView(Ui.text(this, "Two caregivers, separate Google accounts, one private nest. No app backend.", 15, Ui.MUTED));
+        body.addView(Ui.text(this, "Two caregivers, one private nest. Pair over Wi-Fi without an account, or use optional OneDrive sharing. No app backend.", 15, Ui.MUTED));
         LinearLayout people = Ui.card(this, Ui.SAGE);
         people.addView(Ui.title(this, "Profiles & preferences", 20));
         people.addView(Ui.button(this, "Add baby or parent", () -> profileEditor(null)));
@@ -631,7 +653,7 @@ public final class MainActivity extends Activity {
         if (profile() != null) people.addView(Ui.button(this, "Delete current profile", () -> {
             JSONObject selected = profile();
             new AlertDialog.Builder(this).setTitle("Delete " + selected.optString("name") + "?")
-                .setMessage("This removes the profile and its logs from both phones after sync. Historical revisions remain in backups and Drive. Export a backup first.")
+                .setMessage("This removes the profile and its logs from both phones after sync. Historical revisions remain in backups and the sync log. Export a backup first.")
                 .setPositiveButton("Delete profile", (d, w) -> {
                     for (JSONObject event : store.events(selected.optString("id"))) {
                         store.save(event.optString("id"), event, true); Reminders.cancel(this, event.optString("id"));
@@ -648,41 +670,46 @@ public final class MainActivity extends Activity {
         }));
         people.addView(Ui.button(this, "Choose visible activities", this::chooseActivities));
         body.addView(people);
+        localSyncCard();
         LinearLayout drive = Ui.card(this, Ui.BLUE);
-        drive.addView(Ui.title(this, "Google Drive sync", 20));
-        String folder = prefs.getString("folder", "");
-        if (folder.isEmpty()) drive.addView(Ui.text(this, "Not connected. All your logs are safely stored on this phone. Google OAuth setup is required; see the project wiki.", 14, Ui.MUTED));
+        drive.addView(Ui.title(this, "OneDrive sync", 20));
+        if (prefs.getBoolean("googleSyncRemoved", false))
+            drive.addView(Ui.text(this, "Google sync was removed. Your local records are unchanged. Export a backup, then connect OneDrive or pair locally. Your old Google folder and permissions have not been changed.", 14, Ui.INK));
+        String folder = prefs.getString("oneDriveFolder", "");
+        if (folder.isEmpty()) drive.addView(Ui.text(this, OneDriveAuth.configured()
+            ? "Optional: sync while apart, even when the phones are online at different times. Sign in with your own personal Microsoft accounts."
+            : "OneDrive is not configured in this build. The maintainer must register Little Nest with Microsoft once; see wiki/Sync-Setup.md. Local sync needs no account.", 14, Ui.MUTED));
         else {
             drive.addView(Ui.text(this, "Folder: " + folder, 12, Ui.MUTED));
             long last = prefs.getLong("lastSync", 0);
             drive.addView(Ui.text(this, last > 0 ? "Last sync: " + EventEditor.format(last) : "Waiting for first sync", 13, Ui.MUTED));
         }
         if (!prefs.getString("syncError", "").isEmpty()) drive.addView(Ui.text(this, "Needs attention: " + prefs.getString("syncError", ""), 14, Ui.INK));
-        if (working) drive.addView(Ui.text(this, "Working with Drive...", 14, Ui.GREEN));
-        drive.addView(Ui.button(this, "Connect / reconnect Google", () -> authorize(true, () -> {
-            Toast.makeText(this, "Google Drive authorized", Toast.LENGTH_SHORT).show();
-            if (!prefs.getString("folder", "").isEmpty()) sync(); else render();
+        if (working || authorizing) drive.addView(Ui.text(this, "Working with OneDrive...", 14, Ui.GREEN));
+        drive.addView(Ui.button(this, "Connect / reconnect OneDrive", () -> signIn(() -> {
+            Toast.makeText(this, "OneDrive connected", Toast.LENGTH_SHORT).show();
+            if (!prefs.getString("oneDriveFolder", "").isEmpty()) sync(); else render();
         })));
         if (folder.isEmpty()) {
             drive.addView(Ui.button(this, "1. Create a shared nest", () -> authorize(true, this::createNest)));
             drive.addView(Ui.button(this, "Or join partner's nest", this::joinNest));
+            if (OneDriveAuth.connected(this))
+                drive.addView(Ui.button(this, "Sign out of OneDrive on this phone", this::disconnectOneDrive));
         } else {
-            drive.addView(Ui.button(this, "2. Invite partner by Google email", () -> prompt("Invite your partner", "Their Google account email. Only two accounts are permitted.", "", email ->
-                authorize(true, () -> runDrive(() -> { new DriveApi(token).invite(folder, email.trim()); return "Partner invited. Send them the folder ID."; }, this::render)))));
-            drive.addView(Ui.button(this, "Copy pairing folder ID", () -> {
+            drive.addView(Ui.button(this, "2. Invite partner by Microsoft email", () -> prompt("Invite your partner", "Their personal Microsoft account email. Only two accounts are permitted.", "", email ->
+                authorize(true, () -> runDrive(() -> { oneDrive().invite(folder, email.trim()); return "Partner invited. Ask them to accept the email invitation, then send the nest code."; }, this::render)))));
+            drive.addView(Ui.button(this, "Copy OneDrive nest code", () -> {
                 getSystemService(ClipboardManager.class).setPrimaryClip(ClipData.newPlainText("Little Nest folder", folder));
-                Toast.makeText(this, "Folder ID copied. Your partner also needs an email invitation.", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Nest code copied. Your partner must also accept the email invitation.", Toast.LENGTH_LONG).show();
             }));
             drive.addView(Ui.button(this, "Sync now", () -> authorize(true, this::sync)));
-            drive.addView(Ui.button(this, "Disconnect this phone", () -> new AlertDialog.Builder(this).setTitle("Disconnect Drive?")
-                .setMessage("Local logs stay here. This does not remove anyone's folder access. Remove the partner in Google Drive if needed. Do not connect a different family without exporting and clearing app storage.")
+            drive.addView(Ui.button(this, "Disconnect OneDrive on this phone", () -> new AlertDialog.Builder(this).setTitle("Disconnect OneDrive?")
+                .setMessage("Local logs and local pairing stay here. This does not remove anyone's folder access. Remove access in OneDrive if needed. Do not connect another family without exporting and clearing app storage.")
                 .setPositiveButton("Disconnect", (d, w) -> {
-                    if (working || SyncEngine.active()) { error("Wait for the current Drive operation to finish."); return; }
-                    prefs.edit().remove("folder").remove("lastSync").remove("syncError").apply();
-                    getSystemService(JobScheduler.class).cancel(7); token = null; render();
+                    disconnectOneDrive();
                 }).setNegativeButton("Cancel", null).show()));
         }
-        drive.addView(Ui.text(this, "Sync checks private folder permissions (owner + one editor). Both people can read all profiles, parent logs and photos. Foreground checks every minute; background sync is best-effort, typically 15+ minutes. Manual sync is available.", 12, Ui.MUTED));
+        drive.addView(Ui.text(this, "Both caregivers can read all profiles, parent logs, photos and revisions. Files in OneDrive are not end-to-end encrypted by Little Nest. Foreground checks every minute; background sync is best-effort, typically 15+ minutes. Local and OneDrive sync can run together for the same nest.", 12, Ui.MUTED));
         body.addView(drive);
         LinearLayout data = Ui.card(this, Ui.PEACH);
         data.addView(Ui.title(this, "Keep a copy", 20));
@@ -760,62 +787,132 @@ public final class MainActivity extends Activity {
         }
     }
 
+    private void localSyncCard() {
+        LinearLayout card = Ui.card(this, Ui.SAGE);
+        card.addView(Ui.title(this, "Local Wi-Fi sync", 20));
+        boolean paired = !prefs.getString("localPeer", "").isEmpty();
+        card.addView(Ui.text(this, paired
+            ? "Partner paired. Open both apps on the same private Wi-Fi or hotspot to reconnect automatically."
+            : "No account or internet required. Connect both phones to the same private Wi-Fi or hotspot, then pair once. All profiles, parent logs, photos and historical revisions will be shared.", 14, Ui.MUTED));
+        if (paired) {
+            long last = prefs.getLong("localLastSync", 0);
+            card.addView(Ui.text(this, last == 0 ? "Waiting for first local sync" : "Last local sync: " + EventEditor.format(last), 13, Ui.MUTED));
+            card.addView(Ui.text(this, store.pending("local:" + prefs.getString("localPeer", "")) + " changes waiting for partner", 13, Ui.INK));
+            card.addView(Ui.button(this, "Sync locally now", () -> {
+                if (localSync == null) { error("Open the app to start local sync."); return; }
+                if (localSync.busy()) { error("Local sync is already running."); return; }
+                localSync.sync();
+            }));
+            card.addView(Ui.button(this, "Disconnect local partner", () -> new AlertDialog.Builder(this)
+                .setTitle("Disconnect local sync?").setMessage("Local records and OneDrive sharing are kept. Disconnect on both phones before pairing again. A previously paired phone retains its copy of your data.")
+                .setPositiveButton("Disconnect", (dialog, which) -> {
+                    try { if (localSync != null) localSync.disconnect(); render(); }
+                    catch (Exception e) { error("Cannot disconnect local sync: " + e.getMessage()); }
+                }).setNegativeButton("Cancel", null).show()));
+        } else {
+            card.addView(Ui.button(this, "1. Show local pairing QR", () -> {
+                LocalSync local = localSync;
+                if (local == null) { error("Local sync is not running. Reopen the app."); return; }
+                local.invitation(code -> runOnUiThread(() -> {
+                    if (isDestroyed() || local != localSync) return;
+                    try {
+                        LinearLayout content = Ui.column(this);
+                        content.addView(Ui.text(this, "Ask your partner to scan this code. It expires in five minutes. Anyone with this code can pair during that time; do not publish it.", 14, Ui.INK));
+                        ImageView qr = new ImageView(this);
+                        qr.setImageBitmap(new BarcodeEncoder().createBitmap(new MultiFormatWriter().encode(code, BarcodeFormat.QR_CODE, 700, 700)));
+                        qr.setContentDescription("Private local pairing QR code"); qr.setAdjustViewBounds(true);
+                        content.addView(qr, new LinearLayout.LayoutParams(-1, Ui.dp(this, 280)));
+                        new AlertDialog.Builder(this).setTitle("Pair your local partner").setView(content)
+                            .setNeutralButton("Copy code", (dialog, which) -> {
+                                // Copying does not end the invitation; the same five-minute deadline applies.
+                                getSystemService(ClipboardManager.class).setPrimaryClip(ClipData.newPlainText("Private Little Nest pairing", code));
+                            }).setPositiveButton("Close", (dialog, which) -> local.cancelInvitation())
+                            .setOnCancelListener(dialog -> local.cancelInvitation()).show();
+                    } catch (com.google.zxing.WriterException e) {
+                        local.cancelInvitation(); error("Cannot create pairing QR: " + e.getMessage());
+                    }
+                }));
+            }));
+            card.addView(Ui.button(this, "2. Scan partner's local QR", () -> new IntentIntegrator(this)
+                .setDesiredBarcodeFormats(IntentIntegrator.QR_CODE).setPrompt("Scan your partner's Little Nest pairing code")
+                .setBeepEnabled(false).setOrientationLocked(false).initiateScan()));
+            card.addView(Ui.button(this, "Or paste a local pairing code", () ->
+                prompt("Local pairing code", "Paste the private code copied by your partner. Do not use a OneDrive nest code here.", "", this::confirmLocalJoin)));
+        }
+        if (!prefs.getString("localError", "").isEmpty())
+            card.addView(Ui.text(this, "Local sync: " + prefs.getString("localError", ""), 13, Ui.INK));
+        card.addView(Ui.text(this, "Encrypted, authenticated phone-to-phone transfer. Checks every 15 seconds while both apps are open. No always-on background listener; changes wait safely when a phone is asleep or away. Guest Wi-Fi may block local connections.", 12, Ui.MUTED));
+        body.addView(card);
+    }
+
+    private void confirmLocalJoin(String code) {
+        try { LocalSync.parseInvitation(code); }
+        catch (Exception e) { error("Cannot use pairing code: " + e.getMessage()); return; }
+        new AlertDialog.Builder(this).setTitle("Share with this partner?")
+            .setMessage("Only continue if you got this code directly from your partner. All existing profiles, parent logs, photos and historical revisions on both phones will merge and be shared. Export a backup first.")
+            .setPositiveButton("Pair and share", (dialog, which) -> {
+                if (localSync == null) pendingPairing = code; else localSync.join(code);
+            }).setNegativeButton("Cancel", null).show();
+    }
+
     private void authorize(boolean interactive, Runnable after) {
         if (authorizing || working || SyncEngine.active()) {
             if (interactive) Toast.makeText(this, "Please wait for the current sync", Toast.LENGTH_SHORT).show();
             return;
         }
-        if (token != null && System.currentTimeMillis() - tokenAt < 45 * 60_000L) { after.run(); return; }
-        authorizing = true; afterAuthorization = after;
-        var request = AuthorizationRequest.builder().setRequestedScopes(List.of(new Scope(DriveApi.SCOPE))).build();
-        Identity.getAuthorizationClient(this).authorize(request).addOnSuccessListener(this, result -> {
-            if (result.hasResolution()) {
-                if (!interactive) {
-                    authorizing = false; prefs.edit().putString("syncError", "Reconnect Google Drive in Family to resume sync.").apply(); return;
-                }
-                try {
-                    if (result.getPendingIntent() == null) throw new IllegalStateException("Google did not provide a consent screen");
-                    startIntentSenderForResult(result.getPendingIntent().getIntentSender(), AUTH, null, 0, 0, 0);
-                } catch (android.content.IntentSender.SendIntentException | IllegalStateException e) { authorizing = false; error("Cannot open Google consent: " + e.getMessage()); }
-            } else authorized(result);
-        }).addOnFailureListener(this, e -> {
-            authorizing = false;
-            prefs.edit().putString("syncError", "Google authorization failed. Check Play services and OAuth setup (" + e.getClass().getSimpleName() + ").").apply();
-            if (interactive) error("Google authorization failed: " + e.getMessage() + "\nSee wiki/Google-Drive-Setup.md for OAuth setup.");
-        });
+        if (OneDriveAuth.connected(this)) { after.run(); return; }
+        if (!interactive) { after.run(); return; }
+        signIn(after);
     }
-    private void authorized(AuthorizationResult result) {
-        authorizing = false;
-        token = result.getAccessToken(); tokenAt = System.currentTimeMillis();
-        if (token == null || token.isBlank()) { error("Google returned no access token. Grant Drive access and retry."); return; }
-        Runnable after = afterAuthorization; afterAuthorization = null; if (after != null) after.run();
+    private void signIn(Runnable after) {
+        if (authorizing || working || SyncEngine.active()) { error("Wait for the current OneDrive operation."); return; }
+        authorizing = true; afterAuthorization = after;
+        try { startActivityForResult(OneDriveAuth.signIn(authorization), AUTH); }
+        catch (IllegalStateException | android.content.ActivityNotFoundException e) {
+            authorizing = false; afterAuthorization = null;
+            prefs.edit().putString("syncError", e.getMessage()).apply(); error(e.getMessage());
+        }
+    }
+    private void disconnectOneDrive() {
+        if (working || authorizing || SyncEngine.active()) { error("Wait for the current OneDrive operation to finish."); return; }
+        runDrive(() -> {
+            OneDriveAuth.disconnect(this);
+            prefs.edit().remove("oneDriveFolder").remove("lastSync").remove("syncError").apply();
+            getSystemService(JobScheduler.class).cancel(7); return "OneDrive disconnected on this phone";
+        }, null);
     }
     private void createNest() {
-        if (!prefs.getString("folder", "").isEmpty()) { error("Disconnect the existing folder first."); return; }
+        if (!prefs.getString("oneDriveFolder", "").isEmpty()) { error("Disconnect the existing OneDrive folder first."); return; }
         runDrive(() -> {
-            String folder = new DriveApi(token).createFolder();
-            prefs.edit().putString("folder", folder).apply();
+            String family = SyncFamily.ensure(this);
+            String folder = new OneDriveApi(OneDriveAuth.token(this), family).createFolder();
+            SyncFamily.accept(this, family);
+            prefs.edit().putString("oneDriveFolder", folder).remove("googleSyncRemoved").apply();
             SyncJob.schedule(this); return "Nest created. Invite your partner next.";
         }, this::sync);
     }
     private void joinNest() {
-        prompt("Join your partner", "Paste their Little Nest folder ID or Google Drive folder link. They must invite your Google email first. Your existing local logs will be shared with them.", "", value -> {
+        prompt("Join your partner", "Accept their OneDrive email invitation in your browser first, then paste their OneDrive nest code here. All existing local logs will be shared with them.", "", value -> {
             final String folder;
-            try { folder = DriveApi.folderId(value); }
+            try { folder = OneDriveApi.folderId(value.trim()); }
             catch (IllegalArgumentException e) { error(e.getMessage()); return; }
             authorize(true, () -> runDrive(() -> {
-                new DriveApi(token).validateFolder(folder);
-                prefs.edit().putString("folder", folder).apply(); SyncJob.schedule(this);
+                OneDriveApi api = new OneDriveApi(OneDriveAuth.token(this), prefs.getString("syncFamily", ""));
+                SyncFamily.accept(this, api.folderFamily(folder));
+                prefs.edit().putString("oneDriveFolder", folder).remove("googleSyncRemoved").apply(); SyncJob.schedule(this);
                 return "Nest connected";
             }, this::sync));
         });
+    }
+    private OneDriveApi oneDrive() throws Exception {
+        return new OneDriveApi(OneDriveAuth.token(this), SyncFamily.ensure(this));
     }
     private interface DriveWork { String run() throws Exception; }
     private void runDrive(DriveWork work, Runnable after) {
         runDrive(work, after, true);
     }
     private void runDrive(DriveWork work, Runnable after, boolean announce) {
-        if (working) { error("Wait for the current Drive operation."); return; }
+        if (working) { error("Wait for the current OneDrive operation."); return; }
         working = true; render();
         executor.execute(() -> {
             try {
@@ -828,23 +925,32 @@ public final class MainActivity extends Activity {
             } catch (Exception e) {
                 String message = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
                 prefs.edit().putString("syncError", message).apply();
-                if (token != null) Identity.getAuthorizationClient(this).clearToken(ClearTokenRequest.builder().setToken(token).build())
-                    .addOnFailureListener(failure -> android.util.Log.w("LittleNest", "Could not clear authorization cache: " + failure.getClass().getSimpleName()));
-                token = null;
                 runOnUiThread(() -> { working = false; if (!isDestroyed()) { render(); if (announce) error(message); } });
             }
         });
     }
     private void sync() { sync(true); }
-    private void sync(boolean announce) { runDrive(() -> SyncEngine.sync(this, token), null, announce); }
+    private void sync(boolean announce) { runDrive(() -> SyncEngine.sync(this), null, announce); }
 
     @Override protected void onActivityResult(int request, int result, Intent data) {
         super.onActivityResult(request, result, data);
+        IntentResult scan = IntentIntegrator.parseActivityResult(request, result, data);
+        if (scan != null) {
+            if (scan.getContents() != null) confirmLocalJoin(scan.getContents());
+            return;
+        }
         if (request == AUTH) {
             authorizing = false;
-            if (result != RESULT_OK || data == null) { error("Google consent was cancelled. Local tracking still works."); return; }
-            try { authorized(Identity.getAuthorizationClient(this).getAuthorizationResultFromIntent(data)); }
-            catch (ApiException e) { error("Google authorization failed (" + e.getStatusCode() + "). Check the Android OAuth package and signing SHA-1."); }
+            if (result != RESULT_OK || data == null) { afterAuthorization = null; error("Microsoft sign-in was cancelled. Local tracking still works."); return; }
+            authorizing = true;
+            OneDriveAuth.finish(this, authorization, data, () -> runOnUiThread(() -> {
+                authorizing = false;
+                Runnable after = afterAuthorization; afterAuthorization = null;
+                if (!isDestroyed()) { if (after != null) after.run(); else render(); }
+            }), message -> runOnUiThread(() -> {
+                authorizing = false; afterAuthorization = null;
+                prefs.edit().putString("syncError", message).apply(); if (!isDestroyed()) error(message);
+            }));
         } else if (result == RESULT_OK && data != null && data.getData() != null) {
             Uri uri = data.getData();
             if (request == PHOTO && editor != null) {
@@ -874,7 +980,7 @@ public final class MainActivity extends Activity {
                     .setPositiveButton("Merge", (d, w) -> executor.execute(() -> {
                         try (InputStream input = getContentResolver().openInputStream(uri)) {
                             if (input == null) throw new java.io.IOException("Cannot open backup");
-                            String json = new String(DriveApi.readBounded(input, 100_000_000), StandardCharsets.UTF_8);
+                            String json = new String(SyncFiles.readBounded(input, 100_000_000), StandardCharsets.UTF_8);
                             List<JSONObject> operations = Records.parseBackup(json);
                             store.merge(operations); Reminders.scheduleAll(this);
                             runOnUiThread(() -> { if (!isDestroyed()) { changed(); Toast.makeText(this, "Backup merged", Toast.LENGTH_LONG).show(); } });
@@ -892,7 +998,7 @@ public final class MainActivity extends Activity {
         executor.execute(() -> {
             try (InputStream input = getContentResolver().openInputStream(uri)) {
                 if (input == null) throw new java.io.IOException("Cannot open CSV");
-                byte[] bytes = DriveApi.readBounded(input, 25_000_000);
+                byte[] bytes = SyncFiles.readBounded(input, 25_000_000);
                 var decoder = StandardCharsets.UTF_8.newDecoder().onMalformedInput(java.nio.charset.CodingErrorAction.REPORT)
                     .onUnmappableCharacter(java.nio.charset.CodingErrorAction.REPORT);
                 NaraImport.Preview preview = NaraImport.parse(new java.io.InputStreamReader(new java.io.ByteArrayInputStream(bytes), decoder));
@@ -917,7 +1023,7 @@ public final class MainActivity extends Activity {
             content.addView(continueSleep);
             content.addView(Ui.text(this, "Use this if the baby is still sleeping. Elapsed time includes time since the original activity start, including time after export. For an old export, leave unchecked and correct the end time in History.", 13, Ui.MUTED));
         }
-        content.addView(Ui.text(this, "\nChoose where each profile belongs. Existing activities, edits and deletions are never overwritten on reimport. Blank profile metadata can be filled in; existing names and values stay unchanged.\n\nAll imported data will sync to your partner if Drive is linked. Import once on one phone, then sync. Large histories can take time to upload.", 13, Ui.MUTED));
+        content.addView(Ui.text(this, "\nChoose where each profile belongs. Existing activities, edits and deletions are never overwritten on reimport. Blank profile metadata can be filled in; existing names and values stay unchanged.\n\nAll imported data will sync to your partner if local or OneDrive sync is enabled. Import once on one phone, then sync. Large histories can take time to transfer.", 13, Ui.MUTED));
         List<JSONObject> existing = store.records("profile");
         java.util.Map<String, Spinner> choices = new java.util.LinkedHashMap<>();
         for (NaraImport.Profile profile : preview.profiles()) {

@@ -11,9 +11,14 @@ android {
         applicationId 'app.littlenest'
         minSdk 28
         targetSdk 35
-        versionCode 6
-        versionName '1.5.0'
+        versionCode 7
+        versionName '1.6.0'
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+        def oneDriveClient = providers.gradleProperty('oneDriveClientId').orElse(providers.environmentVariable('ONEDRIVE_CLIENT_ID')).getOrElse('')
+        if (oneDriveClient && !(oneDriveClient ==~ /[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/))
+            throw new GradleException('Invalid OneDrive application client ID')
+        buildConfigField 'String', 'ONEDRIVE_CLIENT_ID', "\"${oneDriveClient}\""
+        manifestPlaceholders = [appAuthRedirectScheme: 'app.littlenest']
     }
     signingConfigs {
         localRelease {
@@ -56,7 +61,8 @@ tasks.configureEach {
 
 dependencies {
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
-    implementation 'com.google.android.gms:play-services-auth:22.0.0'
+    implementation 'net.openid:appauth:0.11.1'
+    implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.json:json:20240303'
     androidTestImplementation 'androidx.test:runner:1.6.2'

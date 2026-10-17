@@ -230,6 +230,13 @@ public final class Store extends SQLiteOpenHelper {
         getWritableDatabase().insertWithOnConflict(table, null, values, SQLiteDatabase.CONFLICT_IGNORE);
     }
 
+    public synchronized int pending(String destination) {
+        try (Cursor cursor = getReadableDatabase().rawQuery(
+            "SELECT COUNT(*) FROM operations WHERE id NOT IN (SELECT op FROM uploaded WHERE folder=?)", new String[]{destination})) {
+            cursor.moveToFirst(); return cursor.getInt(0);
+        }
+    }
+
     public String backup() {
         JSONObject root = new JSONObject();
         Records.put(root, "schema", Records.SCHEMA);
