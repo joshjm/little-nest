@@ -43,6 +43,7 @@ Start with the **[small wiki](wiki/Home.md)**:
 - [Local pairing, OneDrive and maintainer setup](wiki/Sync-Setup.md)
 - [Import activity CSV data](wiki/Importing-CSV.md)
 - [Feed/nap windows and advance alerts](wiki/Care-Plan.md)
+- [WHO growth percentiles and interpretation](wiki/Growth-Charts.md)
 - [Feature research and coverage](wiki/Feature-Coverage.md)
 - [Build, verification and maintenance](wiki/Development.md)
 - [GitHub releases and Obtainium updates](wiki/Releases.md)
@@ -56,7 +57,8 @@ Start with the **[small wiki](wiki/Home.md)**:
   snooze/dismiss and upcoming appointments/reminders.
 - Two planning views: a moving-average daily schedule and history-adjusted
   timing after similar short/late naps or feeds.
-- Growth measurements/charts, medicines, vaccinations, temperature and visits.
+- Growth measurements with WHO weight, length/height and head-circumference
+  percentile charts; medicines, vaccinations, temperature and visits.
 - Milestones, routines, tummy time, baths, stories, journals and photos.
 - Pregnancy/postpartum mood, symptoms, vitals, meals, hydration and self-care.
 - Multiple baby/parent profiles, child comparison and caregiver attribution.
@@ -68,6 +70,15 @@ Start with the **[small wiki](wiki/Home.md)**:
 
 No ads, analytics, app backend, remote notifications, public feeds or subscriptions.
 Parent logs are shared with your partner too.
+
+## Version 1.7: WHO growth percentiles
+
+**Trends → Growing together** shows recorded measurements against WHO
+3rd/15th/50th/85th/97th percentile curves, plus a dashed guide following the
+first entry's percentile. All history is retained, with dated text values,
+approximate percentiles and optional adjusted-age viewing.
+These are comparison references, not forecasts or required growth paths.
+See [sources, measurement assumptions and limitations](wiki/Growth-Charts.md).
 
 ## Version 1.6: local and OneDrive sync
 

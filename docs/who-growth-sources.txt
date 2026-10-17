@@ -1,0 +1,17 @@
+WHO Child Growth Standards source workbook SHA-256 and URL.
+Regenerate with python3 scripts/update-growth-data.py.
+
+eac5c0eebccdacec6e8b4c09e58823f1bb065c1fe7dc647f82c5f7ec3391024e  https://cdn.who.int/media/docs/default-source/child-growth/child-growth-standards/indicators/weight-for-age/wfa_boys_0-to-13-weeks_zscores.xlsx
+f8f5a77b944ff7a8c1524e76f9d33f8a93cc423d23c2e7f2b10ba6b96a428e69  https://cdn.who.int/media/docs/default-source/child-growth/child-growth-standards/indicators/weight-for-age/wfa_boys_0-to-5-years_zscores.xlsx
+7f9a305010e56765bfdb9c7fac991aabb2e7c3b12fc35e0e0d4a8325f11d218f  https://cdn.who.int/media/docs/default-source/child-growth/child-growth-standards/indicators/length-height-for-age/lhfa_boys_0-to-13-weeks_zscores.xlsx
+ccfd8e455141c9a39dd728d99b7d7e080a925b06ea4a4d7592229665713dba54  https://cdn.who.int/media/docs/default-source/child-growth/child-growth-standards/indicators/length-height-for-age/lhfa_boys_0-to-2-years_zscores.xlsx
+a44ed06039e0a9dd6920e4a4d928395c541c9732662e49eacd489d2194ccc80d  https://cdn.who.int/media/docs/default-source/child-growth/child-growth-standards/indicators/length-height-for-age/lhfa_boys_2-to-5-years_zscores.xlsx
+70169d624d270a089ba81f2202f3517ec91947b6a1cd6c624121dc9cdaa6f264  https://cdn.who.int/media/docs/default-source/child-growth/child-growth-standards/indicators/head-circumference-for-age/hcfa-boys-0-13-zscores.xlsx
+296038a15de807ee74940627bd1ddc638e68b223b410b4ca3ccf1ff4a8b5770a  https://cdn.who.int/media/docs/default-source/child-growth/child-growth-standards/indicators/head-circumference-for-age/hcfa-boys-0-5-zscores.xlsx
+df731cbdfe797d4ebd9d626ae19c16eec639f04137ae52aec4c00347b78186ed  https://cdn.who.int/media/docs/default-source/child-growth/child-growth-standards/indicators/weight-for-age/wfa_girls_0-to-13-weeks_zscores.xlsx
+01e9a6fda2f3723dbc74d3c86bfbfcb9f6d474367d1d7b4a804501a2debd2ef1  https://cdn.who.int/media/docs/default-source/child-growth/child-growth-standards/indicators/weight-for-age/wfa_girls_0-to-5-years_zscores.xlsx
+b5553e66992073eba51163f9385c1ea8e12dd333154295783355fc207b61694b  https://cdn.who.int/media/docs/default-source/child-growth/child-growth-standards/indicators/length-height-for-age/lhfa_girls_0-to-13-weeks_zscores.xlsx
+6757f5eb96b51ab5cdb4828105929c78b1fb3d73b0fd8fa65682ad9f60f8c083  https://cdn.who.int/media/docs/default-source/child-growth/child-growth-standards/indicators/length-height-for-age/lhfa_girls_0-to-2-years_zscores.xlsx
+a976c56a6d36885cc32bf77c5539ca066e396ef2adad06011cd71d9eb0f0eb5c  https://cdn.who.int/media/docs/default-source/child-growth/child-growth-standards/indicators/length-height-for-age/lhfa_girls_2-to-5-years_zscores.xlsx
+4e21122bad207356494111f0f01f03b318b6af0ab1971d0c6af385d000c89959  https://cdn.who.int/media/docs/default-source/child-growth/child-growth-standards/indicators/head-circumference-for-age/hcfa-girls-0-13-zscores.xlsx
+134cd53ca39f0f55b0b3c2bc6c94278c83d9945842bc64088464f73effcd12e7  https://cdn.who.int/media/docs/default-source/child-growth/child-growth-standards/indicators/head-circumference-for-age/hcfa-girls-0-5-zscores.xlsx

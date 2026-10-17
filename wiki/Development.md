@@ -32,6 +32,9 @@ Source layout:
 | `app/src/main/java/app/littlenest/CareReminders.java` | Per-phone options, revalidated alarms, snooze/dismiss |
 | `app/src/main/java/app/littlenest/CarePlanUi.java` | Coming up, settings and upcoming explicit care |
 | `app/src/main/java/app/littlenest/Insights.java` | Unit normalization, daily boundaries and sleep intervals |
+| `app/src/main/java/app/littlenest/GrowthStandards.java` | WHO LMS interpolation, age and unit handling, approximate percentiles |
+| `app/src/main/java/app/littlenest/GrowthUi.java` | Native growth charts, dated text values and adjusted-age viewing |
+| `app/src/main/java/app/littlenest/GrowthChartView.java` | Time-spaced observations and WHO reference curves |
 | `app/src/main/java/app/littlenest/NaraImport.java` | Activity CSV mapping, stable source identities, preview and ongoing sleep recovery |
 | `app/src/main/java/app/littlenest/CsvReader.java` | Bounded quoted/multiline UTF-8 CSV parsing |
 
@@ -189,6 +192,29 @@ Static manifest evidence cannot prove runtime network behavior or security.
 Use the executable tests and manual acceptance checks as separate evidence.
 
 ## Verification scope
+
+### Version 1.7 growth charts
+
+The [growth guide](Growth-Charts.md) records primary research, dataset provenance,
+LMS calculation, interpolation and clinical limitations. Regenerate only the
+public factual reference data with `python3 scripts/update-growth-data.py`;
+the exact bundled CSV is exempted from the private-export CSV ignore rule.
+`GrowthStandardsTest` checks both sexes, all three measurements, published
+medians, weekly/monthly interpolation, every supported day, percentile
+inversion, the 24-month height boundary, unsupported ages, units and invalid
+data. `GrowthTest` exercises native chart wiring, all-history retention,
+profile guards, adjusted age, offline resources and large-font rendering.
+On an explicitly selected disposable emulator, run
+`python3 scripts/smoke-nara-import.py emulator-5564 --growth` against the
+installed signed release to additionally check all three growth charts,
+first-entry guides and text percentiles through real document-picker imports.
+
+The local JVM run passed 94 tests with one optional private-export test skipped.
+The Android suite passed 37 tests with its optional private-export test skipped,
+including the three new native growth tests. Lint reported zero errors and
+three existing warnings. Same-key 1.5-to-1.7 upgrade acceptance retained sample
+history; signed care-plan alarms and real document-picker imports also passed.
+These checks use synthetic records and do not validate clinical interpretation.
 
 ### Version 1.6 sync replacement
 
