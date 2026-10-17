@@ -1,0 +1,9 @@
+{
+  "name": "little-nest-analysis-tools",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Pinned local REA tooling for APK verification",
+  "devDependencies": {
+    "rea-agents": "6.5.0"
+  }
+}

@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Little Nest</string>
+    <string name="reminders_channel">Care reminders</string>
+    <string name="import_needs_review">Imported entry still needs review</string>
+    <string name="care_feed_alert">Advance milk-feed alerts</string>
+    <string name="care_nap_alert">Advance nap alerts</string>
+    <plurals name="import_continue_sleep">
+        <item quantity="one">Continue %1$d ongoing sleep timer from its original start time</item>
+        <item quantity="other">Continue %1$d ongoing sleep timers from their original start times</item>
+    </plurals>
+</resources>

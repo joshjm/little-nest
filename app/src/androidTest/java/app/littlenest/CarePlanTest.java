@@ -1,0 +1,206 @@
+package app.littlenest;
+
+import android.Manifest;
+import android.app.NotificationManager;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Build;
+import android.view.View;
+import android.view.ViewGroup;
+import androidx.test.core.app.ActivityScenario;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.uiautomator.By;
+import androidx.test.uiautomator.UiDevice;
+import androidx.test.uiautomator.Until;
+import org.json.JSONObject;
+import org.junit.After;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import static org.junit.Assert.*;
+
+@RunWith(AndroidJUnit4.class)
+public class CarePlanTest {
+    private final List<String> profiles = new ArrayList<>();
+    private Context context() { return InstrumentationRegistry.getInstrumentation().getTargetContext(); }
+    private Store store() { return Store.get(context()); }
+    private UiDevice device() { return UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()); }
+    private androidx.test.uiautomator.UiObject2 require(androidx.test.uiautomator.BySelector selector) throws Exception {
+        var found = device().wait(Until.findObject(selector), 15_000);
+        if (found == null) {
+            java.io.ByteArrayOutputStream hierarchy = new java.io.ByteArrayOutputStream(); device().dumpWindowHierarchy(hierarchy);
+            fail("Missing " + selector + ": " + hierarchy.toString(java.nio.charset.StandardCharsets.UTF_8.name()));
+        }
+        return found;
+    }
+    private String profile(String name, String role) {
+        JSONObject data = new JSONObject(); Records.put(data, "entity", "profile"); Records.put(data, "name", name); Records.put(data, "role", role);
+        String id = store().save(null, data, false); profiles.add(id);
+        context().getSharedPreferences("settings", Context.MODE_PRIVATE).edit().putString("profile", id).apply(); return id;
+    }
+    private String feed(String profile, long start) {
+        JSONObject event = new JSONObject(); Records.put(event, "entity", "event"); Records.put(event, "profileId", profile);
+        Records.put(event, "kind", "bottle"); Records.put(event, "start", start); Records.put(event, "end", start);
+        Records.put(event, "amount", "90"); Records.put(event, "unit", "ml");
+        return store().save(null, event, false);
+    }
+    private CareReminders.Options options(boolean enabled, int interval, int lead) {
+        return new CareReminders.Options(enabled, false, lead, 0, 0, new CarePredictor.Settings(interval, 0));
+    }
+    private CarePredictor.Window window(String profile) {
+        return CarePredictor.predict(store().events(profile), CareReminders.options(context(), profile).intervals(), System.currentTimeMillis(), ZoneId.systemDefault()).get(0);
+    }
+    private void worker(Runnable action) throws Exception {
+        CountDownLatch done = new CountDownLatch(1); AtomicReference<Throwable> error = new AtomicReference<>();
+        CareReminders.execute(context(), () -> { try { action.run(); } catch (RuntimeException | AssertionError e) { error.set(e); } finally { done.countDown(); } });
+        assertTrue("Care background work timed out", done.await(20, TimeUnit.SECONDS));
+        if (error.get() != null) throw new AssertionError(error.get());
+    }
+    private void permission() {
+        if (Build.VERSION.SDK_INT >= 33) InstrumentationRegistry.getInstrumentation().getUiAutomation()
+            .grantRuntimePermission(context().getPackageName(), Manifest.permission.POST_NOTIFICATIONS);
+    }
+    private android.service.notification.StatusBarNotification notification(String profile) {
+        for (var notification : context().getSystemService(NotificationManager.class).getActiveNotifications())
+            if (("care:" + CareReminders.key(profile, "feed")).equals(notification.getTag())) return notification;
+        return null;
+    }
+    private void await(java.util.function.BooleanSupplier ready) throws Exception {
+        long until = android.os.SystemClock.elapsedRealtime() + 10_000;
+        while (!ready.getAsBoolean() && android.os.SystemClock.elapsedRealtime() < until) Thread.sleep(50);
+        assertTrue("Expected asynchronous care state", ready.getAsBoolean());
+    }
+    @After public void cleanup() throws Exception {
+        for (String id : profiles) CareReminders.save(context(), id, options(false, 0, 15));
+        worker(() -> CareReminders.scheduleAll(context()));
+    }
+    @Test public void suggestionsDefaultToSilentAndManualSettingsPersistPerProfile() throws Exception {
+        String first = profile("Care test baby", "Baby"), second = profile("Separate baby", "Baby");
+        feed(first, System.currentTimeMillis() - 30 * CarePredictor.MINUTE);
+        assertFalse(CareReminders.options(context(), first).feed()); assertFalse(CareReminders.options(context(), first).nap());
+        CareReminders.save(context(), first, options(false, 180, 20));
+        worker(() -> CareReminders.scheduleAll(context()));
+        assertEquals(180, CareReminders.options(context(), first).intervals().feedMinutes());
+        assertEquals(0, CareReminders.options(context(), second).intervals().feedMinutes());
+        assertEquals(0, CareReminders.prefs(context()).getLong(CareReminders.key(first, "feed") + ".scheduledAt", 0));
+        assertTrue(window(first).available());
+    }
+    @Test public void enabledAlertSchedulesThenNewFeedReplacesCycleAndDisableCancels() throws Exception {
+        permission(); String id = profile("Scheduled care baby", "Baby");
+        feed(id, System.currentTimeMillis() - 90 * CarePredictor.MINUTE);
+        CareReminders.save(context(), id, options(true, 180, 15));
+        worker(() -> CareReminders.scheduleAll(context()));
+        String key = CareReminders.key(id, "feed"), cycle = window(id).cycle();
+        long scheduled = CareReminders.prefs(context()).getLong(key + ".scheduledAt", 0);
+        assertTrue(scheduled > System.currentTimeMillis());
+        feed(id, System.currentTimeMillis());
+        worker(() -> CareReminders.scheduleAll(context()));
+        assertNotEquals(cycle, window(id).cycle());
+        CareReminders.save(context(), id, options(false, 180, 15)); worker(() -> CareReminders.scheduleAll(context()));
+        assertEquals(0, CareReminders.prefs(context()).getLong(key + ".scheduledAt", -1));
+    }
+    @Test public void refreshRestoresBabyAlarmsAndIgnoresParentProfiles() throws Exception {
+        permission(); String baby = profile("Refresh care baby", "Baby"), parent = profile("Care parent", "Parent");
+        feed(baby, System.currentTimeMillis() - 30 * CarePredictor.MINUTE);
+        feed(parent, System.currentTimeMillis() - 30 * CarePredictor.MINUTE);
+        CareReminders.save(context(), baby, options(true, 180, 15));
+        CareReminders.save(context(), parent, options(true, 180, 15));
+        worker(() -> Reminders.scheduleAll(context()));
+        String key = CareReminders.key(baby, "feed"), cycle = window(baby).cycle();
+        long expected = CareReminders.prefs(context()).getLong(key + ".scheduledAt", 0);
+        CareReminders.prefs(context()).edit().remove(key + ".scheduledAt").apply();
+        worker(() -> CareReminders.receive(context(), new Intent().setAction("refresh")));
+        assertEquals(expected, CareReminders.prefs(context()).getLong(key + ".scheduledAt", 0));
+        assertEquals(cycle, window(baby).cycle());
+        assertFalse(CareReminders.prefs(context()).getStringSet("scheduled", java.util.Set.of()).contains(CareReminders.key(parent, "feed")));
+        CareReminders.act(context(), baby, window(baby), false);
+        worker(() -> Reminders.scheduleAll(context()));
+        assertEquals(0, CareReminders.prefs(context()).getLong(key + ".scheduledAt", -1));
+        assertEquals(cycle, CareReminders.prefs(context()).getString(key + ".dismissed", ""));
+    }
+    @Test public void broadcastPostsOnceSnoozesDismissesAndOpensCorrectProfile() throws Exception {
+        permission(); String id = profile("Notification care baby", "Baby");
+        feed(id, System.currentTimeMillis() - 50 * CarePredictor.MINUTE);
+        CareReminders.save(context(), id, options(true, 60, 0));
+        worker(() -> CareReminders.scheduleAll(context()));
+        CarePredictor.Window window = window(id); String key = CareReminders.key(id, "feed");
+        Intent notify = new Intent(context(), CareReminderReceiver.class).setAction("notify").putExtra("profile", id).putExtra("type", "feed").putExtra("cycle", window.cycle());
+        context().sendBroadcast(notify);
+        await(() -> notification(id) != null);
+        var notification = notification(id).getNotification();
+        assertEquals(2, notification.actions.length);
+        worker(() -> CareReminders.receive(context(), notify));
+        assertEquals(window.cycle(), CareReminders.prefs(context()).getString(key + ".fired", ""));
+        profile("Other selected baby", "Baby");
+        notification.contentIntent.send();
+        require(By.text("Notification care baby  \u2304"));
+        assertEquals(id, context().getSharedPreferences("settings", Context.MODE_PRIVATE).getString("profile", ""));
+        notification.actions[0].actionIntent.send();
+        await(() -> CareReminders.prefs(context()).getLong(key + ".snoozeAt", 0) > System.currentTimeMillis());
+        worker(() -> CareReminders.scheduleAll(context()));
+        assertNull(notification(id)); assertTrue(CareReminders.prefs(context()).getLong(key + ".scheduledAt", 0) > System.currentTimeMillis());
+        notification.actions[1].actionIntent.send();
+        await(() -> CareReminders.prefs(context()).getString(key + ".dismissed", "").equals(window.cycle()));
+        worker(() -> CareReminders.scheduleAll(context()));
+        assertEquals(0, CareReminders.prefs(context()).getLong(key + ".scheduledAt", -1));
+        assertNull(notification(id));
+    }
+    @Test public void staleAlarmAndDeletedProfileCannotNotify() throws Exception {
+        permission(); String id = profile("Stale alarm baby", "Baby");
+        feed(id, System.currentTimeMillis() - 50 * CarePredictor.MINUTE);
+        CareReminders.save(context(), id, options(true, 60, 0));
+        worker(() -> CareReminders.scheduleAll(context()));
+        String cycle = window(id).cycle();
+        feed(id, System.currentTimeMillis());
+        worker(() -> CareReminders.receive(context(), new Intent().setAction("notify").putExtra("profile", id).putExtra("type", "feed").putExtra("cycle", cycle)));
+        assertNull(notification(id));
+        JSONObject profile = store().records("profile").stream().filter(p -> p.optString("id").equals(id)).findFirst().orElseThrow();
+        store().save(id, profile, true);
+        worker(() -> CareReminders.scheduleAll(context()));
+        worker(() -> CareReminders.receive(context(), new Intent().setAction("notify").putExtra("profile", id).putExtra("type", "feed").putExtra("cycle", cycle)));
+        assertNull(notification(id)); assertFalse(CareReminders.prefs(context()).getStringSet("scheduled", java.util.Set.of()).contains(CareReminders.key(id, "feed")));
+    }
+    @Test public void nativeSettingsSaveManualPlanAndShowUpcomingAppointments() throws Exception {
+        String id = profile("Native care baby", "Baby"); feed(id, System.currentTimeMillis() - 30 * CarePredictor.MINUTE);
+        JSONObject appointment = new JSONObject(); Records.put(appointment, "entity", "event"); Records.put(appointment, "profileId", id);
+        Records.put(appointment, "kind", "appointment"); Records.put(appointment, "name", "Care test appointment");
+        Records.put(appointment, "start", System.currentTimeMillis() + CarePredictor.DAY); Records.put(appointment, "end", appointment.optLong("start"));
+        store().save(null, appointment, false);
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            require(By.text("Coming up"));
+            require(By.text("Care plan & advance alerts")).click();
+            var interval = require(By.desc("Manual milk-feed interval (minutes)")); interval.setText("180");
+            require(By.res("android:id/button1")).click();
+            assertTrue(device().wait(Until.hasObject(By.textStartsWith("Next milk feed \u00b7")), 5000));
+            assertEquals(180, CareReminders.options(context(), id).intervals().feedMinutes()); assertFalse(CareReminders.options(context(), id).feed());
+            scenario.onActivity(activity -> scrollBottom(activity.findViewById(android.R.id.content)));
+            assertTrue(device().wait(Until.hasObject(By.textContains("Care test appointment")), 5000));
+            require(By.textContains("Care test appointment")).click();
+            assertTrue(device().wait(Until.hasObject(By.desc("Appointment / reminder")), 5000));
+            require(By.res("android:id/button2")).click();
+        }
+    }
+    @Test public void notificationProfileSelectionIsConsumedAndSurvivesRecreation() throws Exception {
+        String id = profile("Recreated care baby", "Baby");
+        Intent open = new Intent(context(), MainActivity.class).putExtra("careProfile", id);
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(open)) {
+            require(By.text("Recreated care baby  \u2304"));
+            scenario.onActivity(activity -> assertFalse(activity.getIntent().hasExtra("careProfile")));
+            String second = profile("Newly selected baby", "Baby");
+            scenario.recreate();
+            require(By.text("Newly selected baby  \u2304"));
+            assertEquals(second, context().getSharedPreferences("settings", Context.MODE_PRIVATE).getString("profile", ""));
+        }
+    }
+    private static boolean scrollBottom(View view) {
+        if (view instanceof android.widget.ScrollView scroll) { scroll.fullScroll(View.FOCUS_DOWN); return true; }
+        if (view instanceof ViewGroup group) for (int i = 0; i < group.getChildCount(); i++) if (scrollBottom(group.getChildAt(i))) return true;
+        return false;
+    }
+}
