@@ -6,8 +6,8 @@ private shared nest.
 
 ## Screenshots
 
-Android screenshots of the **1.4 source build**, using synthetic demo data only.
-The published GitHub/Obtainium release remains 1.3 until 1.4 is released.
+Android screenshots of the **1.4 design**, using synthetic demo data only.
+Version 1.5 retains this design and adds the planning comparisons described below.
 Select a screenshot to view it full-size.
 
 | Today & activity tiles | Activity history | Sleep trends |
@@ -50,6 +50,8 @@ Start with the **[small wiki](wiki/Home.md)**:
 - Sleep timers, pauses, wake windows, daily/weekly charts and a sleep timeline.
 - Personalized milk-feed/nap windows, opt-in advance alerts, quiet hours,
   snooze/dismiss and upcoming appointments/reminders.
+- Two planning views: a moving-average daily schedule and history-adjusted
+  timing after similar short/late naps or feeds.
 - Growth measurements/charts, medicines, vaccinations, temperature and visits.
 - Milestones, routines, tummy time, baths, stories, journals and photos.
 - Pregnancy/postpartum mood, symptoms, vitals, meals, hydration and self-care.
@@ -64,8 +66,9 @@ Parent logs are shared with your partner too.
 
 ## Version 1.4: Little Nest's own look
 
-The redesign is in the current source build; the published GitHub/Obtainium
-release remains 1.3 until a new release is published.
+The redesign is included in the
+[1.5.0 release](https://github.com/joshjm/little-nest/releases/tag/v1.5.0),
+alongside the planning comparisons below.
 
 Warm paper surfaces, forest-green navigation, bold sans-serif headings and an
 original woven-nest mark give Little Nest its own identity. Care activities use
@@ -74,6 +77,19 @@ history and settings share the same palette and readable type.
 
 The visual refresh preserves tracking, timers, reminders and imported history.
 Install over an existing release without uninstalling to keep local records.
+
+## Version 1.5: compare normal and adjusted planning
+
+**Today → Coming up** shows a **Normal schedule** (moving-average clock time
+for the next daily nap/feed number) and **History-adjusted** timing based on
+similar early/late or short/long care in recent logs. It explains earlier/later
+shifts and shows insufficient evidence rather than guessing.
+
+These are observed patterns, not measured sleep or nutritional debt. Bottle
+volumes can be compared, but breastfeeding minutes are never treated as intake.
+No catch-up amounts or medical schedule are prescribed. Existing interval-based
+alerts remain unchanged. See the [planning guide](wiki/Care-Plan.md) for sample
+requirements, grouping, assumptions and limitations.
 
 ## Version 1.3 care planning
 

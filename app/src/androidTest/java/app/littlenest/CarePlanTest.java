@@ -32,7 +32,17 @@ public class CarePlanTest {
     private Store store() { return Store.get(context()); }
     private UiDevice device() { return UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()); }
     private androidx.test.uiautomator.UiObject2 require(androidx.test.uiautomator.BySelector selector) throws Exception {
-        var found = device().wait(Until.findObject(selector), 15_000);
+        var found = device().wait(Until.findObject(selector), 3000);
+        for (int i = 0; found == null && i < 6; i++) {
+            device().swipe(device().getDisplayWidth() / 2, device().getDisplayHeight() * 3 / 4,
+                device().getDisplayWidth() / 2, device().getDisplayHeight() / 3, 20);
+            found = device().wait(Until.findObject(selector), 1000);
+        }
+        for (int i = 0; found == null && i < 8; i++) {
+            device().swipe(device().getDisplayWidth() / 2, device().getDisplayHeight() / 3,
+                device().getDisplayWidth() / 2, device().getDisplayHeight() * 3 / 4, 20);
+            found = device().wait(Until.findObject(selector), 1000);
+        }
         if (found == null) {
             java.io.ByteArrayOutputStream hierarchy = new java.io.ByteArrayOutputStream(); device().dumpWindowHierarchy(hierarchy);
             fail("Missing " + selector + ": " + hierarchy.toString(java.nio.charset.StandardCharsets.UTF_8.name()));
@@ -177,7 +187,7 @@ public class CarePlanTest {
             require(By.text("Care plan & advance alerts")).click();
             var interval = require(By.desc("Manual milk-feed interval (minutes)")); interval.setText("180");
             require(By.res("android:id/button1")).click();
-            assertTrue(device().wait(Until.hasObject(By.textStartsWith("Next milk feed \u00b7")), 5000));
+            require(By.textStartsWith("Next milk feed \u00b7"));
             assertEquals(180, CareReminders.options(context(), id).intervals().feedMinutes()); assertFalse(CareReminders.options(context(), id).feed());
             scenario.onActivity(activity -> scrollBottom(activity.findViewById(android.R.id.content)));
             assertTrue(device().wait(Until.hasObject(By.textContains("Care test appointment")), 5000));
@@ -197,6 +207,67 @@ public class CarePlanTest {
             require(By.text("Newly selected baby  \u2304"));
             assertEquals(second, context().getSharedPreferences("settings", Context.MODE_PRIVATE).getString("profile", ""));
         }
+    }
+    @Test public void nativeTodayShowsBothPredictionsAndEvidenceWithoutChangingAlerts() throws Exception {
+        String id = profile("Comparison test baby", "Baby");
+        ZoneId zone = ZoneId.systemDefault();
+        java.time.LocalDate today = java.time.LocalDate.now(zone);
+        long now = System.currentTimeMillis();
+        // Use completed daytime care; the test emulator may be running at any hour.
+        long dayStart = today.atStartOfDay(zone).toInstant().toEpochMilli();
+        if (now < dayStart + 11 * CarePredictor.MINUTE * 60) {
+            today = today.minusDays(1);
+        }
+        for (int day = 12; day >= 0; day--) {
+            java.time.LocalDate date = today.minusDays(day);
+            boolean small = day <= 4;
+            feed(id, date.atTime(6, 0).atZone(zone).toInstant().toEpochMilli());
+            long start = date.atTime(small ? 10 : 9, 0).atZone(zone).toInstant().toEpochMilli();
+            String eventId = feed(id, start);
+            if (small) {
+                JSONObject data = store().events(id).stream().filter(e -> e.optString("id").equals(eventId)).findFirst().orElseThrow();
+                Records.put(data, "amount", "45"); store().save(eventId, data, false);
+            }
+            if (day > 0) feed(id, date.atTime(small ? 11 : 12, 0).atZone(zone).toInstant().toEpochMilli());
+        }
+        var comparison = CareComparison.predict(store().events(id), "feed", now, zone);
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            scenario.onActivity(activity -> {
+                View root = activity.findViewById(android.R.id.content);
+                assertTrue(hasText(root, "Normal schedule: "));
+                assertTrue(hasText(root, "History-adjusted: "));
+                if (comparison.adjusted().available()) assertTrue(hasText(root, comparison.shift()));
+            });
+            require(By.textStartsWith("Next milk feed \u00b7")).click();
+            require(By.text("Normal schedule \u00b7 moving average"));
+            require(By.text("History-adjusted \u00b7 last care"));
+            require(By.text("Interval / alert estimate (unchanged)"));
+            require(By.res("android:id/button2")).click();
+        }
+        assertFalse(CareReminders.options(context(), id).feed());
+        assertEquals(0, CareReminders.options(context(), id).intervals().feedMinutes());
+    }
+    private static boolean hasText(View view, String prefix) {
+        if (view instanceof android.widget.TextView text && text.getText().toString().startsWith(prefix)) return true;
+        if (view instanceof ViewGroup group) for (int i = 0; i < group.getChildCount(); i++)
+            if (hasText(group.getChildAt(i), prefix)) return true;
+        return false;
+    }
+    @Test public void unknownMilkVolumesRemainComparableOnAndroid() {
+        List<JSONObject> events = new ArrayList<>();
+        ZoneId zone = ZoneId.of("Australia/Brisbane");
+        java.time.LocalDate today = java.time.LocalDate.of(2026, 10, 17);
+        for (int day = 7; day >= 0; day--) for (int hour : new int[]{6, 9, 12}) {
+            if (day == 0 && hour == 12) continue;
+            long start = today.minusDays(day).atTime(hour, 0).atZone(zone).toInstant().toEpochMilli();
+            JSONObject event = new JSONObject(); Records.put(event, "kind", "breast"); Records.put(event, "id", "breast" + start);
+            Records.put(event, "start", start); Records.put(event, "end", start + 5 * CarePredictor.MINUTE); events.add(event);
+        }
+        long now = today.atTime(9, 10).atZone(zone).toInstant().toEpochMilli();
+        var result = CareComparison.predict(events, "feed", now, zone);
+        assertTrue(result.schedule().available()); assertTrue(result.adjusted().available());
+        assertEquals(today.atTime(12, 0).atZone(zone).toInstant().toEpochMilli(), result.adjusted().target());
+        assertTrue(result.adjusted().basis().contains("timing only"));
     }
     private static boolean scrollBottom(View view) {
         if (view instanceof android.widget.ScrollView scroll) { scroll.fullScroll(View.FOCUS_DOWN); return true; }

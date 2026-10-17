@@ -85,6 +85,9 @@ not reverse-engineering observations of Nara. See [verification](Development.md)
 - Private-folder checks that stop syncing when a third account is added.
 - Local pattern-based [feed and nap planning](Care-Plan.md), per-phone advance
   alerts, quiet hours, snooze/dismiss and upcoming appointment/reminder lists.
+- Moving-average daily clock schedules alongside history-adjusted timing after
+  comparable short/late care, with explicit evidence and insufficient-data states;
+  no physiological sleep/food debt or breastfeeding intake is inferred.
 
 ## Deliberate differences / not implemented
 

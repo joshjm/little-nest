@@ -56,6 +56,12 @@ release account.
 
 ## Maintainer: cut the next release
 
+Completed app changes should be committed, pushed and released by default,
+unless the maintainer explicitly asks to keep them local or unpublished.
+Documentation-only updates need a commit and push, not a new APK release.
+The persistent agent preference is in
+[the project instructions](../.github/copilot-instructions.md).
+
 Signing stays on the trusted local machine. CI runs JVM tests, lint and a debug
 build; it cannot publish a signed release and holds no production signing keys.
 
@@ -94,3 +100,9 @@ explicit APK/checksum files are uploaded by the helper. Keep signing-key and
 password backups securely outside GitHub. Developer-verification requirements
 for sideloading can vary by country and Android rollout; see
 [Android's current guidance](https://developer.android.com/developer-verification/guides).
+
+After publishing, verify the public latest-release API reports the intended
+stable tag and exactly the APK/checksum assets. Download both assets without
+authentication, run `sha256sum -c SHA256SUMS`, compare the APK with the local
+tested artifact, and verify its package/version and original signing certificate.
+Only then report the update as available through GitHub/Obtainium.

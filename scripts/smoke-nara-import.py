@@ -25,32 +25,36 @@ def adb(*args):
 
 
 def nodes():
-    result = adb("shell", "uiautomator", "dump", HIERARCHY)
-    if b"dumped to" not in result:
-        raise AssertionError("Android UI hierarchy unavailable")
-    return list(ET.fromstring(adb("shell", "cat", HIERARCHY)).iter("node"))
+    for attempt in range(3):
+        result = adb("shell", "uiautomator", "dump", HIERARCHY)
+        if b"dumped to" in result:
+            return list(ET.fromstring(adb("shell", "cat", HIERARCHY)).iter("node"))
+        print(f"UI hierarchy not ready, attempt {attempt + 1}/3", file=sys.stderr)
+        time.sleep(1)
+    raise AssertionError("Android UI hierarchy unavailable after three attempts")
 
 
-def find(text, attr="text", contains=False):
+def find(text, attr="text", contains=False, resource_id=None):
     for node in nodes():
         value = node.get(attr, "")
         matches = text.casefold() in value.casefold() if contains else text.casefold() == value.casefold()
-        if matches:
+        if matches and (resource_id is None or node.get("resource-id") == resource_id):
             return node
     return None
 
 
-def tap(text, attr="text", contains=False):
-    node = find(text, attr, contains)
+def tap(text, attr="text", contains=False, resource_id=None):
+    node = find(text, attr, contains, resource_id)
     assert node is not None, f"Missing UI control: {text}"
     bounds = list(map(int, re.findall(r"\d+", node.get("bounds", ""))))
     adb("shell", "input", "tap", str((bounds[0] + bounds[2]) // 2), str((bounds[1] + bounds[3]) // 2))
+    time.sleep(.5)
 
 
-def wait(text, seconds=20, contains=False):
+def wait(text, seconds=20, contains=False, attr="text", resource_id=None):
     deadline = time.monotonic() + seconds
     while time.monotonic() < deadline:
-        if find(text, contains=contains) is not None:
+        if find(text, attr=attr, contains=contains, resource_id=resource_id) is not None:
             return
         time.sleep(.3)
     raise AssertionError(f"Timed out waiting for: {text}")
@@ -63,10 +67,10 @@ def import_csv():
             break
         adb("shell", "input", "swipe", "500", "1800", "500", "500", "250")
     tap("Import activity CSV")
-    if find("Show roots", "content-desc") is not None:
-        tap("Show roots", "content-desc")
-        wait("Downloads")
-        tap("Downloads")
+    wait("Show roots", attr="content-desc")
+    tap("Show roots", "content-desc")
+    wait("Downloads", resource_id="android:id/title")
+    tap("Downloads", resource_id="android:id/title")
     wait("little-nest-csv-smoke.csv")
     tap("little-nest-csv-smoke.csv")
     wait("Import activity CSV")
@@ -115,10 +119,7 @@ try:
         file = Path(directory) / "little-nest-csv-smoke.csv"
         file.write_text(buffer.getvalue(), encoding="utf-8")
         adb("push", str(file), REMOTE)
-    adb("shell", "am", "start", "-W", "-S", "-n", "app.littlenest/.MainActivity")
-    if find("Show roots", "content-desc") is not None:
-        adb("shell", "input", "keyevent", "BACK")
-        adb("shell", "am", "start", "-W", "-n", "app.littlenest/.MainActivity")
+    adb("shell", "am", "start", "-W", "-S", "-f", "0x10008000", "-n", "app.littlenest/.MainActivity")
     wait("Family")
     import_csv()
     assert find("9 new records imported", contains=True) is not None

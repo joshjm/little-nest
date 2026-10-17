@@ -22,17 +22,22 @@ final class CarePlanUi {
         LinearLayout card = Ui.card(activity, Ui.BLUE);
         card.addView(Ui.title(activity, "Coming up", 21));
         for (CarePredictor.Window window : CarePredictor.predict(events, options.intervals(), now, ZoneId.systemDefault())) {
+            var comparison = CareComparison.predict(events, window.type(), now, ZoneId.systemDefault());
             LinearLayout row = Ui.column(activity);
             row.setMinimumHeight(Ui.dp(activity, 60));
-            String text = window.title() + " · " + (window.available() ? range(window) : "Learning / unavailable");
+            String text = window.title() + " · Compare timings";
             row.addView(Ui.title(activity, text, 15));
-            row.addView(Ui.text(activity, window.available() ? window.status(now) : "Tap for details or set your own interval", 12, Ui.MUTED));
-            row.setOnClickListener(v -> details(activity, profile, window)); row.setFocusable(true);
-            row.setContentDescription(text + ". Tap for details.");
+            row.addView(Ui.text(activity, comparisonLine("Normal schedule", comparison.schedule(), now), 13, Ui.INK));
+            row.addView(Ui.text(activity, comparisonLine("History-adjusted", comparison.adjusted(), now), 13, Ui.INK));
+            if (!comparison.shift().isEmpty()) row.addView(Ui.text(activity, comparison.shift(), 12, Ui.GREEN));
+            row.addView(Ui.text(activity, "Tap for evidence and interval-alert details", 12, Ui.MUTED));
+            row.setOnClickListener(v -> details(activity, profile, window, comparison)); row.setFocusable(true);
+            row.setContentDescription(text + ". " + comparisonLine("Normal schedule", comparison.schedule(), now) + ". "
+                + comparisonLine("History-adjusted", comparison.adjusted(), now) + ". " + comparison.shift() + ". Tap for details.");
             card.addView(row); Ui.divider(card);
         }
         card.addView(Ui.button(activity, "Care plan & advance alerts", () -> settings(activity, profile)));
-        card.addView(Ui.text(activity, "Estimates, not deadlines. Follow baby's cues; never delay a feed for a prediction.", 11, Ui.MUTED));
+        card.addView(Ui.text(activity, "Estimates, not deadlines. Adjusted timing learns from similar short/late care, not a measured sleep or food debt. Alerts still use the interval estimate. Follow baby's cues; never delay a feed for a prediction.", 11, Ui.MUTED));
         body.addView(card);
     }
     private static String range(CarePredictor.Window window) {
@@ -41,9 +46,21 @@ final class CarePlanUi {
         return java.time.Instant.ofEpochMilli(window.earliest()).atZone(zone).format(format) + "–"
             + java.time.Instant.ofEpochMilli(window.latest()).atZone(zone).format(format);
     }
-    private static void details(MainActivity activity, JSONObject profile, CarePredictor.Window window) {
+    private static String comparisonLine(String label, CarePredictor.Window window, long now) {
+        return label + ": " + (window.available() ? EventEditor.format(window.target()) + "\n" + window.status(now) : "Learning / unavailable");
+    }
+    private static void comparisonDetails(MainActivity activity, LinearLayout content, String label, CarePredictor.Window window, long now) {
+        content.addView(Ui.title(activity, label, 17));
+        content.addView(Ui.text(activity, window.available() ? range(window) + "\nTypical time: " + EventEditor.format(window.target())
+            + "\n" + window.status(now) + "\n\n" + window.basis() : window.message(), 14, Ui.INK));
+    }
+    private static void details(MainActivity activity, JSONObject profile, CarePredictor.Window window, CareComparison.Comparison comparison) {
         long now = System.currentTimeMillis(); String id = profile.optString("id");
         LinearLayout content = Ui.column(activity); int pad = Ui.dp(activity, 18); content.setPadding(pad, pad, pad, pad);
+        comparisonDetails(activity, content, "Normal schedule · moving average", comparison.schedule(), now);
+        comparisonDetails(activity, content, "History-adjusted · last care", comparison.adjusted(), now);
+        if (!comparison.shift().isEmpty()) content.addView(Ui.text(activity, comparison.shift(), 15, Ui.GREEN));
+        content.addView(Ui.title(activity, "Interval / alert estimate (unchanged)", 17));
         String text = window.available() ? range(window) + "\nTypical time: " + EventEditor.format(window.target()) + "\n"
             + window.status(now) + "\n\n" + window.basis() + "\n\n" + CareReminders.reminderState(activity, id, window) : window.message();
         content.addView(Ui.text(activity, text, 15, Ui.INK));
@@ -73,7 +90,7 @@ final class CarePlanUi {
     static void settings(MainActivity activity, JSONObject profile) {
         String id = profile.optString("id"); CareReminders.Options options = CareReminders.options(activity, id);
         LinearLayout content = Ui.column(activity); int pad = Ui.dp(activity, 20); content.setPadding(pad, pad, pad, pad);
-        content.addView(Ui.text(activity, "For " + profile.optString("name") + " on this phone. Suggestions learn from the last 14 days of milk feeds and wake-to-nap intervals. At least 4 intervals across 2 days are needed. Daytime naps use 05:00–20:00 local time.", 14, Ui.MUTED));
+        content.addView(Ui.text(activity, "For " + profile.optString("name") + " on this phone. Normal schedule averages clock times for the same daily nap/feed number (4 previous days needed). History-adjusted timing needs 4 similar prior days with short/late care. These comparisons do not change alerts or manual intervals. Interval alerts learn from the last 14 days, with at least 4 intervals across 2 days. Daytime naps use 05:00–20:00 local time.", 14, Ui.MUTED));
         CheckBox feed = checkbox(activity, content, activity.getString(R.string.care_feed_alert), options.feed());
         CheckBox nap = checkbox(activity, content, activity.getString(R.string.care_nap_alert), options.nap());
         EditText lead = input(activity, content, "Advance notice (minutes before window)", Integer.toString(options.leadMinutes()));

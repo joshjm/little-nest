@@ -23,6 +23,7 @@ Source layout:
 | `app/src/main/java/app/littlenest/SyncJob.java` | Best-effort Android background sync |
 | `app/src/main/java/app/littlenest/Reminders.java` | Local notification and alarm scheduling |
 | `app/src/main/java/app/littlenest/CarePredictor.java` | Deterministic recent-history feed/nap windows |
+| `app/src/main/java/app/littlenest/CareComparison.java` | Moving-average clock schedules and comparable-history adjustments |
 | `app/src/main/java/app/littlenest/CareReminders.java` | Per-phone options, revalidated alarms, snooze/dismiss |
 | `app/src/main/java/app/littlenest/CarePlanUi.java` | Coming up, settings and upcoming explicit care |
 | `app/src/main/java/app/littlenest/Insights.java` | Unit normalization, daily boundaries and sleep intervals |
@@ -187,11 +188,14 @@ Use the executable tests and manual acceptance checks as separate evidence.
 
 Completed on 17 October 2026:
 
-- **51 JVM unit tests:** passed, including local full-export acceptance,
+- **77 JVM unit tests:** passed, including local full-export acceptance,
   source-field retention, parser edge cases, unit mapping, live-sleep recovery
   and 17 predictor/reminder-timing tests. Import errors and warnings are also
-  checked for generic activity-export wording.
-- **27 Android 15 emulator tests:** passed, including SQLite, native UI/timers,
+  checked for generic activity-export wording. 26 comparison tests check exact
+  moving averages, earlier/later shifts, short sleep, small/large bottles,
+  unmeasured breastfeeding, grouping/units, sparse data, guards and local/DST
+  boundaries. They do not validate clinical prediction accuracy.
+- **29 Android 15 emulator tests:** passed, including SQLite, native UI/timers,
   category add actions, minimum navigation touch targets and simulated
   two-phone Drive synchronization; also full-data double import, paged history,
   partner database merge, manual per-side duration editing and ongoing-sleep
@@ -202,6 +206,8 @@ Completed on 17 October 2026:
   tests check sans-serif headings, text contrast of at least 4.5:1 across the
   palette, activity tiles, generic import labels, the version footer and absence
   of competitor text on the native Today/History/Trends/Family screens.
+  Two comparison tests exercise the native dual-prediction/evidence UI and
+  unmeasured milk-volume handling on Android.
 - **Android lint:** passed with 0 errors and 2 non-blocking warnings (legacy
   backup configuration guidance and a small drawing-time allocation).
 - **Signed release smoke:** installed the exact deliverable APK and exercised
@@ -224,6 +230,10 @@ Completed on 17 October 2026:
 - **Version 1.3 → 1.4 upgrade:** installed the signed identity refresh over
   signed 1.3 sample history without clearing data; existing profiles and bottle
   logs survived, and timers, care alarms and document-picker imports passed.
+- **Version 1.4 → 1.5 upgrade:** existing sample profiles and bottle history
+  survived the same-key update. Signed care alarms, dismiss and CSV import
+  passed. A synthetic-history import into the final signed APK displayed both
+  exact comparison targets and a 26-minute earlier adjustment with its evidence.
 - **Version 1.4 visual identity:** warm paper backgrounds, forest-green selected
   navigation, bold sans-serif headings, an original woven-nest mark and rounded
   activity tiles replace the earlier styling. Text-labelled Add controls and
@@ -256,6 +266,8 @@ Automated checks cover:
   no nighttime nap prediction, outlier resistance and stable cycle identities.
 - Advance timing, quiet-hour rollover/DST, snooze, dismiss and expiry; real
   native notification actions and per-baby/per-phone settings.
+- Normal daily-slot clock averages and history-adjusted next-care intervals,
+  with no guessed physiological debt or breastfeeding-volume conversion.
 
 Not verified without your participation/environment:
 
