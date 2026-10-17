@@ -38,11 +38,11 @@ def nodes():
     raise AssertionError("Android did not provide a UI hierarchy after three attempts")
 
 
-def find(value, attr="text", prefix=False):
+def find(value, attr="text", prefix=False, contains=False):
     def match():
         for node in nodes():
             actual = node.attrib.get(attr, "").casefold()
-            if actual.startswith(value.casefold()) if prefix else actual == value.casefold():
+            if (value.casefold() in actual if contains else actual.startswith(value.casefold()) if prefix else actual == value.casefold()):
                 return node
         return None
     found = match()
@@ -149,7 +149,7 @@ if args.care_plan:
         time.sleep(1)
     screenshot("care-plan.png")
     tap("Next milk feed ·", prefix=True)
-    assert any("Your manual interval: 30 min" in node.attrib.get("text", "") for node in nodes()), "Manual prediction basis missing"
+    find("Your manual interval: 30 min", contains=True)
     screenshot("care-details.png")
     tap("Dismiss this cycle")
     deadline = time.monotonic() + 15

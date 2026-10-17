@@ -1,4 +1,4 @@
-# Google Drive sync was removed in 1.5
+# Google Drive sync was removed in 1.6
 
 Use [local Wi-Fi pairing or OneDrive](Sync-Setup.md) instead. This page is kept
 so links in historical release notes still resolve.

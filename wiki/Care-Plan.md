@@ -1,14 +1,94 @@
 # Feed and nap planning
 
-Version 1.3 adds **Coming up** to each baby's Today screen. Tap **Next milk feed**
-or **Nap sweet spot** to see a suggested window, typical time, the evidence used
-and actions to log care. Existing imported activity logs count toward learning.
+**Coming up** on each baby's Today screen now shows two planning comparisons
+for **Next milk feed** and **Nap sweet spot** (version 1.5):
+
+1. **Normal schedule:** a moving average of clock times.
+2. **History-adjusted:** an estimate of what comes next after similar early/late
+   or short/long care in this baby's own history.
+
+Tap either care section for windows, evidence, any earlier/later shift and actions
+to log care. Existing imported activity logs count toward learning.
 
 These are personal pattern estimates, not deadlines, medical advice, guaranteed
 predictions or a sleep-training schedule. **Follow hunger and sleep cues; never
 delay a feed to match an estimate.** Follow your clinician's care plan.
 
-## How learning works
+## Normal schedule: moving-average clock time
+
+- Uses daytime sessions in the last **14 local calendar days**, excluding today.
+- Matches the next **daily nap/feed number**, not just the time since the latest
+  event. After today's second daytime milk feed, for example, it averages the
+  third milk feed on previous days.
+- Needs that numbered event on **4 previous days**. Uses at most the **7 most
+  recent matching days** with equal weight; older days drop out as new days arrive.
+- The target is an arithmetic mean of **local clock times**, not a median or
+  an elapsed 24-hour offset. This keeps clock-time schedules local across daylight
+  saving changes.
+- Shows a descriptive middle-half window widened to at least ±15 minutes. This
+  is not a calibrated confidence interval. A passed window stays marked as passed.
+
+Daily numbering assumes reasonably complete logs. Missed care can misalign
+slots. Known incomplete historical days are excluded, and known incomplete care
+today blocks comparisons until reviewed. This is a learned routine, not a
+recommended schedule.
+
+## History-adjusted: short/late-care comparison
+
+This is a conservative alternative to inventing a physiological **sleep debt**
+or **food debt**. It uses the previous session's timing and measured size:
+
+- Compares the latest session's start with the average prior-session start for
+  that daily slot. Early/late means **more than 20 minutes** before/after average.
+- For sleep, compares **logged actual sleep duration**, excluding recorded
+  pauses. Below **80%** of the prior-slot average is short; above **120%** is long.
+- For bottle-only feeding sessions with complete positive volumes, compares
+  **recorded ml**, normalizing fl oz and summing top-ups. Below 80% is smaller,
+  above 120% is larger. These are relative log comparisons, not intake targets.
+- Breastfeeding duration does **not** measure intake. A breastfeeding, mixed
+  breast/bottle, or missing-volume session uses **timing only**, explicitly labelled.
+  No calories, required milk, nutritional deficit or catch-up amount is inferred.
+- Looks for **4 previous days** with the same early/on-time/late band and, when
+  measured, the same short/normal/long band. It averages the observed interval
+  to the next care event on those days.
+- Anchors that interval at the **latest wake time** for naps, or the **latest
+  feeding-session start** for milk. An early wake therefore moves the anchor;
+  a historically shorter next wake interval after short naps can move it further.
+  A late nap/feed can move the estimate later, or observed catch-up timing may
+  bring it back toward the clock schedule.
+- Shows how many minutes earlier/later this is than the normal schedule.
+  Predictions can agree. With too few comparable days it says **Learning /
+  unavailable**, explains the missing evidence, and does not invent a correction.
+
+The 20-minute and 80–120% bands are implementation rules, **not medical
+thresholds**. Similar past logs show an association, not what your baby needs.
+This model does not calculate accumulated sleep deprivation, required daily
+sleep, breastfeeding intake or nutritional needs. Missing logs, feeding method,
+illness and changing routines can make either prediction unreliable.
+
+## Shared guards and scope
+
+Both comparisons use only this baby's local logs; there is no online model.
+Milk includes bottles and breastfeeding, **not solids or pumping**. Top-ups within
+30 minutes of the previous feed ending count as one session; sleep splits within
+15 minutes are grouped. The first nap can use the preceding overnight sleep as
+its wake anchor.
+
+Active/paused care, a latest incomplete entry, future completed end times and
+care over 18 hours old suppress comparisons. Today's care must be logged; the
+model does not roll yesterday's schedule into tomorrow. Feed comparisons cover
+05:00–22:00 and nap starts 05:00–20:00 local time. An adjusted target outside
+today's daytime range is not shown. Bedtime and overnight comparisons are not
+predicted.
+
+## Existing interval estimate and alerts (unchanged)
+
+The two comparisons are **additional planning information**. Existing alert
+timing, opt-ins, manual intervals, snooze and dismiss keep the prior behavior.
+Details explicitly label **Interval / alert estimate (unchanged)**. No extra
+alerts are generated for the two comparisons.
+
+The interval model used for alerts:
 
 - Uses only this baby's logs on this phone. No online prediction service,
   advertising SDK or upload is involved.
@@ -44,9 +124,10 @@ make estimates unreliable. There is no age-based fallback schedule.
 Open **Today → Care plan & advance alerts** (also under **Family** for a selected
 baby).
 
-- Leave manual intervals blank to learn from logs.
+- Leave manual intervals blank for interval-alert learning.
 - Or enter your own milk-feed interval, **30–720 minutes**, and/or wake interval,
-  **20–480 minutes**. These replace learning for that kind of estimate.
+  **20–480 minutes**. These replace interval-alert learning for that kind of
+  care; the normal and history-adjusted comparisons still learn from logs.
 - A manual feed interval is measured from the most recent feeding-session start;
   a manual wake interval is measured from the latest completed sleep end.
 - Manual windows are ±15 minutes. A recent completed anchor is still needed;
@@ -60,7 +141,7 @@ Suggestions appear automatically, but **both alert types are off by default**.
 2. Enable milk-feed and/or nap alerts.
 3. Choose advance notice, **0–120 minutes before the window begins**.
    The default is 15 minutes before the earliest suggested time, not before
-   the median.
+   the interval-model median. The two comparison targets do not drive alerts.
 4. Set quiet hours using local whole hours, 0–23. Default: **22:00–06:00**.
    Set the same start/end hour to disable quiet hours.
 5. Save, allow Android notifications, and check **Android notification settings**

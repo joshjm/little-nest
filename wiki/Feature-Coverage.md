@@ -12,7 +12,7 @@ Research performed 17 October 2026 using:
   [REA skill](https://github.com/morluto/rea/blob/main/.agents/skills/reverse-engineer-anything/SKILL.md)
   and [Android analysis workflow](https://github.com/morluto/rea/blob/main/docs/android-analysis.md).
 - [Microsoft OneDrive permissions](https://learn.microsoft.com/en-us/onedrive/developer/rest-api/concepts/permissions_reference)
-  and [native OAuth](https://www.rfc-editor.org/rfc/rfc8252) for the 1.5 sync architecture.
+  and [native OAuth](https://www.rfc-editor.org/rfc/rfc8252) for the 1.6 sync architecture.
 
 The primary listing is **documented evidence**, not observed in-app behavior.
 No original Nara APK, account or device session was supplied. No Nara code,
@@ -86,6 +86,9 @@ not reverse-engineering observations of Nara. See [verification](Development.md)
   must maintain two-person access.
 - Local pattern-based [feed and nap planning](Care-Plan.md), per-phone advance
   alerts, quiet hours, snooze/dismiss and upcoming appointment/reminder lists.
+- Moving-average daily clock schedules alongside history-adjusted timing after
+  comparable short/late care, with explicit evidence and insufficient-data states;
+  no physiological sleep/food debt or breastfeeding intake is inferred.
 
 ## Deliberate differences / not implemented
 

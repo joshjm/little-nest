@@ -9,5 +9,6 @@ tooling/node_modules/.bin/rea inspect-android-package "$apk" --format json > art
 tooling/node_modules/.bin/rea inspect-android-class "$apk" app.littlenest.OneDriveApi --format json > artifacts/rea-drive-class.json
 tooling/node_modules/.bin/rea inspect-android-class "$apk" app.littlenest.NaraImport --format json > artifacts/rea-import-class.json
 tooling/node_modules/.bin/rea inspect-android-class "$apk" app.littlenest.CarePredictor --format json > artifacts/rea-predictor-class.json
+tooling/node_modules/.bin/rea inspect-android-class "$apk" app.littlenest.CareComparison --format json > artifacts/rea-comparison-class.json
 tooling/node_modules/.bin/rea inspect-android-class "$apk" app.littlenest.CareReminders --format json > artifacts/rea-care-reminders-class.json
 echo "REA/JADX artifact-bound evidence saved in artifacts/."

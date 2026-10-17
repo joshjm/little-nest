@@ -167,5 +167,5 @@ with a forest-green selected tab. Profile switching is in the name header below
 the Little Nest masthead. The warm paper palette, bold sans-serif type, woven-nest
 mark and rounded activity tiles are Little Nest's own visual identity.
 
-Install updates directly over the existing app. The 1.5 sync update preserves
+Install updates directly over the existing app. The 1.6 sync update preserves
 local data but replaces Google sharing; see [migration](Google-Drive-Setup.md).

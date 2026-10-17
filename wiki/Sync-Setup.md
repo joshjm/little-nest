@@ -7,7 +7,7 @@ Both caregivers can read everything in the nest.
 
 ## Local sync: no account, no internet
 
-1. Install the same signed 1.5+ APK on both phones. Export backups first if you
+1. Install the same signed 1.6+ APK on both phones. Export backups first if you
    already have records. Set different **Family -> Caregiver name** values.
 2. Connect both phones to the same private Wi-Fi network or hotspot. Some guest
    networks/hotspots isolate clients; use a network that allows phone-to-phone

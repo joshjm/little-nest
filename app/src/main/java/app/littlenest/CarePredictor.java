@@ -33,23 +33,47 @@ public final class CarePredictor {
             return "In about " + Insights.duration(target - now);
         }
     }
-    private record Session(long start, long end, String id, boolean active, boolean incomplete) {}
+    record Session(long start, long end, String id, boolean active, boolean incomplete, double quantity) {}
     private record Sample(long interval, long anchor) {}
 
     public static List<Window> predict(List<JSONObject> events, Settings settings, long now, ZoneId zone) {
-        List<Session> feeds = new ArrayList<>(), sleeps = new ArrayList<>();
+        return List.of(feed(sessions(events, "feed", now), settings.feedMinutes(), now, zone),
+            nap(sessions(events, "nap", now), settings.wakeMinutes(), now, zone));
+    }
+
+    static List<Session> sessions(List<JSONObject> events, String type, long now) {
+        List<Session> result = new ArrayList<>();
         for (JSONObject event : events) {
             long start = event.optLong("start"), end = event.optLong("end", start);
             if (start > now || start < now - 15 * DAY || end < start) continue;
             String kind = event.optString("kind");
-            Session session = new Session(start, Math.min(end, now), event.optString("id", Long.toString(start)),
-                event.optBoolean("running") || event.optBoolean("timerPaused"), event.optBoolean("importIncomplete"));
-            if (kind.equals("bottle") || kind.equals("breast")) feeds.add(session);
-            if (kind.equals("sleep")) sleeps.add(session);
+            if (!(type.equals("feed") ? kind.equals("bottle") || kind.equals("breast") : kind.equals("sleep"))) continue;
+            double quantity = kind.equals("sleep") ? Records.duration(event, now)
+                : kind.equals("bottle") && Insights.bottleMl(event) > 0 ? Insights.bottleMl(event) : 0;
+            result.add(new Session(start, Math.min(end, now), event.optString("id", Long.toString(start)),
+                event.optBoolean("running") || event.optBoolean("timerPaused"), event.optBoolean("importIncomplete"), quantity));
         }
-        feeds.sort(Comparator.comparingLong(Session::start).thenComparing(Session::id));
-        sleeps.sort(Comparator.comparingLong(Session::start).thenComparing(Session::id));
-        return List.of(feed(feeds, settings.feedMinutes(), now, zone), nap(sleeps, settings.wakeMinutes(), now, zone));
+        result.sort(Comparator.comparingLong(Session::start).thenComparing(Session::id));
+        return result;
+    }
+
+    static List<Session> grouped(List<Session> raw, long gap, boolean sleep) {
+        List<Session> groups = new ArrayList<>();
+        for (Session session : raw) {
+            if (session.active || session.incomplete || sleep && session.end <= session.start) continue;
+            if (!groups.isEmpty()) {
+                Session prior = groups.get(groups.size() - 1);
+                if (session.start - prior.end <= gap) {
+                    long end = Math.max(prior.end, session.end);
+                    double quantity = prior.quantity > 0 && session.quantity > 0 ? prior.quantity + session.quantity : 0;
+                    if (sleep) quantity = Math.min(end - prior.start, quantity);
+                    groups.set(groups.size() - 1, new Session(prior.start, end, session.id, false, false, quantity));
+                    continue;
+                }
+            }
+            groups.add(session);
+        }
+        return groups;
     }
 
     private static Window feed(List<Session> raw, int manual, long now, ZoneId zone) {
@@ -58,18 +82,7 @@ public final class CarePredictor {
         if (raw.stream().anyMatch(Session::active)) return missing("feed", "A milk feed is running or paused. Finish it before the next estimate.");
         if (last.incomplete) return missing("feed", "Review the latest incomplete milk feed before estimating the next one.");
         if (now - last.start > 18 * 60 * MINUTE) return missing("feed", "The latest milk feed is over 18 hours old. Log recent care first.");
-        List<Session> groups = new ArrayList<>();
-        for (Session session : raw) {
-            if (session.active || session.incomplete) continue;
-            if (!groups.isEmpty()) {
-                Session prior = groups.get(groups.size() - 1);
-                if (session.start - prior.end <= 30 * MINUTE) {
-                    groups.set(groups.size() - 1, new Session(prior.start, Math.max(prior.end, session.end), session.id, false, false));
-                    continue;
-                }
-            }
-            groups.add(session);
-        }
+        List<Session> groups = grouped(raw, 30 * MINUTE, false);
         Session anchor = groups.get(groups.size() - 1);
         List<Sample> samples = new ArrayList<>();
         for (int i = 1; i < groups.size(); i++) {
@@ -88,18 +101,7 @@ public final class CarePredictor {
         Session last = raw.get(raw.size() - 1);
         if (raw.stream().anyMatch(Session::active)) return missing("nap", "Sleep is running or paused. Finish it when baby wakes to estimate the next nap.");
         if (last.incomplete) return missing("nap", "Review the latest incomplete sleep before estimating the next nap.");
-        List<Session> groups = new ArrayList<>();
-        for (Session session : raw) {
-            if (session.incomplete || session.active || session.end <= session.start) continue;
-            if (!groups.isEmpty()) {
-                Session prior = groups.get(groups.size() - 1);
-                if (session.start - prior.end <= 15 * MINUTE) {
-                    groups.set(groups.size() - 1, new Session(prior.start, Math.max(prior.end, session.end), session.id, false, false));
-                    continue;
-                }
-            }
-            groups.add(session);
-        }
+        List<Session> groups = grouped(raw, 15 * MINUTE, true);
         if (groups.isEmpty()) return missing("nap", "Log a completed sleep with an end time first.");
         Session anchor = groups.get(groups.size() - 1);
         if (now - anchor.end > 18 * 60 * MINUTE) return missing("nap", "The latest wake time is over 18 hours old. Log recent sleep first.");
