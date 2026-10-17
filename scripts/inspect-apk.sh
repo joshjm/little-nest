@@ -11,4 +11,5 @@ tooling/node_modules/.bin/rea inspect-android-class "$apk" app.littlenest.NaraIm
 tooling/node_modules/.bin/rea inspect-android-class "$apk" app.littlenest.CarePredictor --format json > artifacts/rea-predictor-class.json
 tooling/node_modules/.bin/rea inspect-android-class "$apk" app.littlenest.CareComparison --format json > artifacts/rea-comparison-class.json
 tooling/node_modules/.bin/rea inspect-android-class "$apk" app.littlenest.CareReminders --format json > artifacts/rea-care-reminders-class.json
+tooling/node_modules/.bin/rea inspect-android-class "$apk" app.littlenest.GrowthStandards --format json > artifacts/rea-growth-class.json
 echo "REA/JADX artifact-bound evidence saved in artifacts/."

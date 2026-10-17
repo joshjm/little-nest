@@ -66,6 +66,8 @@ final class EventEditor {
             content.addView(Ui.text(activity, "Enter a total or component amounts. If a total is supplied, totals and charts use it instead of adding components again.", 12, Ui.MUTED));
         if (kind.id().equals("pump"))
             content.addView(Ui.text(activity, "Total output overrides the sum of left and right volumes. Each side can use its own unit.", 12, Ui.MUTED));
+        if (kind.id().equals("growth"))
+            content.addView(Ui.text(activity, "Trends compares these measurements with WHO growth percentiles. Measure length lying down before age two, and height standing from age two. Note a different measurement position in Notes; charts do not convert positions.", 12, Ui.MUTED));
         for (Catalog.Field field : kind.fields()) {
             content.addView(Ui.text(activity, field.label(), 13, Ui.MUTED));
             if (field.multiple()) {

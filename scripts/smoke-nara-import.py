@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Check the installed release's real document-picker import on an owned emulator."""
 import csv
+from datetime import datetime, timezone
 import io
 import os
 from pathlib import Path
@@ -13,6 +14,7 @@ import uuid
 import xml.etree.ElementTree as ET
 
 SERIAL = sys.argv[1] if len(sys.argv) > 1 else "emulator-5554"
+GROWTH = "--growth" in sys.argv[2:]
 if not SERIAL.startswith("emulator-"):
     raise SystemExit("This test creates sample data. Use only a disposable emulator.")
 ADB = str(Path(os.environ.get("ANDROID_HOME", Path.home() / ".local/share/baby-app-tools/android-sdk")) / "platform-tools/adb")
@@ -106,6 +108,15 @@ event("Breastfeed", {"[Breastfeed] Begin Side": "RIGHT", "[Breastfeed] End Side"
 event("Pump", {"[Pump] Duration (Seconds)": "0", "[Pump] Left Volume": "1", "[Pump] Left Volume Unit": "FLOZ",
                "[Pump] Right Volume": "10", "[Pump] Right Volume Unit": "ML"}, unassigned=True)
 event("Growth", {"[Growth] Weight": "5", "[Growth] Weight Unit": "KG", "[Growth] Head Size": "15", "[Growth] Head Size Unit": "IN"})
+if GROWTH:
+    rows[-1].update({"[Growth] Weight": "11", "[Growth] Height": "82", "[Growth] Height Unit": "CM",
+                     "[Growth] Head Size": "47", "[Growth] Head Size Unit": "CM"})
+    for index, date, weight, length, head in ((1, "2025-01-01", "3.2", "49", "34"), (2, "2025-04-01", "5.6", "59", "39")):
+        event("Growth", {"[Growth] Weight": weight, "[Growth] Weight Unit": "KG",
+                         "[Growth] Height": length, "[Growth] Height Unit": "CM",
+                         "[Growth] Head Size": head, "[Growth] Head Size Unit": "CM",
+                         "_activityKey": "growth-history-" + str(index),
+                         "Start Date/time (Epoch)": str(int(datetime.fromisoformat(date).replace(tzinfo=timezone.utc).timestamp() * 1000))})
 event("Baby First", {"[Baby First] Baby First": "Grabbing rattle"})
 event("Profile", {"[Profile] Type": "CHILD", "[Profile] Sex": "FEMALE", "[Profile] Birth Date": "2025-01-01"})
 columns = list(dict.fromkeys(key for row in rows for key in row))
@@ -122,7 +133,7 @@ try:
     adb("shell", "am", "start", "-W", "-S", "-f", "0x10008000", "-n", "app.littlenest/.MainActivity")
     wait("Family")
     import_csv()
-    assert find("9 new records imported", contains=True) is not None
+    assert find(f"{11 if GROWTH else 9} new records imported", contains=True) is not None
     tap("android:id/button1", "resource-id")
     wait("Today")
     tap("Today")
@@ -137,6 +148,29 @@ try:
     tap("Today")
     wait("A day at a time")
     assert find("Finish") is None, "Reimport must not restart a finished sleep"
+    if GROWTH:
+        tap("Trends")
+        for title, filename in (("Weight", "weight"), ("Length / height", "length"), ("Head circumference", "head")):
+            description = title + " growth chart in"
+            for _ in range(18):
+                if find(description, attr="content-desc", contains=True) is not None:
+                    break
+                adb("shell", "input", "swipe", "500", "1800", "500", "900", "250")
+            chart = find(description, attr="content-desc", contains=True)
+            assert chart is not None, f"Missing growth chart: {title}"
+            assert "WHO percentiles 3, 15, 50, 85, 97" in chart.get("content-desc", "")
+            assert "2025-01-01" in chart.get("content-desc", "") and "2025-04-01" in chart.get("content-desc", "")
+            assert "Dashed line follows" in chart.get("content-desc", "")
+            screenshot = Path(__file__).resolve().parent.parent / "artifacts" / f"growth-{filename}.png"
+            screenshot.write_bytes(adb("exec-out", "screencap", "-p"))
+        for _ in range(5):
+            if find("View 3 measurements") is not None:
+                break
+            adb("shell", "input", "swipe", "500", "1800", "500", "1200", "250")
+        tap("View 3 measurements")
+        assert sum("Approx. percentile" in node.get("text", "") for node in nodes()) == 3
+        tap("android:id/button1", "resource-id")
+        print("Signed release growth smoke passed: all three WHO charts, first-entry guides, imported history and text percentiles.")
     print("Signed release CSV smoke passed: document picker, mixed/side-unit data, ongoing sleep finish and duplicate-free repeat import.")
 finally:
     adb("shell", "rm", "-f", REMOTE, HIERARCHY)
