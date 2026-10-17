@@ -1,0 +1,38 @@
+{
+  "outfile": "publisher",
+  "title": "Little Nest - publisher setup (logical view, not live inventory)",
+  "graph": {
+    "azurerm_group.terraform_managed": ["tv_azurerm_server.registration"],
+    "tv_azurerm_client.terraform": ["tv_azurerm_server.registration", "tv_azurerm_client.release_build"],
+    "tv_azurerm_server.registration": [],
+    "tv_azurerm_client.release_build": ["tv_azurerm_client.phones"],
+    "tv_azurerm_client.phones": ["tv_azurerm_server.microsoft_sign_in"],
+    "tv_azurerm_server.microsoft_sign_in": ["tv_azurerm_server.registration"]
+  },
+  "attributes": {
+    "azurerm_group.terraform_managed": {"label": "Terraform-managed configuration only"},
+    "tv_azurerm_client.terraform": {"label": "Publisher Terraform"},
+    "tv_azurerm_server.registration": {"label": "Entra app registration"},
+    "tv_azurerm_client.release_build": {"label": "Signed APK build"},
+    "tv_azurerm_client.phones": {"label": "Two Android apps"},
+    "tv_azurerm_server.microsoft_sign_in": {"label": "Microsoft sign-in"}
+  },
+  "edge_labels": {
+    "tv_azurerm_client.terraform -> tv_azurerm_server.registration": "Import and manage settings",
+    "tv_azurerm_client.terraform -> tv_azurerm_client.release_build": "ONEDRIVE_CLIENT_ID output",
+    "tv_azurerm_client.release_build -> tv_azurerm_client.phones": "Same-key APK",
+    "tv_azurerm_client.phones -> tv_azurerm_server.microsoft_sign_in": "Authorization code + PKCE",
+    "tv_azurerm_server.microsoft_sign_in -> tv_azurerm_server.registration": "Uses registered client settings"
+  },
+  "flows": {
+    "publisher_setup": {
+      "description": "Adopt the existing identity; do not create a backend or rotate the client ID.",
+      "steps": [
+        {"resource": "tv_azurerm_client.terraform", "detail": "Import by object ID; verify the existing release client ID."},
+        {"resource": "tv_azurerm_server.registration", "detail": "Manage personal accounts, app.littlenest:/oauth and delegated Files.ReadWrite."},
+        {"resource": "tv_azurerm_client.release_build", "detail": "Export the public client ID into the unchanged APK build."},
+        {"resource": "tv_azurerm_client.phones", "detail": "Families consent in the browser; Terraform never manages family data."}
+      ]
+    }
+  }
+}

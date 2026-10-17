@@ -15,6 +15,8 @@ Optional OneDrive sharing keeps phones up to date while apart.
    care, manual intervals and opt-in advance alerts.
 7. **[GitHub / Obtainium releases](Releases.md)** — downloads, updates,
    checksums and maintainer release instructions.
+8. **[Infrastructure and architecture](Infrastructure.md)** — import-first
+   Terraform for the publisher registration and TerraVision interaction views.
 
 ## Important before you start
 

@@ -121,6 +121,10 @@ retry resumes by comparing IDs. Invalid operations are rejected explicitly.
 
 This is publisher setup, **not a task for each family**.
 
+The existing registration can be adopted and maintained with
+[Terraform](Infrastructure.md), including architecture views generated through
+TerraVision. Keep the same client ID used by release builds.
+
 1. In Microsoft Entra's app-registration portal create **Little Nest** with
    supported account type **Personal Microsoft accounts only**.
 2. Add the **Mobile and desktop applications** platform with custom redirect
