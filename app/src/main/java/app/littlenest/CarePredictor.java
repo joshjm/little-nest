@@ -25,7 +25,7 @@ public final class CarePredictor {
     public record Window(String type, String cycle, long earliest, long target, long latest,
                          int samples, int days, String basis, String message) {
         public boolean available() { return target > 0; }
-        public String title() { return type.equals("feed") ? "Next milk feed" : "Nap sweet spot"; }
+        public String title() { return type.equals("feed") ? "Next milk feed" : type.equals("bedtime") ? "Evening bedtime pattern" : "Nap sweet spot"; }
         public String status(long now) {
             if (!available()) return message;
             if (now > latest) return "Window has passed — check cues or log any missing care";

@@ -269,6 +269,82 @@ public class CarePlanTest {
         assertEquals(today.atTime(12, 0).atZone(zone).toInstant().toEpochMilli(), result.adjusted().target());
         assertTrue(result.adjusted().basis().contains("timing only"));
     }
+    @Test public void planGoalsPersistPerBabyWithoutChangingIntervalsOrAlerts() throws Exception {
+        String id = profile("Planner baby", "Baby");
+        feed(id, System.currentTimeMillis() - 10 * CarePredictor.MINUTE);
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            require(By.text("Plan")).click();
+            require(By.text("Room for a rhythm"));
+            require(By.text("Edit daily goals")).click();
+            require(By.desc("Total sleep goal (hours, e.g. 14.5)")).setText("14.5");
+            require(By.desc("Daytime nap goal (count, 1–12)")).setText("3");
+            require(By.desc("Milk-feed session goal (count, 1–30)")).setText("8");
+            require(By.res("android:id/button1")).click();
+            require(By.text("Sleep  0m / 14h 30m goal"));
+            scenario.recreate();
+            require(By.text("Room for a rhythm"));
+            scenario.onActivity(activity -> {
+                assertEquals(new CarePlanner.Goals(870, 3, 8), CarePlanUi.goals(activity, id));
+                assertEquals(new CarePlanner.Goals(0, 0, 0), CarePlanUi.goals(activity, "another-baby"));
+                assertEquals(0, CareReminders.options(activity, id).intervals().feedMinutes());
+                assertFalse(CareReminders.options(activity, id).feed());
+                assertFalse(CareReminders.options(activity, id).nap());
+            });
+            require(By.text("Edit daily goals")).click();
+            require(By.desc("Total sleep goal (hours, e.g. 14.5)")).setText("");
+            require(By.desc("Daytime nap goal (count, 1–12)")).setText("");
+            require(By.desc("Milk-feed session goal (count, 1–30)")).setText("");
+            require(By.res("android:id/button1")).click();
+            scenario.onActivity(activity -> assertEquals(new CarePlanner.Goals(0, 0, 0), CarePlanUi.goals(activity, id)));
+        }
+    }
+    @Test public void planRejectsInvalidGoalsWithoutSavingAndCancelPreservesPreviousGoals() throws Exception {
+        String id = profile("Goal validation baby", "Baby");
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            require(By.text("Plan")).click(); require(By.text("Edit daily goals")).click();
+            require(By.desc("Total sleep goal (hours, e.g. 14.5)")).setText("24.01");
+            require(By.res("android:id/button1")).click(); require(By.text("Sleep goal must be from 0 to 24 hours."));
+            require(By.text("OK")).click();
+            require(By.desc("Total sleep goal (hours, e.g. 14.5)")).setText("14");
+            require(By.desc("Daytime nap goal (count, 1–12)")).setText("13");
+            require(By.res("android:id/button1")).click(); require(By.textContains("Nap goal must be blank"));
+            require(By.text("OK")).click(); require(By.res("android:id/button2")).click();
+            scenario.onActivity(activity -> assertEquals(new CarePlanner.Goals(0, 0, 0), CarePlanUi.goals(activity, id)));
+        }
+    }
+    @Test public void planShowsAgeGuidanceSourcesAndBedtimeLearningWithoutAssumingMissingAge() throws Exception {
+        String id = profile("Guidance baby", "Baby");
+        JSONObject data = store().records("profile").stream().filter(p -> p.optString("id").equals(id)).findFirst().orElseThrow();
+        Records.put(data, "dob", java.time.LocalDate.now().minusMonths(7).toString()); store().save(id, data, false);
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            require(By.text("Plan")).click();
+            scenario.onActivity(activity -> {
+                View root = activity.findViewById(android.R.id.content);
+                assertTrue(hasText(root, "7 months"));
+                assertTrue(hasText(root, "Around 6–12 months"));
+                assertTrue(hasText(root, "At 6–12 months"));
+                assertTrue(hasText(root, "Learning: log sleep as Night sleep"));
+            });
+            require(By.text("Sources & how planning works")).click();
+            require(By.text("CDC \u00b7 sleep by age \u00b7 opens browser"));
+            require(By.res("android:id/button2")).click();
+        }
+        profile("No birth date baby", "Baby");
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            require(By.text("Plan")).click();
+            scenario.onActivity(activity -> assertTrue(hasText(activity.findViewById(android.R.id.content), "Add a valid birth date")));
+        }
+    }
+    @Test public void planExcludesParentsAndKeepsNavigationTouchTargets() throws Exception {
+        profile("Planner parent", "Parent");
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            var plan = require(By.text("Plan"));
+            assertTrue(plan.getVisibleBounds().height() >= 48 * context().getResources().getDisplayMetrics().density);
+            plan.click();
+            require(By.textStartsWith("Sleep and milk-feed planning is for baby profiles."));
+            scenario.onActivity(activity -> assertFalse(hasText(activity.findViewById(android.R.id.content), "Edit daily goals")));
+        }
+    }
     private static boolean scrollBottom(View view) {
         if (view instanceof android.widget.ScrollView scroll) { scroll.fullScroll(View.FOCUS_DOWN); return true; }
         if (view instanceof ViewGroup group) for (int i = 0; i < group.getChildCount(); i++) if (scrollBottom(group.getChildAt(i))) return true;

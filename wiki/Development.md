@@ -31,6 +31,7 @@ Source layout:
 | `app/src/main/java/app/littlenest/CareComparison.java` | Moving-average clock schedules and comparable-history adjustments |
 | `app/src/main/java/app/littlenest/CareReminders.java` | Per-phone options, revalidated alarms, snooze/dismiss |
 | `app/src/main/java/app/littlenest/CarePlanUi.java` | Coming up, settings and upcoming explicit care |
+| `app/src/main/java/app/littlenest/CarePlanner.java` | Optional goals, partial-day totals, sourced age context and evening clock patterns |
 | `app/src/main/java/app/littlenest/Insights.java` | Unit normalization, daily boundaries and sleep intervals |
 | `app/src/main/java/app/littlenest/GrowthStandards.java` | WHO LMS interpolation, age and unit handling, approximate percentiles |
 | `app/src/main/java/app/littlenest/GrowthUi.java` | Native growth charts, dated text values and adjusted-age viewing |
@@ -117,7 +118,7 @@ To exercise the exact signed release and save screenshots:
 
 ```bash
 # Only on the disposable emulator. --reset clears this test app's sample data.
-python3 scripts/smoke-apk.py emulator-5554 --reset --care-plan
+python3 scripts/smoke-apk.py emulator-5554 --reset --care-plan --planner
 python3 scripts/smoke-nara-import.py emulator-5554
 ```
 
@@ -199,6 +200,28 @@ Static manifest evidence cannot prove runtime network behavior or security.
 Use the executable tests and manual acceptance checks as separate evidence.
 
 ## Verification scope
+
+### Version 1.10 planning
+
+`CarePlannerTest` covers optional goal limits, calendar-age boundaries, unknown
+birth dates, method-specific feeding context, grouped milk/nap counts,
+cross-midnight sessions, paused/running sleep, overlap removal, DST boundaries,
+bedtime minimum evidence, latest-seven clock averages and incomplete/active
+sleep guards. These deterministic checks do not validate clinical prediction
+accuracy.
+
+`CarePlanTest` adds native Plan navigation, saved/cleared per-baby goals,
+invalid-input and cancel behavior, recreation, unchanged alerts/intervals,
+age/source content and parent exclusion. The existing care-alarm, app and
+identity checks remain in the focused native run. The JVM suite has 109 tests
+(one optional private-export test skipped); the focused native run has 21 tests.
+Light and dark 200%-font layouts were checked with synthetic records.
+
+`scripts/smoke-apk.py --planner` checks the signed Plan screen, goal persistence,
+bedtime learning and source links. Use it together with `--care-plan`; use
+`--existing` after installing an older same-key release to check retained
+sample history. The smoke helper identifies the Today navigation button by
+class so it does not tap a History day heading also called Today.
 
 ### Version 1.7 growth charts
 

@@ -60,6 +60,8 @@ Start with the **[small wiki](wiki/Home.md)**:
   snooze/dismiss and upcoming appointments/reminders.
 - Two planning views: a moving-average daily schedule and history-adjusted
   timing after similar short/late naps or feeds.
+- A dedicated Plan tab with optional daily sleep, nap and milk-feed goals,
+  learned evening bedtime windows and sourced age-specific context.
 - Growth measurements with WHO weight, length/height and head-circumference
   percentile charts; medicines, vaccinations, temperature and visits.
 - Milestones, routines, tummy time, baths, stories, journals and photos.
@@ -73,6 +75,18 @@ Start with the **[small wiki](wiki/Home.md)**:
 
 No ads, analytics, app backend, remote notifications, public feeds or subscriptions.
 Parent logs are shared with your partner too.
+
+## Version 1.10: a little more room to plan
+
+**Plan** brings next-care estimates, optional daily goals and age-specific
+sleep/nap/feeding context together. Evening bedtime windows learn from sleep
+explicitly labelled **Night sleep** on at least four previous days. Goals stay
+on this phone for each baby; they do not change predictions or alerts.
+
+These are gentle planning aids, not deadlines or intake recommendations.
+Today's totals are a partial calendar day, not a full 24-hour comparison.
+Follow baby's cues and your clinician's plan. See the
+[sleep and feeding guide](wiki/Care-Plan.md) for sources and limitations.
 
 ## Version 1.8: Woven day design
 
