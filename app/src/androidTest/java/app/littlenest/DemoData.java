@@ -24,6 +24,7 @@ public class DemoData {
         Store store = Store.get(context);
         JSONObject profile = new JSONObject(); Records.put(profile, "entity", "profile"); Records.put(profile, "name", "Ada");
         Records.put(profile, "role", "Baby"); Records.put(profile, "dob", LocalDate.now().minusDays(118).toString());
+        Records.put(profile, "sex", "Female");
         String id = store.save(null, profile, false);
         context.getSharedPreferences("settings", Context.MODE_PRIVATE).edit().putString("profile", id).putString("caregiver", "Sam").apply();
         ZoneId zone = ZoneId.systemDefault(); long now = System.currentTimeMillis();
@@ -64,6 +65,14 @@ public class DemoData {
                 Records.put(e, "height", d == 9 ? "61.0" : "62.2"); Records.put(e, "head", d == 9 ? "40.1" : "40.6"); Records.put(e, "lengthUnit", "cm"); Records.put(e, "headUnit", "cm");
                 store.save(null, e, false);
             }
+        }
+        String[][] earlier = {{"118", "3.3", "49.5", "34.0"}, {"76", "4.6", "55.0", "37.2"}, {"40", "5.4", "58.4", "38.9"}};
+        for (String[] g : earlier) {
+            long start = LocalDate.now().minusDays(Integer.parseInt(g[0])).atStartOfDay(zone).toInstant().toEpochMilli() + 11 * 60 * MIN;
+            JSONObject e = event(id, "growth", start, start, "Sam");
+            Records.put(e, "weight", g[1]); Records.put(e, "weightUnit", "kg"); Records.put(e, "height", g[2]);
+            Records.put(e, "head", g[3]); Records.put(e, "lengthUnit", "cm"); Records.put(e, "headUnit", "cm");
+            store.save(null, e, false);
         }
         long visit = LocalDate.now().plusDays(3).atStartOfDay(zone).toInstant().toEpochMilli() + 10 * 60 * MIN;
         JSONObject appointment = event(id, "appointment", visit, visit, "Sam");

@@ -784,12 +784,19 @@ public final class MainActivity extends Activity {
         if (profile() != null && profile().optString("role").equals("Baby"))
             people.addView(Ui.rowButton(this, "Care plan & advance alerts", () -> CarePlanUi.settings(this, profile())));
         if (!CareReminders.error(this).isEmpty()) people.addView(Ui.text(this, CareReminders.error(this), 14, Ui.INK));
-        if (profile() != null && !profile().optString("sex").isBlank()) people.addView(Ui.text(this, "Sex: " + profile().optString("sex"), 13, Ui.MUTED));
-        if (profile() != null && !profile().optString("adjustedDob").isBlank()) {
-            JSONObject adjustedProfile = Records.copy(profile()); Records.put(adjustedProfile, "dob", adjustedProfile.optString("adjustedDob"));
-            people.addView(Ui.text(this, "Adjusted birth date: " + profile().optString("adjustedDob") + " / adjusted age: " + age(adjustedProfile), 13, Ui.MUTED));
+        if (profile() != null) {
+            people.addView(Ui.rowButton(this, "Edit " + profile().optString("name"), () -> profileEditor(profile())));
+            List<String> facts = new ArrayList<>();
+            if (!profile().optString("sex").isBlank()) facts.add("Sex: " + profile().optString("sex"));
+            if (!profile().optString("adjustedDob").isBlank()) {
+                JSONObject adjustedProfile = Records.copy(profile()); Records.put(adjustedProfile, "dob", adjustedProfile.optString("adjustedDob"));
+                facts.add("Adjusted birth date: " + profile().optString("adjustedDob") + " / adjusted age: " + age(adjustedProfile));
+            }
+            if (!facts.isEmpty()) {
+                TextView detail = Ui.text(this, String.join("\n", facts), 13, Ui.MUTED);
+                detail.setPadding(Ui.dp(this, 4), 0, Ui.dp(this, 4), Ui.dp(this, 8)); people.addView(detail);
+            }
         }
-        if (profile() != null) people.addView(Ui.rowButton(this, "Edit " + profile().optString("name"), () -> profileEditor(profile())));
         if (profile() != null) people.addView(Ui.rowButton(this, "Delete current profile", () -> {
             JSONObject selected = profile();
             new AlertDialog.Builder(this).setTitle("Delete " + selected.optString("name") + "?")
