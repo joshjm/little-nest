@@ -4,7 +4,8 @@
 
 - Native Android/Java 17, min SDK 28 (Android 9), target/compile SDK 35.
 - Android Gradle Plugin 8.9.2; checksum-pinned Gradle wrapper 8.13.
-- Google Identity Services `play-services-auth` 22.0.0.
+- AppAuth 0.11.1 for Microsoft authorization-code/PKCE sign-in; ZXing Android
+  Embedded 4.3.0 for local pairing QR generation/scanning. No Google Play services.
 - Core-library desugaring 2.1.5 for Java collection/string APIs on older Android.
 - Android SQLite, JobScheduler, AlarmManager, document picker and share intents.
 - No WebView, JavaScript app runtime, backend or proprietary tracker dependency.
@@ -13,12 +14,16 @@ Source layout:
 
 | File | Responsibility |
 |---|---|
-| `app/src/main/java/app/littlenest/MainActivity.java` | Native screens, navigation, Google consent and import/export |
+| `app/src/main/java/app/littlenest/MainActivity.java` | Native screens, local pairing, Microsoft consent and import/export |
 | `app/src/main/java/app/littlenest/EventEditor.java` | Typed activity form, manual times, photos and timer creation |
 | `app/src/main/java/app/littlenest/Catalog.java` | Activity categories and fields |
 | `app/src/main/java/app/littlenest/Records.java` | Versioned operations, validation, ordering and timer semantics |
 | `app/src/main/java/app/littlenest/Store.java` | Transactional SQLite operation log and materialized records |
-| `app/src/main/java/app/littlenest/DriveApi.java` | Bounded Google Drive HTTP transport and private-folder validation |
+| `app/src/main/java/app/littlenest/OneDriveApi.java` | Bounded Graph HTTP transport, immutable files and visible permission validation |
+| `app/src/main/java/app/littlenest/OneDriveAuth.java` | Native browser OAuth, token exchange and refresh |
+| `app/src/main/java/app/littlenest/LocalSync.java` | Pinned mutual TLS, expiring invitations, NSD discovery and foreground reconnect |
+| `app/src/main/java/app/littlenest/LocalProtocol.java` | Bounded inventory and missing-operation exchange |
+| `app/src/main/java/app/littlenest/SyncSecrets.java` | Keystore-encrypted credentials and local pairing secret |
 | `app/src/main/java/app/littlenest/SyncEngine.java` | Pull/upload/pull, per-folder checkpoints and retries |
 | `app/src/main/java/app/littlenest/SyncJob.java` | Best-effort Android background sync |
 | `app/src/main/java/app/littlenest/Reminders.java` | Local notification and alarm scheduling |
@@ -85,8 +90,7 @@ The key alias is `little-nest`. Existing material is preserved; partial signing
 material fails explicitly rather than silently replacing the key.
 
 Future release APKs must use the same key and application ID. Increment
-`versionCode`/`versionName` in `app/build.gradle`. Android OAuth registration
-must match the signing SHA-1 of each permitted build.
+`versionCode`/`versionName` in `app/build.gradle`.
 
 ## Run checks
 
@@ -185,7 +189,36 @@ Use the executable tests and manual acceptance checks as separate evidence.
 
 ## Verification scope
 
-Completed on 17 October 2026:
+### Version 1.5 sync replacement
+
+The new setup and remaining real-account/physical-device acceptance steps are
+documented in [Sync setup](Sync-Setup.md). The 1.5 tests exercise the production
+OneDrive transport through simulated Graph responses and two SQLite stores,
+including lost upload replies, cancellation, offline retry and visible extra
+members. Local tests exercise real mutual-TLS sockets on Android, pinned
+certificate/secret rejection, reconnect, keystore credential storage, bounded
+frames and delta exchange with photos, running timers and tombstones.
+
+No Microsoft app registration or credentials were supplied. Live Microsoft
+consent, invitation representations, OneDrive permissions and two-account
+transfer have **not** been verified. Physical-phone discovery, camera scanning,
+hotspots and OEM background behavior require the two-phone acceptance checklist.
+The emulator uses a disposable, separately named AVD and explicit device serial
+to avoid interfering with another checkout or agent.
+
+Validation in this worktree: 58 JVM tests, with 57 passed and the optional
+private-export test skipped; debug app/test APKs built successfully; Android
+lint reported zero errors and three warnings (the deliberate peer-pinning trust
+manager plus the existing backup/drawing warnings). The full Android suite
+passed 32 tests before the final family-setup regression was added; the final
+focused sync/identity run passed all 12 tests, including that new case.
+Real local TLS pairing exposed and verified the need to permit raw ECDSA
+signing for Android's Conscrypt provider.
+
+### Earlier 1.4 baseline
+
+The following historical checks were completed before the sync replacement on
+17 October 2026. They are not evidence of the new OneDrive or local transports:
 
 - **51 JVM unit tests:** passed, including local full-export acceptance,
   source-field retention, parser edge cases, unit mapping, live-sleep recovery
@@ -232,7 +265,7 @@ Completed on 17 October 2026:
   and care details, with additional 150%/200% font-scale screen checks.
   This is an independent visual direction, not a claim of legal clearance.
 
-Automated checks cover:
+The earlier automated checks covered:
 
 - Order-independent revision convergence, concurrent-edit tie-breaking and
   tombstones.
@@ -257,7 +290,7 @@ Automated checks cover:
 - Advance timing, quiet-hour rollover/DST, snooze, dismiss and expiry; real
   native notification actions and per-baby/per-phone settings.
 
-Not verified without your participation/environment:
+The earlier baseline did not verify:
 
 - Google Cloud project creation, actual Google consent, email invitations,
   two-real-account Drive access and policy approval.
@@ -265,7 +298,7 @@ Not verified without your participation/environment:
 - Exhaustive accessibility, localization, long-term large-history performance,
   Android versions other than the tested emulator and every image-provider app.
 
-After configuring Google, execute the [two-phone acceptance checklist](Google-Drive-Setup.md#4-check-the-handoff).
+For the current version execute the [two-phone acceptance checklist](Sync-Setup.md#two-phone-acceptance-before-relying-on-sync).
 Do not treat simulated network coverage as a claim of real-account verification.
 
 ## GitHub checks and releases

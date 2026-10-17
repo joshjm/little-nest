@@ -106,19 +106,27 @@ public class RecordsTest {
             "tummy", "bath", "story", "routine", "journal", "parentSleep", "hydration", "meal", "mood", "vitals", "symptom", "selfcare", "appointment")) assertNotNull(Catalog.get(id));
     }
     @Test public void permissionsRejectThirdAccountsAndPublicLinks() throws Exception {
-        JSONObject owner = new JSONObject().put("type", "user").put("role", "owner");
-        JSONObject partner = new JSONObject().put("type", "user").put("role", "writer");
-        DriveApi.validatePermissions(new JSONArray().put(owner).put(partner));
-        assertThrows(IllegalArgumentException.class, () -> DriveApi.validatePermissions(new JSONArray().put(owner).put(partner).put(partner)));
-        assertThrows(IllegalArgumentException.class, () -> DriveApi.validatePermissions(new JSONArray().put(owner).put(new JSONObject().put("type", "anyone").put("role", "reader"))));
+        JSONObject owner = new JSONObject().put("roles", new JSONArray().put("owner"))
+            .put("grantedToV2", new JSONObject().put("user", new JSONObject().put("id", "owner")));
+        JSONObject partner = new JSONObject().put("roles", new JSONArray().put("write"))
+            .put("grantedToV2", new JSONObject().put("user", new JSONObject().put("id", "partner")));
+        JSONObject third = new JSONObject().put("roles", new JSONArray().put("write"))
+            .put("invitation", new JSONObject().put("email", "third@example.invalid"));
+        OneDriveApi.validatePermissions(new JSONArray().put(owner).put(partner));
+        OneDriveApi.validatePermissions(new JSONArray().put(partner));
+        assertThrows(java.io.IOException.class, () -> OneDriveApi.validatePermissions(new JSONArray()));
+        assertThrows(java.io.IOException.class, () -> OneDriveApi.validatePermissions(new JSONArray().put(owner).put(partner).put(third)));
+        assertThrows(java.io.IOException.class, () -> OneDriveApi.validatePermissions(new JSONArray().put(owner)
+            .put(new JSONObject().put("roles", new JSONArray().put("write")).put("link", new JSONObject().put("scope", "anonymous")))));
     }
     @Test public void folderLinkIsParsedWithoutQueryInjection() {
-        assertEquals("1234567890abcdef", DriveApi.folderId("https://drive.google.com/drive/folders/1234567890abcdef?usp=sharing"));
-        assertThrows(IllegalArgumentException.class, () -> DriveApi.folderId("bad' or trashed=false"));
+        assertEquals("drive123|folder!123", OneDriveApi.folderId("drive123|folder!123"));
+        assertThrows(IllegalArgumentException.class, () -> OneDriveApi.folderId("bad' or trashed=false"));
+        assertThrows(IllegalArgumentException.class, () -> OneDriveApi.folderId("drive|folder/../../me"));
     }
     @Test public void oversizedFilesAreRejected() {
         byte[] bytes = new byte[100];
-        assertThrows(java.io.IOException.class, () -> DriveApi.readBounded(new java.io.ByteArrayInputStream(bytes), 99));
+        assertThrows(java.io.IOException.class, () -> SyncFiles.readBounded(new java.io.ByteArrayInputStream(bytes), 99));
     }
     @Test public void fractionalRevisionAndMalformedTimerAreRejected() {
         JSONObject operation = op(UUID.randomUUID().toString(), 1, false); Records.put(operation, "clock", 1.5);

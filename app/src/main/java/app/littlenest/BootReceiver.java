@@ -11,7 +11,7 @@ public final class BootReceiver extends BroadcastReceiver {
         CareReminders.execute(context, () -> {
             try {
                 Reminders.scheduleAll(context);
-                if (!context.getSharedPreferences("settings", Context.MODE_PRIVATE).getString("folder", "").isEmpty()) SyncJob.schedule(context);
+                if (!context.getSharedPreferences("settings", Context.MODE_PRIVATE).getString("oneDriveFolder", "").isEmpty()) SyncJob.schedule(context);
             } finally { pending.finish(); }
         });
     }

@@ -9,8 +9,9 @@
    unknown apps** for the app used to open the APK.
 3. Confirm installation, then disable that installation permission again.
 4. Open **Little Nest**. Android 9 or newer is required. Google Play services
-   are needed for Drive, but not for offline tracking.
-5. Follow [Drive setup](Google-Drive-Setup.md) if you want shared storage.
+   are not required.
+5. Follow [sync setup](Sync-Setup.md) for account-free local pairing or optional
+   OneDrive sharing.
 
 For update notifications and installation through Obtainium, follow
 [GitHub / Obtainium releases](Releases.md).
@@ -86,8 +87,9 @@ hides unused activity buttons without deleting their history.
 
 ### Photos
 
-Pick an image through Android's document picker. No blanket media or camera
-permission is requested. Images are resized to at most 1,000 pixels on the long
+Pick an image through Android's document picker. No blanket media permission
+or camera permission is needed for photos (the separate local-pairing QR
+scanner optionally requests camera access). Images are resized to at most 1,000 pixels on the long
 edge and re-encoded as JPEG (metadata is not deliberately copied).
 One compressed photo per event, at most 750 KB, is stored inside the record.
 Large/unreadable images produce an explicit error. Open **History → Edit** to
@@ -146,12 +148,13 @@ Phone-local care-plan settings and alert state are not part of this backup.
 Local data lives in Android's private app storage, protected by Android/device
 security, not separate app-level encryption or an app PIN. Automatic OS backup
 and device transfer are disabled to avoid duplicating identity/sync state.
-Drive storage uses Google's normal access controls and encryption; this app
-does not implement end-to-end encryption.
+Local sync uses mutually authenticated, certificate-pinned TLS. OneDrive storage
+uses Microsoft's normal access controls and encryption; cloud files are not
+end-to-end encrypted by Little Nest.
 
 Delete a profile from **Family** only after exporting anything you want to keep.
 The profile and its current logs are deleted locally and shared as deletions.
-This is not a forensic erasure of Drive history or older backups.
+This is not a forensic erasure of operation history or older backups.
 
 ## Little Nest appearance
 
@@ -164,5 +167,5 @@ with a forest-green selected tab. Profile switching is in the name header below
 the Little Nest masthead. The warm paper palette, bold sans-serif type, woven-nest
 mark and rounded activity tiles are Little Nest's own visual identity.
 
-The visual refresh does not migrate the database, change sharing or require
-Google reauthorization. Install the update directly over the existing app.
+Install updates directly over the existing app. The 1.5 sync update preserves
+local data but replaces Google sharing; see [migration](Google-Drive-Setup.md).

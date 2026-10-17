@@ -55,8 +55,25 @@ public class IdentityTest {
                     assertUnbranded(activity.findViewById(android.R.id.content));
                 }
                 assertNotNull(text(activity.findViewById(android.R.id.content), "Import activity CSV"));
+                assertNotNull(text(activity.findViewById(android.R.id.content), "Local Wi-Fi sync"));
+                assertNotNull(text(activity.findViewById(android.R.id.content), "OneDrive sync"));
+                assertNull(text(activity.findViewById(android.R.id.content), "Google Drive sync"));
                 assertNotNull(text(activity.findViewById(android.R.id.content), "Little Nest " + BuildConfig.VERSION_NAME
                     + "\nA shared place for everyday care. No ads, analytics, subscriptions, or app backend."));
+            });
+        }
+
+    }
+
+    @Test public void oldGoogleConnectionIsRemovedWithoutChangingRecords() {
+        var prefs = context().getSharedPreferences("settings", Context.MODE_PRIVATE);
+        prefs.edit().putString("folder", "old_google_test_folder").putLong("lastSync", 123).commit();
+        String before = Store.get(context()).backup();
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            scenario.onActivity(activity -> {
+                assertFalse(prefs.contains("folder")); assertFalse(prefs.contains("lastSync"));
+                assertTrue(prefs.getBoolean("googleSyncRemoved", false));
+                assertEquals(before, Store.get(context()).backup());
             });
         }
     }

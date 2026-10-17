@@ -11,9 +11,8 @@ Research performed 17 October 2026 using:
 - [REA repository instructions](https://github.com/morluto/rea/blob/main/AGENTS.md),
   [REA skill](https://github.com/morluto/rea/blob/main/.agents/skills/reverse-engineer-anything/SKILL.md)
   and [Android analysis workflow](https://github.com/morluto/rea/blob/main/docs/android-analysis.md).
-- [Google Android authorization documentation](https://developer.android.com/identity/authorization)
-  and [Drive scope guidance](https://developers.google.com/workspace/drive/api/guides/api-specific-auth)
-  for the replacement sync architecture.
+- [Microsoft OneDrive permissions](https://learn.microsoft.com/en-us/onedrive/developer/rest-api/concepts/permissions_reference)
+  and [native OAuth](https://www.rfc-editor.org/rfc/rfc8252) for the 1.5 sync architecture.
 
 The primary listing is **documented evidence**, not observed in-app behavior.
 No original Nara APK, account or device session was supplied. No Nara code,
@@ -63,7 +62,7 @@ not reverse-engineering observations of Nara. See [verification](Development.md)
 | Tummy time, bath, story, custom routines | Dedicated logs plus named timed custom routines |
 | First smile/steps/teeth and memories | Milestones and photo journals |
 | Multiple children/twins | Separate profiles, quick switch and today's comparison |
-| Multiple caregivers/devices | Deliberately limited to two Google accounts; shared Drive operations |
+| Multiple caregivers/devices | One paired local partner; optional two-person OneDrive operation sharing |
 | Pregnancy vitals | Weight, blood pressure, glucose/unit and pulse |
 | Pregnancy symptoms, cravings and aversions | Symptom categories, severity and notes |
 | Mood, journal and photos | Mood categories, free text, journal/photo entries |
@@ -75,14 +74,16 @@ not reverse-engineering observations of Nara. See [verification](Development.md)
 
 ## Original additions
 
-- Google Drive instead of an app-hosted service.
+- Local Wi-Fi and optional OneDrive instead of an app-hosted service.
 - Fully usable offline without signup.
 - JSON backup/merge and per-profile CSV export.
 - Nara CSV migration with preview, destination mapping, safe repeat imports,
   original source fields and optional continuation of an ongoing sleep.
 - Deterministic, operation-based offline merging and deletion tombstones.
 - Local-only caregiver names, visibility and unit preferences.
-- Private-folder checks that stop syncing when a third account is added.
+- Private-folder checks reject visible extra accounts, public links and inherited
+  editor access. Microsoft limits a non-owner to viewing their own grants; the owner
+  must maintain two-person access.
 - Local pattern-based [feed and nap planning](Care-Plan.md), per-phone advance
   alerts, quiet hours, snooze/dismiss and upcoming appointment/reminder lists.
 
@@ -103,7 +104,7 @@ not reverse-engineering observations of Nara. See [verification](Development.md)
 - Foreground eventual sync and scheduled background jobs, not instant push sync.
 - Same-record simultaneous edits resolve to one deterministic winner rather than
   a collaborative field-by-field editor or an interactive conflict dialog.
-- No end-to-end encryption, separate app PIN, account-specific private parent
+- No cloud end-to-end encryption, separate app PIN, account-specific private parent
   journals, automatic compaction, remote erase or automated Drive migration.
 - English UI; Android date labels follow the phone locale, but the text is not
   translated. Accessibility uses native controls, scalable text, chart descriptions
