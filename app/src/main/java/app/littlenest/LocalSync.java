@@ -123,7 +123,8 @@ final class LocalSync implements AutoCloseable {
         tls.init(factory.getKeyManagers(), new TrustManager[]{trust}, new SecureRandom()); return tls;
     }
 
-    void invitation(java.util.function.Consumer<String> ready) {
+    void invitation(java.util.function.Consumer<String> ready) { invitation(ready, this::failure); }
+    void invitation(java.util.function.Consumer<String> ready, java.util.function.Consumer<Exception> failed) {
         clientWorker.execute(() -> {
             try {
                 if (paired()) throw new IllegalStateException("A local partner is already paired");
@@ -135,7 +136,7 @@ final class LocalSync implements AutoCloseable {
                     .put("host", address()).put("port", server.getLocalPort()).put("pin", fingerprint)
                     .put("secret", pairingSecret).put("expires", pairingUntil).toString();
                 ready.accept(code);
-            } catch (Exception e) { failure(e); }
+            } catch (Exception e) { cancelInvitation(); failed.accept(e); }
         });
     }
     void cancelInvitation() { pairingUntil = 0; pairingSecret = ""; }

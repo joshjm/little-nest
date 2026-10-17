@@ -6,7 +6,6 @@ import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.job.JobScheduler;
 import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -306,7 +305,7 @@ public final class MainActivity extends Activity {
         body.addView(intro);
         Ui.gap(body, 18);
         body.addView(Ui.primary(this, "Create a profile", () -> profileEditor(null)));
-        body.addView(Ui.button(this, "Join partner's nest", () -> { tab = "Family"; render(); }));
+        body.addView(Ui.button(this, "Join partner's nest", () -> { tab = "Family"; render(); withCaregiverName(this::scanPartner); }));
         Ui.gap(body, 8);
         body.addView(Ui.text(this, "Start with a baby or parent profile. Add twins and other children whenever you need.", 14, Ui.MUTED));
         Ui.stitch(body);
@@ -778,6 +777,7 @@ public final class MainActivity extends Activity {
     private void family() {
         TextView heading = Ui.title(this, "Your people. Your data.", 26); heading.setPadding(0, Ui.dp(this, 6), 0, 0); body.addView(heading);
         body.addView(Ui.text(this, "Two caregivers, one private nest. Pair over Wi-Fi without an account, or use optional OneDrive sharing. No app backend.", 15, Ui.MUTED));
+        partnerCard();
         body.addView(Ui.section(this, "Profiles & preferences"));
         LinearLayout people = Ui.panel(this);
         people.addView(Ui.rowButton(this, "Add baby or parent", () -> profileEditor(null)));
@@ -817,7 +817,6 @@ public final class MainActivity extends Activity {
         }));
         people.addView(Ui.rowButton(this, "Choose visible activities", this::chooseActivities));
         body.addView(people);
-        localSyncCard();
         body.addView(Ui.section(this, "OneDrive sync"));
         LinearLayout drive = Ui.panel(this);
         if (prefs.getBoolean("googleSyncRemoved", false))
@@ -838,17 +837,12 @@ public final class MainActivity extends Activity {
             if (!prefs.getString("oneDriveFolder", "").isEmpty()) sync(); else render();
         })));
         if (folder.isEmpty()) {
-            drive.addView(Ui.rowButton(this, "1. Create a shared nest", () -> authorize(true, this::createNest)));
-            drive.addView(Ui.rowButton(this, "Or join partner's nest", this::joinNest));
+            drive.addView(Ui.rowButton(this, "Create a shared OneDrive nest", () -> authorize(true, this::createNest)));
+            drive.addView(Ui.text(this, "Joining your partner's nest? Use Join partner above instead of creating a second nest.", 12, Ui.MUTED));
             if (OneDriveAuth.connected(this))
                 drive.addView(Ui.rowButton(this, "Sign out of OneDrive on this phone", this::disconnectOneDrive));
         } else {
-            drive.addView(Ui.rowButton(this, "2. Invite partner by Microsoft email", () -> prompt("Invite your partner", "Their personal Microsoft account email. Only two accounts are permitted.", "", email ->
-                authorize(true, () -> runDrive(() -> { oneDrive().invite(folder, email.trim()); return "Partner invited. Ask them to accept the email invitation, then send the nest code."; }, this::render)))));
-            drive.addView(Ui.rowButton(this, "Copy OneDrive nest code", () -> {
-                getSystemService(ClipboardManager.class).setPrimaryClip(ClipData.newPlainText("Little Nest folder", folder));
-                Toast.makeText(this, "Nest code copied. Your partner must also accept the email invitation.", Toast.LENGTH_LONG).show();
-            }));
+            drive.addView(Ui.text(this, "To add your partner, use Invite partner above. It includes this nest and can send the Microsoft email invitation.", 12, Ui.MUTED));
             drive.addView(Ui.rowButton(this, "Sync now", () -> authorize(true, this::sync)));
             drive.addView(Ui.rowButton(this, "Disconnect OneDrive on this phone", () -> new AlertDialog.Builder(this).setTitle("Disconnect OneDrive?")
                 .setMessage("Local logs and local pairing stay here. This does not remove anyone's folder access. Remove access in OneDrive if needed. Do not connect another family without exporting and clearing app storage.")
@@ -936,15 +930,29 @@ public final class MainActivity extends Activity {
         }
     }
 
-    private void localSyncCard() {
-        body.addView(Ui.section(this, "Local Wi-Fi sync"));
+    private void partnerCard() {
+        body.addView(Ui.section(this, "Your partner"));
         LinearLayout card = Ui.panel(this);
         boolean paired = !prefs.getString("localPeer", "").isEmpty();
-        card.addView(Ui.text(this, paired
-            ? "Partner paired. Open both apps on the same private Wi-Fi or hotspot to reconnect automatically."
-            : "No account or internet required. Connect both phones to the same private Wi-Fi or hotspot, then pair once. All profiles, parent logs, photos and historical revisions will be shared.", 14, Ui.MUTED));
+        String folder = prefs.getString("oneDriveFolder", ""), pendingNest = prefs.getString("pendingNest", "");
+        boolean joining = !pendingNest.isEmpty() && folder.isEmpty();
+        if (!paired && folder.isEmpty() && !joining)
+            card.addView(Ui.text(this, "Share this nest with one other caregiver. On one phone tap Invite partner. On the other tap Join partner and scan the code. On the same Wi-Fi or hotspot this pairs instantly, with no account. All profiles, logs, photos and past edits are shared.", 14, Ui.MUTED));
+        if (joining) {
+            card.addView(Ui.text(this, "Almost done: your partner also shared their OneDrive nest, so you can sync while apart. Accept the Microsoft invitation email they sent you, then tap below.", 14, Ui.INK));
+            card.addView(Ui.rowButton(this, "Finish joining OneDrive nest", () -> joinNest(pendingNest)));
+            card.addView(Ui.rowButton(this, "Skip OneDrive for now", () -> { prefs.edit().remove("pendingNest").apply(); render(); }));
+        }
+        if ((!paired || !folder.isEmpty()) && !joining) card.addView(Ui.primary(this, "Invite partner", () -> withCaregiverName(this::invitePartner)));
+        if (!paired || folder.isEmpty()) {
+            card.addView(Ui.rowButton(this, "Join partner - scan their code", () -> withCaregiverName(this::scanPartner)));
+            card.addView(Ui.rowButton(this, "Or paste a code they sent you", () -> withCaregiverName(() ->
+                prompt("Partner code", "Paste the Little Nest code your partner sent you.", "", this::usePartnerCode))));
+        }
         if (paired) {
+            card.addView(Ui.medium(this, "Wi-Fi sync", 16, Ui.INK));
             long last = prefs.getLong("localLastSync", 0);
+            card.addView(Ui.text(this, "Paired. Open both apps on the same private Wi-Fi or hotspot to sync automatically.", 14, Ui.MUTED));
             card.addView(Ui.text(this, last == 0 ? "Waiting for first local sync" : "Last local sync: " + EventEditor.format(last), 13, Ui.MUTED));
             card.addView(Ui.text(this, store.pending("local:" + prefs.getString("localPeer", "")) + " changes waiting for partner", 13, Ui.INK));
             card.addView(Ui.rowButton(this, "Sync locally now", () -> {
@@ -958,49 +966,120 @@ public final class MainActivity extends Activity {
                     try { if (localSync != null) localSync.disconnect(); render(); }
                     catch (Exception e) { error("Cannot disconnect local sync: " + e.getMessage()); }
                 }).setNegativeButton("Cancel", null).show()));
-        } else {
-            card.addView(Ui.rowButton(this, "1. Show local pairing QR", () -> {
-                LocalSync local = localSync;
-                if (local == null) { error("Local sync is not running. Reopen the app."); return; }
-                local.invitation(code -> runOnUiThread(() -> {
-                    if (isDestroyed() || local != localSync) return;
-                    try {
-                        LinearLayout content = Ui.column(this);
-                        content.addView(Ui.text(this, "Ask your partner to scan this code. It expires in five minutes. Anyone with this code can pair during that time; do not publish it.", 14, Ui.INK));
-                        ImageView qr = new ImageView(this);
-                        qr.setImageBitmap(new BarcodeEncoder().createBitmap(new MultiFormatWriter().encode(code, BarcodeFormat.QR_CODE, 700, 700)));
-                        qr.setContentDescription("Private local pairing QR code"); qr.setAdjustViewBounds(true);
-                        content.addView(qr, new LinearLayout.LayoutParams(-1, Ui.dp(this, 280)));
-                        new AlertDialog.Builder(this).setTitle("Pair your local partner").setView(content)
-                            .setNeutralButton("Copy code", (dialog, which) -> {
-                                // Copying does not end the invitation; the same five-minute deadline applies.
-                                getSystemService(ClipboardManager.class).setPrimaryClip(ClipData.newPlainText("Private Little Nest pairing", code));
-                            }).setPositiveButton("Close", (dialog, which) -> local.cancelInvitation())
-                            .setOnCancelListener(dialog -> local.cancelInvitation()).show();
-                    } catch (com.google.zxing.WriterException e) {
-                        local.cancelInvitation(); error("Cannot create pairing QR: " + e.getMessage());
-                    }
-                }));
-            }));
-            card.addView(Ui.rowButton(this, "2. Scan partner's local QR", () -> new IntentIntegrator(this)
-                .setDesiredBarcodeFormats(IntentIntegrator.QR_CODE).setPrompt("Scan your partner's Little Nest pairing code")
-                .setBeepEnabled(false).setOrientationLocked(false).initiateScan()));
-            card.addView(Ui.rowButton(this, "Or paste a local pairing code", () ->
-                prompt("Local pairing code", "Paste the private code copied by your partner. Do not use a OneDrive nest code here.", "", this::confirmLocalJoin)));
         }
         if (!prefs.getString("localError", "").isEmpty())
             card.addView(Ui.text(this, "Local sync: " + prefs.getString("localError", ""), 13, Ui.INK));
-        card.addView(Ui.text(this, "Encrypted, authenticated phone-to-phone transfer. Checks every 15 seconds while both apps are open. No always-on background listener; changes wait safely when a phone is asleep or away. Guest Wi-Fi may block local connections.", 12, Ui.MUTED));
+        card.addView(Ui.text(this, "Wi-Fi sync is encrypted phone-to-phone and runs while both apps are open; changes wait safely when a phone is asleep or away. Guest Wi-Fi may block it. To sync while apart, add OneDrive below before inviting.", 12, Ui.MUTED));
         body.addView(card);
     }
 
-    private void confirmLocalJoin(String code) {
-        try { LocalSync.parseInvitation(code); }
-        catch (Exception e) { error("Cannot use pairing code: " + e.getMessage()); return; }
-        new AlertDialog.Builder(this).setTitle("Share with this partner?")
-            .setMessage("Only continue if you got this code directly from your partner. All existing profiles, parent logs, photos and historical revisions on both phones will merge and be shared. Export a backup first.")
-            .setPositiveButton("Pair and share", (dialog, which) -> {
-                if (localSync == null) pendingPairing = code; else localSync.join(code);
+    private void withCaregiverName(Runnable next) {
+        if (!prefs.getString("caregiver", "").isBlank()) { next.run(); return; }
+        prompt("Your name first", "Shown on your logs so you and your partner can tell who logged what.", "", value -> {
+            if (value.isBlank()) { error("Enter a caregiver name"); return; }
+            prefs.edit().putString("caregiver", value.trim()).apply(); render(); next.run();
+        });
+    }
+
+    private void invitePartner() {
+        String nest = prefs.getString("oneDriveFolder", "");
+        LocalSync local = localSync;
+        if (!prefs.getString("localPeer", "").isEmpty() || local == null) {
+            if (nest.isEmpty()) error("Local sync is not running. Reopen the app.");
+            else showInvite(null, nest, null, "");
+            return;
+        }
+        local.invitation(code -> runOnUiThread(() -> {
+            if (isDestroyed() || local != localSync) local.cancelInvitation(); else showInvite(code, nest, local, "");
+        }), failure -> runOnUiThread(() -> {
+            String message = failure.getMessage() == null ? failure.getClass().getSimpleName() : failure.getMessage();
+            if (isDestroyed()) return;
+            if (nest.isEmpty()) error("Cannot create invitation: " + message);
+            else showInvite(null, nest, null, "Wi-Fi pairing is unavailable (" + message + "), so this code uses OneDrive only.");
+        }));
+    }
+
+    private void showInvite(String localCode, String nest, LocalSync local, String note) {
+        String code;
+        Bitmap image;
+        try {
+            code = PartnerInvite.create(localCode, nest);
+            image = new BarcodeEncoder().createBitmap(new MultiFormatWriter().encode(code, BarcodeFormat.QR_CODE, 700, 700));
+        } catch (Exception e) {
+            if (local != null) local.cancelInvitation();
+            error("Cannot create invitation: " + e.getMessage()); return;
+        }
+        LinearLayout content = Ui.column(this);
+        int pad = Ui.dp(this, 20); content.setPadding(pad, pad / 2, pad, 0);
+        content.addView(Ui.text(this, "On your partner's phone: open Little Nest, tap Join partner and scan this code.", 15, Ui.INK));
+        if (!note.isEmpty()) content.addView(Ui.text(this, note, 13, Ui.INK));
+        if (localCode != null) content.addView(Ui.text(this, "Keep this screen open with both phones on the same Wi-Fi or hotspot. The code expires in five minutes. Anyone who scans it can join, so do not post it.", 13, Ui.MUTED));
+        if (!nest.isEmpty()) content.addView(Ui.text(this, "It also adds them to your OneDrive nest once they accept a Microsoft invitation email. Not together? Use Invite by email instead.", 13, Ui.MUTED));
+        ImageView qr = new ImageView(this); qr.setImageBitmap(image);
+        qr.setContentDescription("Private partner invitation QR code"); qr.setAdjustViewBounds(true);
+        content.addView(qr, new LinearLayout.LayoutParams(-1, Ui.dp(this, 260)));
+        AlertDialog.Builder builder = new AlertDialog.Builder(this).setTitle("Invite your partner").setView(content)
+            .setPositiveButton("Done", (dialog, which) -> { if (local != null) local.cancelInvitation(); })
+            .setOnCancelListener(dialog -> { if (local != null) local.cancelInvitation(); });
+        // Leaving the app stops the Wi-Fi listener, so codes sent remotely carry only the OneDrive nest.
+        if (!nest.isEmpty()) builder.setNeutralButton("Invite by email", (dialog, which) -> {
+            if (local != null) local.cancelInvitation();
+            emailInvite(nest);
+        });
+        builder.show();
+    }
+
+    private void emailInvite(String nest) {
+        prompt("Invite by email", "Your partner's personal Microsoft account email. OneDrive emails them access, then your email app opens with their join code. Only two accounts are permitted.", "", value -> {
+            String email = value.trim();
+            if (!email.matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+")) { error("Enter your partner's email address"); return; }
+            authorize(true, () -> runDrive(() -> { oneDrive().invite(nest, email); return "Microsoft invitation sent"; }, () -> {
+                try { sendJoinCode(email, PartnerInvite.create(null, nest)); }
+                catch (Exception e) { error("Cannot create join code: " + e.getMessage()); }
+            }));
+        });
+    }
+
+    private void sendJoinCode(String email, String code) {
+        String text = "Join me in Little Nest.\n\n1. Accept the OneDrive invitation email from Microsoft.\n"
+            + "2. Open Little Nest, go to Family, tap Join partner, then \"Or paste a code they sent you\".\n3. Paste this code:\n\n" + code
+            + "\n\nThis code is private. Please don't share it.";
+        Intent mail = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:")).putExtra(Intent.EXTRA_EMAIL, new String[]{email})
+            .putExtra(Intent.EXTRA_SUBJECT, "Join our Little Nest").putExtra(Intent.EXTRA_TEXT, text);
+        try { startActivity(mail); }
+        catch (android.content.ActivityNotFoundException e) {
+            startActivity(Intent.createChooser(new Intent(Intent.ACTION_SEND).setType("text/plain")
+                .putExtra(Intent.EXTRA_SUBJECT, "Join our Little Nest").putExtra(Intent.EXTRA_TEXT, text), "Send join code"));
+        }
+    }
+
+    private void scanPartner() {
+        new IntentIntegrator(this).setDesiredBarcodeFormats(IntentIntegrator.QR_CODE).setPrompt("Scan the code on your partner's phone")
+            .setBeepEnabled(false).setOrientationLocked(false).initiateScan();
+    }
+
+    private void usePartnerCode(String text) {
+        PartnerInvite.Parsed code;
+        try { code = PartnerInvite.parse(text); }
+        catch (Exception e) { error("Cannot use this code: " + e.getMessage()); return; }
+        String folder = prefs.getString("oneDriveFolder", "");
+        boolean local = code.local() != null && prefs.getString("localPeer", "").isEmpty();
+        boolean nest = !code.nest().isEmpty() && !code.nest().equals(folder);
+        if (nest && !folder.isEmpty()) { error("This phone already uses a different OneDrive nest. Disconnect it first."); return; }
+        if (!local && !nest) {
+            error(code.local() != null || !code.nest().isEmpty() ? "This phone is already connected to that partner." : "Cannot use this code: " + code.localProblem());
+            return;
+        }
+        StringBuilder message = new StringBuilder("Only continue if this code came directly from your partner. Everything on both phones (profiles, logs, photos and past edits) will merge and be shared. Export a backup first if unsure.\n");
+        if (local) message.append("\n- Pair now over Wi-Fi.");
+        if (nest) message.append("\n- Join their OneDrive nest after you accept their Microsoft invitation email.");
+        if (!code.localProblem().isEmpty()) message.append("\n\nWi-Fi pairing skipped: ").append(code.localProblem());
+        new AlertDialog.Builder(this).setTitle("Join your partner?").setMessage(message.toString())
+            .setPositiveButton("Join and share", (dialog, which) -> {
+                tab = "Family";
+                if (nest) prefs.edit().putString("pendingNest", code.nest()).apply();
+                if (local) { if (localSync == null) pendingPairing = code.local(); else localSync.join(code.local()); }
+                render();
             }).setNegativeButton("Cancel", null).show();
     }
 
@@ -1037,21 +1116,19 @@ public final class MainActivity extends Activity {
             String folder = new OneDriveApi(OneDriveAuth.token(this), family).createFolder();
             SyncFamily.accept(this, family);
             prefs.edit().putString("oneDriveFolder", folder).remove("googleSyncRemoved").apply();
-            SyncJob.schedule(this); return "Nest created. Invite your partner next.";
+            SyncJob.schedule(this); return "Nest created. Tap Invite partner to add your partner.";
         }, this::sync);
     }
-    private void joinNest() {
-        prompt("Join your partner", "Accept their OneDrive email invitation in your browser first, then paste their OneDrive nest code here. All existing local logs will be shared with them.", "", value -> {
-            final String folder;
-            try { folder = OneDriveApi.folderId(value.trim()); }
-            catch (IllegalArgumentException e) { error(e.getMessage()); return; }
-            authorize(true, () -> runDrive(() -> {
-                OneDriveApi api = new OneDriveApi(OneDriveAuth.token(this), prefs.getString("syncFamily", ""));
-                SyncFamily.accept(this, api.folderFamily(folder));
-                prefs.edit().putString("oneDriveFolder", folder).remove("googleSyncRemoved").apply(); SyncJob.schedule(this);
-                return "Nest connected";
-            }, this::sync));
-        });
+    private void joinNest(String nest) {
+        final String folder;
+        try { folder = OneDriveApi.folderId(nest.trim()); }
+        catch (IllegalArgumentException e) { error(e.getMessage()); return; }
+        authorize(true, () -> runDrive(() -> {
+            OneDriveApi api = new OneDriveApi(OneDriveAuth.token(this), prefs.getString("syncFamily", ""));
+            SyncFamily.accept(this, api.folderFamily(folder));
+            prefs.edit().putString("oneDriveFolder", folder).remove("pendingNest").remove("googleSyncRemoved").apply(); SyncJob.schedule(this);
+            return "Nest connected";
+        }, this::sync));
     }
     private OneDriveApi oneDrive() throws Exception {
         return new OneDriveApi(OneDriveAuth.token(this), SyncFamily.ensure(this));
@@ -1085,7 +1162,7 @@ public final class MainActivity extends Activity {
         super.onActivityResult(request, result, data);
         IntentResult scan = IntentIntegrator.parseActivityResult(request, result, data);
         if (scan != null) {
-            if (scan.getContents() != null) confirmLocalJoin(scan.getContents());
+            if (scan.getContents() != null) usePartnerCode(scan.getContents());
             return;
         }
         if (request == AUTH) {

@@ -45,8 +45,9 @@ Have a supported activity export? Use **Family → Import activity CSV** before 
 profiles. Follow the [import guide](Importing-CSV.md), including the option to
 continue the baby's current sleep from its original start time.
 
-If you are joining your partner, pair and sync before creating profiles to avoid
-creating the same baby twice. Distinct offline profiles are intentionally not
+If you are joining your partner, tap **Join partner's nest** on the welcome
+screen and scan the code from their **Family -> Your partner -> Invite partner**
+before creating profiles, to avoid creating the same baby twice. Distinct offline profiles are intentionally not
 deduplicated by name.
 
 ## Log care
