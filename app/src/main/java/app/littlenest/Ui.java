@@ -31,7 +31,7 @@ import android.widget.TextView;
 final class Ui {
     static boolean night;
     static int BG, SURFACE, INK, MUTED, GREEN, ON_GREEN, SAGE, PEACH, LAVENDER, BLUE, CORAL, SAND, LINE, RIPPLE, DANGER;
-    static int FEED, SLEEP, PUMP, DIAPER, HEALTH, PARENT, MEMORY;
+    static int FEED, SLEEP, PUMP, NAPPY, HEALTH, PARENT, MEMORY;
     static { set(false); }
 
     static void apply(Context context) {
@@ -47,7 +47,7 @@ final class Ui {
             BLUE = Color.rgb(223, 232, 227); CORAL = Color.rgb(242, 224, 218); SAND = Color.rgb(238, 231, 211);
             LINE = Color.rgb(221, 224, 212); RIPPLE = 0x242B5B45; DANGER = Color.rgb(160, 52, 40);
             FEED = Color.rgb(196, 110, 52); SLEEP = Color.rgb(74, 101, 158); PUMP = Color.rgb(174, 82, 104);
-            DIAPER = Color.rgb(166, 128, 38); HEALTH = Color.rgb(44, 124, 106); PARENT = Color.rgb(122, 92, 166);
+            NAPPY = Color.rgb(166, 128, 38); HEALTH = Color.rgb(44, 124, 106); PARENT = Color.rgb(122, 92, 166);
             MEMORY = Color.rgb(150, 98, 140);
         } else {
             BG = Color.rgb(17, 22, 19); SURFACE = Color.rgb(26, 33, 29);
@@ -57,7 +57,7 @@ final class Ui {
             BLUE = Color.rgb(32, 45, 52); CORAL = Color.rgb(56, 37, 39); SAND = Color.rgb(51, 46, 33);
             LINE = Color.rgb(48, 58, 52); RIPPLE = 0x3396C9A7; DANGER = Color.rgb(240, 160, 148);
             FEED = Color.rgb(231, 160, 110); SLEEP = Color.rgb(147, 174, 219); PUMP = Color.rgb(226, 150, 168);
-            DIAPER = Color.rgb(217, 188, 106); HEALTH = Color.rgb(127, 199, 180); PARENT = Color.rgb(187, 162, 222);
+            NAPPY = Color.rgb(217, 188, 106); HEALTH = Color.rgb(127, 199, 180); PARENT = Color.rgb(187, 162, 222);
             MEMORY = Color.rgb(214, 160, 200);
         }
     }
@@ -79,7 +79,7 @@ final class Ui {
             case "breast", "bottle", "solids" -> FEED;
             case "sleep", "parentSleep" -> SLEEP;
             case "pump" -> PUMP;
-            case "diaper", "tummy", "bath", "story", "routine" -> DIAPER;
+            case "diaper", "tummy", "bath", "story", "routine" -> NAPPY;
             case "growth", "medicine", "vaccine", "temperature", "medical" -> HEALTH;
             case "appointment" -> GREEN;
             default -> kind.group().equals("Parent") ? PARENT : MEMORY;
@@ -92,7 +92,7 @@ final class Ui {
             case "breast", "bottle", "solids" -> "Feeds";
             case "sleep", "parentSleep" -> "Sleep";
             case "pump" -> "Pumping";
-            case "diaper", "tummy", "bath", "story", "routine" -> "Diapers & routines";
+            case "diaper", "tummy", "bath", "story", "routine" -> "Nappies & routines";
             case "growth", "medicine", "vaccine", "temperature", "medical" -> "Health";
             case "appointment" -> "Appointments";
             default -> kind.group().equals("Parent") ? "Parent care" : "Memories";

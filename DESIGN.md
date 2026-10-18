@@ -31,7 +31,7 @@ Thread colours (marks and graphics only, never body text):
 | `FEED` | `#C46E34` | `#E7A06E` | Breast, bottle, solids |
 | `SLEEP` | `#4A659E` | `#93AEDB` | Sleep, parent sleep |
 | `PUMP` | `#AE5268` | `#E296A8` | Pumping |
-| `DIAPER` | `#A68026` | `#D9BC6A` | Diapers, tummy time, bath, story, routines |
+| `NAPPY` | `#A68026` | `#D9BC6A` | Nappies, tummy time, bath, story, routines |
 | `HEALTH` | `#2C7C6A` | `#7FC7B4` | Growth, medicine, vaccines, temperature, visits |
 | `PARENT` | `#7A5CA6` | `#BBA2DE` | Parent care |
 | `MEMORY` | `#96628C` | `#D6A0C8` | Milestones, journal, photos |
@@ -59,6 +59,12 @@ values and the night palette was checked by hand (lowest 6.0:1).
   pills. Every touch target is at least 48dp.
 - Bottom navigation: Today, Plan, History, Trends, Family, with a tinted indicator
   behind the selected icon.
+- Quick logs: three equal tinted buttons at the very top of Today (nappy sand,
+  sleep blue, each with its care icon). They save with no form and confirm with
+  a short toast plus the usual saved moment.
+- Home-screen widgets reuse the paper surface, hairline edge and thread colours
+  through `widget_*` colour resources, with night variants. Estimates keep the
+  `~` / "was" wording used by At a glance.
 
 ## Signature components
 

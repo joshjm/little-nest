@@ -51,7 +51,7 @@ not reverse-engineering observations of Nara. See [verification](Development.md)
 | Solids and preloaded first foods | 40+ foods/allergens, Other, portion and reaction fields |
 | Feeding patterns and schedules | Charts, learned milk-feed windows, manual intervals and opt-in advance alerts |
 | Feeding notes and photos | Notes and one resized photo on every event |
-| Wet, dirty and dry diapers; rash | Wet/dirty/mixed/dry, rash, blowout and multi-select stool colors/textures |
+| Wet, dirty and dry nappies; rash | Wet/dirty/mixed/dry, rash, blowout and multi-select stool colors/textures |
 | Handoff and bowel history | Caregiver attribution, timestamps, search, CSV |
 | Nap/night sleep timer and manual sessions | Sleep type, timer, manual start/end, persisted paused intervals |
 | Sleep patterns by day/week | Seven-day charts, 24-hour sleep timeline, previous-week totals |
@@ -97,8 +97,8 @@ not reverse-engineering observations of Nara. See [verification](Development.md)
   Generic JSON restore supports Little Nest's format, not a Nara JSON format.
 - No Apple Watch, Siri, iOS widgets or live activities. These are out of scope
   for Android and some require online features excluded by the request.
-- No Android home-screen widget or wearable companion. Public research did not
-  establish these as part of Nara's Android feature set.
+- No wearable companion. Android home-screen widgets cover one-tap nappy and
+  sleep logs and an at-a-glance summary only.
 - No clinician portal, medical recommendations,
   age-based milestone recommendations, automatic scheduling, PDF report or AI.
 - No multi-grandparent sharing, chat, social features, ads, analytics,

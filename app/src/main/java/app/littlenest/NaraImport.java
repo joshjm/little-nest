@@ -204,14 +204,14 @@ public final class NaraImport {
             case "diaper" -> {
                 put(event, "diaper", switch (required(row, "[Diaper] Type")) {
                     case "Wet" -> "Wet"; case "Dirty" -> "Dirty"; case "Dirty Wet" -> "Mixed"; case "Dry" -> "Dry";
-                    default -> throw new IllegalArgumentException("Unknown diaper type");
+                    default -> throw new IllegalArgumentException("Unknown nappy type");
                 });
                 String detail = value(row, "[Diaper] Detail");
                 if (!detail.isEmpty()) {
                     for (String flag : detail.split(" ")) {
                         if (flag.equals("Rash")) put(event, "rash", "Yes");
                         else if (flag.equals("Blowout")) put(event, "blowout", "Yes");
-                        else throw new IllegalArgumentException("Unknown diaper detail: " + flag);
+                        else throw new IllegalArgumentException("Unknown nappy detail: " + flag);
                     }
                 }
                 if (!value(row, "[Diaper] Dirty Color").isEmpty()) put(event, "stool", tokens(value(row, "[Diaper] Dirty Color"), false));

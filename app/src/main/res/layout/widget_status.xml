@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="UseCompatTextViewDrawableXml"
+    android:id="@+id/status_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_background"
+    android:orientation="vertical"
+    android:paddingHorizontal="16dp"
+    android:paddingVertical="10dp">
+
+    <TextView
+        android:id="@+id/status_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:fontFamily="sans-serif-medium"
+        android:maxLines="1"
+        android:text="@string/app_name"
+        android:textColor="@color/widget_ink"
+        android:textSize="15sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            style="@style/WidgetLabel"
+            android:text="@string/widget_last_nappy"
+            android:drawableStart="@drawable/widget_dot_nappy" />
+
+        <TextView
+            android:id="@+id/status_nappy"
+            style="@style/WidgetValue" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            style="@style/WidgetLabel"
+            android:text="@string/widget_last_sleep"
+            android:drawableStart="@drawable/widget_dot_sleep" />
+
+        <TextView
+            android:id="@+id/status_sleep"
+            style="@style/WidgetValue" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            style="@style/WidgetLabel"
+            android:text="@string/widget_next_sleep"
+            android:drawableStart="@drawable/widget_dot_sleep" />
+
+        <TextView
+            android:id="@+id/status_next_sleep"
+            style="@style/WidgetValue" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            style="@style/WidgetLabel"
+            android:text="@string/widget_next_feed"
+            android:drawableStart="@drawable/widget_dot_feed" />
+
+        <TextView
+            android:id="@+id/status_next_feed"
+            style="@style/WidgetValue" />
+    </LinearLayout>
+</LinearLayout>

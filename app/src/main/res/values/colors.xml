@@ -1,0 +1,12 @@
+<resources>
+    <color name="widget_surface">#FFFDF8</color>
+    <color name="widget_line">#DDE0D4</color>
+    <color name="widget_ink">#26352C</color>
+    <color name="widget_muted">#576357</color>
+    <color name="widget_ripple">#242B5B45</color>
+    <color name="widget_nappy_fill">#EEE7D3</color>
+    <color name="widget_sleep_fill">#DFE8E3</color>
+    <color name="widget_nappy">#A68026</color>
+    <color name="widget_sleep">#4A659E</color>
+    <color name="widget_feed">#C46E34</color>
+</resources>

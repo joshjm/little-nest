@@ -145,11 +145,14 @@ public final class MainActivity extends Activity {
         localSync.start(); handler.postDelayed(localTick, 1500);
         if (pendingPairing != null) { localSync.join(pendingPairing); pendingPairing = null; }
         CareReminders.refresh(this);
+        // Widgets can log while the app is in the background, so show their entries on return.
+        if (editor == null && !importing && !working && !renderedTab.isEmpty()) render();
         handler.postDelayed(careTick, 60_000);
     }
     @Override protected void onPause() {
         handler.removeCallbacks(ticker); handler.removeCallbacks(autoSync); handler.removeCallbacks(careTick); handler.removeCallbacks(localTick);
         if (localSync != null) { localSync.close(); localSync = null; }
+        NestWidgets.refresh(this);
         super.onPause();
     }
     @Override protected void onDestroy() { executor.shutdown(); authorization.dispose(); super.onDestroy(); }
@@ -159,6 +162,7 @@ public final class MainActivity extends Activity {
     void changed() {
         render();
         CareReminders.refresh(this);
+        NestWidgets.refresh(this);
         if (localSync != null) { handler.removeCallbacks(localTick); handler.postDelayed(localTick, 1500); }
         if (!prefs.getString("oneDriveFolder", "").isEmpty()) {
             handler.removeCallbacks(autoSync); handler.postDelayed(autoSync, 1500);
@@ -325,6 +329,7 @@ public final class MainActivity extends Activity {
         List<JSONObject> events = store.events(profileId);
         long now = System.currentTimeMillis();
         boolean parent = profile.optString("role").equals("Parent");
+        if (!parent) quickLogs(events);
         body.addView(Ui.illustratedHeading(this, "A day at a time", 22, "nest", careSaved));
         careSaved = false;
         for (JSONObject event : events) if (event.optBoolean("running") || event.optBoolean("timerPaused")) timerCard(event);
@@ -344,7 +349,7 @@ public final class MainActivity extends Activity {
             if (latestBreast != null) feedFact.addView(Ui.text(this, "Last breast side: " + latestBreast.optString("side", "Not recorded"), 13, Ui.MUTED));
             JSONObject sleep = events.stream().filter(e -> e.optString("kind").equals("sleep") && !e.optBoolean("importIncomplete")).findFirst().orElse(null);
             fact(weave, Ui.SLEEP, sleep == null ? "No sleep logged yet" : sleep.optBoolean("running") ? "Sleeping now" : "Awake for " + Insights.duration(now - sleep.optLong("end")));
-            fact(weave, Ui.DIAPER, day.wet() + " wet, " + day.dirty() + " dirty today");
+            fact(weave, Ui.NAPPY, day.wet() + " wet, " + day.dirty() + " dirty today");
         }
         TextView totals = Ui.figures(Ui.text(this, parent
             ? events.stream().filter(e -> Insights.date(e.optLong("start")).equals(LocalDate.now())).count() + " moments logged today  \u00b7  " + Insights.duration(day.sleepMs()) + " sleep"
@@ -359,7 +364,7 @@ public final class MainActivity extends Activity {
             && (parent ? k.group().equals("Parent") || List.of("pump", "journal", "appointment", "routine", "medical", "medicine", "vaccine", "temperature").contains(k.id())
                 : !k.group().equals("Parent"))).toList();
         for (String group : parent ? List.of("Pump", "Parent", "Health", "Routines", "Memories", "Planning")
-            : List.of("Feed", "Sleep", "Pump", "Diaper", "Growth", "Health", "Routines", "Memories", "Planning")) {
+            : List.of("Feed", "Sleep", "Pump", "Nappy", "Growth", "Health", "Routines", "Memories", "Planning")) {
             List<Catalog.Kind> kinds = visible.stream().filter(k -> activitySection(k).equals(group)).toList();
             if (!kinds.isEmpty()) activityCard(group, kinds, events);
         }
@@ -370,6 +375,27 @@ public final class MainActivity extends Activity {
         LinearLayout list = Ui.panel(this);
         for (JSONObject event : recent) eventCard(list, event);
         if (!recent.isEmpty()) body.addView(list);
+    }
+    /** One-tap logs at the top of Today. They save straight away; tap the entry in Recent moments to change it. */
+    private void quickLogs(List<JSONObject> events) {
+        boolean sleeping = events.stream().anyMatch(e -> e.optString("kind").equals("sleep") && (e.optBoolean("running") || e.optBoolean("timerPaused")));
+        LinearLayout row = Ui.row(this); row.setPadding(0, Ui.dp(this, 4), 0, Ui.dp(this, 2));
+        quickButton(row, "Wet nappy", "diaper", Ui.SAND, Ui.NAPPY, QuickLog.WET);
+        quickButton(row, "Poo nappy", "diaper", Ui.SAND, Ui.NAPPY, QuickLog.POO);
+        quickButton(row, sleeping ? "End sleep" : "Start sleep", "sleep", Ui.BLUE, Ui.SLEEP, QuickLog.SLEEP);
+        body.addView(row);
+    }
+    private void quickButton(LinearLayout row, String label, String icon, int fill, int thread, String action) {
+        Button button = Ui.button(this, label, () -> {
+            try { Toast.makeText(this, QuickLog.log(this, profileId, action), Toast.LENGTH_SHORT).show(); logged(); }
+            catch (RuntimeException e) { error("Could not save: " + e.getMessage()); }
+        });
+        button.setBackground(Ui.ripple(this, fill, 20)); button.setTextColor(Ui.INK); button.setTextSize(14);
+        button.setPadding(Ui.dp(this, 6), Ui.dp(this, 10), Ui.dp(this, 6), Ui.dp(this, 10));
+        button.setCompoundDrawables(null, new NestIcon(this, icon, thread, fill, 24), null, null);
+        button.setCompoundDrawablePadding(Ui.dp(this, 2));
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, -2, 1);
+        params.setMargins(Ui.dp(this, 3), 0, Ui.dp(this, 3), 0); row.addView(button, params);
     }
     /** One dot per thread colour actually drawn in the weave, so the key never claims a lane is a single colour. */
     private TextView legend(List<JSONObject> shown) {
@@ -405,7 +431,7 @@ public final class MainActivity extends Activity {
         return switch (kind.id()) {
             case "breast", "bottle", "solids" -> "Feed";
             case "pump" -> "Pump";
-            case "diaper" -> "Diaper";
+            case "diaper" -> "Nappy";
             case "growth" -> "Growth";
             default -> kind.group();
         };
@@ -678,7 +704,7 @@ public final class MainActivity extends Activity {
         addChart("Bottle milk", prefs.getBoolean("imperial", false) ? "fl oz" : "ml",
             days.stream().map(d -> new ChartView.Point(d.date().format(DateTimeFormatter.ofPattern("EE")), d.milkMl() / (prefs.getBoolean("imperial", false) ? 29.5735295625 : 1))).toList(), Ui.FEED, false);
         LinearLayout table = Ui.panel(this);
-        table.addView(chartTitle("Daily comparison", "per day", Ui.DIAPER));
+        table.addView(chartTitle("Daily comparison", "per day", Ui.NAPPY));
         tableRow(table, true, "Day", "Feeds", "Wet", "Dirty", "Sleep");
         for (int i = days.size() - 1; i >= 0; i--) {
             Insights.Day day = days.get(i);

@@ -64,10 +64,10 @@ final class NestScene extends View {
         if (scene.equals("rhythm") || Ui.night && !scene.equals("family")) {
             fill(Ui.SLEEP); canvas.drawCircle(109, 25, 13, paint);
             fill(Ui.SAGE); canvas.drawCircle(115, 20, 12, paint);
-            stroke(Ui.DIAPER, 2); star(canvas, 26, 28, 4); star(canvas, 126, 47, 3);
+            stroke(Ui.NAPPY, 2); star(canvas, 26, 28, 4); star(canvas, 126, 47, 3);
         } else {
             fill(Ui.SAND); canvas.drawCircle(110, 23, 15, paint);
-            stroke(Ui.DIAPER, 1.8f);
+            stroke(Ui.NAPPY, 1.8f);
             for (int i = 0; i < 6; i++) {
                 canvas.save(); canvas.rotate(i * 60, 110, 23);
                 canvas.drawLine(110, 3, 110, 0, paint); canvas.restore();
@@ -107,7 +107,7 @@ final class NestScene extends View {
         fill(color); canvas.drawOval(-17, -18, 17, 19, paint);
         stroke(Ui.ON_GREEN, 2);
         canvas.drawArc(-11, 0 - flutter * 8, 9, 15 - flutter * 8, 15, 140, false, paint);
-        fill(Ui.DIAPER);
+        fill(Ui.NAPPY);
         path.reset(); path.moveTo(13, -6); path.lineTo(23, -2); path.lineTo(13, 2); path.close();
         canvas.drawPath(path, paint);
         if (asleep) {

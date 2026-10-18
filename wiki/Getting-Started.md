@@ -52,11 +52,36 @@ deduplicated by name.
 
 ## Log care
 
+For the most common logs, use the buttons at the top of **Today**:
+**Wet nappy**, **Poo nappy** and **Start sleep** (it changes to **End sleep**
+while baby sleeps). They save straight away with the current time. To change or
+remove one, tap it under **Recent moments**.
+
+For anything else:
+
 1. On **Today**, tap an activity.
-2. Tap its start/end times to choose a date and time.
+2. Tap a time to change it with the hour and minute wheels, which start at the
+   current time. Nappies and other one-moment logs have a single **Time**;
+   timed activities such as sleep have **Start** and **End**. A time later than
+   now is taken as yesterday, for example logging last night's 23:50 feed
+   after midnight. Appointments and reminders also ask for a date.
 3. Fill in the relevant fields. Numeric values cannot be negative.
 4. Add optional notes and a photo, then tap **Save**.
 5. For a live session, tap **Start timer** instead.
+
+### Home-screen widgets
+
+Touch and hold the home screen, choose **Widgets**, then **Little Nest**:
+
+- **Quick log**: Wet nappy, Poo nappy and Start/End sleep buttons. Each tap
+  saves straight away and shows a short confirmation.
+- **At a glance**: last nappy, last sleep, and the estimated next sleep and
+  feed (shown with `~`, or "was" once the window has passed). Tap it to open
+  the app.
+
+Widgets use the baby selected in the app (or the first baby if a parent
+profile is selected). Widget logs sync the next time the app or background
+sync runs.
 
 ### Timers
 
@@ -77,7 +102,7 @@ Keep automatic date/time enabled on both phones for meaningful timer displays.
 
 ### Activities and units
 
-Choose bottle milk type and ml/fl oz, wet/dirty/mixed/dry diapers, stool/rash
+Choose bottle milk type and ml/fl oz, wet/dirty/mixed/dry nappies, stool/rash
 details, sleep type, food/reaction, growth units, medications and more.
 The food list includes common foods and allergens with an **Other** option.
 It is a logging convenience, not feeding or allergy guidance.
@@ -99,8 +124,8 @@ see an attached photo. Full-resolution originals are not retained.
 ## History, growth and patterns
 
 - **Today:** feeds, bottle milk, wet and dirty counts, sleep, last-care intervals,
-  last breast side, wake window and recent activity. A mixed diaper contributes
-  once to each of wet/dirty; those numbers are not a total diaper count.
+  last breast side, wake window and recent activity. A mixed nappy contributes
+  once to each of wet/dirty; those numbers are not a total nappy count.
 - **History:** all dates or a selected calendar day, plus text search. Tap an
   entry for full details, editing or confirmed deletion. Large histories have
   previous/next controls, 100 entries per page; search covers all pages.
@@ -159,7 +184,7 @@ This is not a forensic erasure of operation history or older backups.
 
 ## Little Nest appearance
 
-Today groups activities into **Feed, Sleep, Pump, Diaper, Growth,
+Today groups activities into **Feed, Sleep, Pump, Nappy, Growth,
 Health, Routines and Memories** sections. Tap an activity tile to log care, or
 **Add** next to a section heading to choose an activity. Hidden
 activities stay hidden. Parent profiles have the corresponding parent sections.
