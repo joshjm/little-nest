@@ -31,7 +31,11 @@ Source layout:
 | `app/src/main/java/app/littlenest/CareComparison.java` | Moving-average clock schedules and comparable-history adjustments |
 | `app/src/main/java/app/littlenest/CareReminders.java` | Per-phone options, revalidated alarms, snooze/dismiss |
 | `app/src/main/java/app/littlenest/CarePlanUi.java` | Coming up, settings and upcoming explicit care |
+| `app/src/main/java/app/littlenest/CarePlanner.java` | Optional goals, partial-day totals, sourced age context and evening clock patterns |
 | `app/src/main/java/app/littlenest/Insights.java` | Unit normalization, daily boundaries and sleep intervals |
+| `app/src/main/java/app/littlenest/GrowthStandards.java` | WHO LMS interpolation, age and unit handling, approximate percentiles |
+| `app/src/main/java/app/littlenest/GrowthUi.java` | Native growth charts, dated text values and adjusted-age viewing |
+| `app/src/main/java/app/littlenest/GrowthChartView.java` | Time-spaced observations and WHO reference curves |
 | `app/src/main/java/app/littlenest/NaraImport.java` | Activity CSV mapping, stable source identities, preview and ongoing sleep recovery |
 | `app/src/main/java/app/littlenest/CsvReader.java` | Bounded quoted/multiline UTF-8 CSV parsing |
 
@@ -114,9 +118,16 @@ To exercise the exact signed release and save screenshots:
 
 ```bash
 # Only on the disposable emulator. --reset clears this test app's sample data.
-python3 scripts/smoke-apk.py emulator-5554 --reset --care-plan
+python3 scripts/smoke-apk.py emulator-5554 --reset --care-plan --planner
 python3 scripts/smoke-nara-import.py emulator-5554
 ```
+
+To refresh the README and wiki screenshots with synthetic demo data, follow
+[Screenshots](Screenshots.md#make-new-screenshots).
+
+When more than one emulator is connected, set `ANDROID_SERIAL` (for example
+`export ANDROID_SERIAL=emulator-5554`) before running Gradle or adb, so tests
+never install to, or uninstall from, someone else's device.
 
 Use an owned test emulator, not a phone with personal production data.
 Instrumentation tests create test profiles. Depending on Gradle's test runner
@@ -189,6 +200,51 @@ Static manifest evidence cannot prove runtime network behavior or security.
 Use the executable tests and manual acceptance checks as separate evidence.
 
 ## Verification scope
+
+### Version 1.10 planning
+
+`CarePlannerTest` covers optional goal limits, calendar-age boundaries, unknown
+birth dates, method-specific feeding context, grouped milk/nap counts,
+cross-midnight sessions, paused/running sleep, overlap removal, DST boundaries,
+bedtime minimum evidence, latest-seven clock averages and incomplete/active
+sleep guards. These deterministic checks do not validate clinical prediction
+accuracy.
+
+`CarePlanTest` adds native Plan navigation, saved/cleared per-baby goals,
+invalid-input and cancel behavior, recreation, unchanged alerts/intervals,
+age/source content and parent exclusion. The existing care-alarm, app and
+identity checks remain in the focused native run. The JVM suite has 109 tests
+(one optional private-export test skipped); the focused native run has 21 tests.
+Light and dark 200%-font layouts were checked with synthetic records.
+
+`scripts/smoke-apk.py --planner` checks the signed Plan screen, goal persistence,
+bedtime learning and source links. Use it together with `--care-plan`; use
+`--existing` after installing an older same-key release to check retained
+sample history. The smoke helper identifies the Today navigation button by
+class so it does not tap a History day heading also called Today.
+
+### Version 1.7 growth charts
+
+The [growth guide](Growth-Charts.md) records primary research, dataset provenance,
+LMS calculation, interpolation and clinical limitations. Regenerate only the
+public factual reference data with `python3 scripts/update-growth-data.py`;
+the exact bundled CSV is exempted from the private-export CSV ignore rule.
+`GrowthStandardsTest` checks both sexes, all three measurements, published
+medians, weekly/monthly interpolation, every supported day, percentile
+inversion, the 24-month height boundary, unsupported ages, units and invalid
+data. `GrowthTest` exercises native chart wiring, all-history retention,
+profile guards, adjusted age, offline resources and large-font rendering.
+On an explicitly selected disposable emulator, run
+`python3 scripts/smoke-nara-import.py emulator-5564 --growth` against the
+installed signed release to additionally check all three growth charts,
+first-entry guides and text percentiles through real document-picker imports.
+
+The local JVM run passed 94 tests with one optional private-export test skipped.
+The Android suite passed 37 tests with its optional private-export test skipped,
+including the three new native growth tests. Lint reported zero errors and
+three existing warnings. Same-key 1.5-to-1.7 upgrade acceptance retained sample
+history; signed care-plan alarms and real document-picker imports also passed.
+These checks use synthetic records and do not validate clinical interpretation.
 
 ### Version 1.6 sync replacement
 

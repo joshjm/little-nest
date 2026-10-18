@@ -66,6 +66,8 @@ final class EventEditor {
             content.addView(Ui.text(activity, "Enter a total or component amounts. If a total is supplied, totals and charts use it instead of adding components again.", 12, Ui.MUTED));
         if (kind.id().equals("pump"))
             content.addView(Ui.text(activity, "Total output overrides the sum of left and right volumes. Each side can use its own unit.", 12, Ui.MUTED));
+        if (kind.id().equals("growth"))
+            content.addView(Ui.text(activity, "Trends compares these measurements with WHO growth percentiles. Measure length lying down before age two, and height standing from age two. Note a different measurement position in Notes; charts do not convert positions.", 12, Ui.MUTED));
         for (Catalog.Field field : kind.fields()) {
             content.addView(Ui.text(activity, field.label(), 13, Ui.MUTED));
             if (field.multiple()) {
@@ -122,7 +124,7 @@ final class EventEditor {
         if (kind.id().equals("medicine") || kind.id().equals("temperature") || kind.group().equals("Parent"))
             content.addView(Ui.text(activity, "A personal log, not medical advice. Contact a clinician for health concerns.", 12, Ui.MUTED));
         ScrollView scroll = new ScrollView(activity); scroll.addView(content);
-        AlertDialog.Builder builder = new AlertDialog.Builder(activity).setCustomTitle(Ui.dialogTitle(activity, kind.title())).setView(scroll)
+        AlertDialog.Builder builder = new AlertDialog.Builder(activity).setCustomTitle(Ui.dialogTitle(activity, kind.title(), Ui.thread(kind))).setView(scroll)
             .setPositiveButton("Save", null).setNegativeButton("Cancel", (d, w) -> activity.editor = null);
         if (kind.timer() && !source.has("id")) builder.setNeutralButton("Start timer", null);
         dialog = builder.create(); dialog.setOnDismissListener(d -> { if (activity.editor == this) activity.editor = null; });
@@ -142,7 +144,7 @@ final class EventEditor {
         row.addView(Ui.title(activity, label, 15), new LinearLayout.LayoutParams(0, -2, 1));
         EditText input = Ui.input(activity, label, format(value), false);
         input.setTextSize(13); input.setGravity(android.view.Gravity.END | android.view.Gravity.CENTER_VERTICAL);
-        input.setBackgroundColor(Ui.BG);
+        input.setBackground(Ui.shape(activity, Ui.night ? Ui.BG : Ui.SAGE, 12));
         input.setFocusable(false); input.setOnClickListener(v -> pick(input));
         row.addView(input, new LinearLayout.LayoutParams(0, Ui.dp(activity, 48), 2));
         content.addView(row); Ui.divider(content); return input;
@@ -248,7 +250,7 @@ final class EventEditor {
             String id = activity.store.save(source.has("id") ? source.optString("id") : null, data, false);
             Records.put(data, "id", id); Reminders.schedule(activity, data);
             if (data.optLong("remindAt") > 0) activity.requestNotifications();
-            dialog.dismiss(); activity.editor = null; activity.changed();
+            dialog.dismiss(); activity.editor = null; activity.logged();
         } catch (IllegalArgumentException e) { activity.error(e.getMessage()); }
     }
 }

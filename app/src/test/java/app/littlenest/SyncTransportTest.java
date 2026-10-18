@@ -99,4 +99,22 @@ public class SyncTransportTest {
         code.put("expires", System.currentTimeMillis() + 300_000).put("port", 65536);
         assertThrows(IOException.class, () -> LocalSync.parseInvitation(code.toString()));
     }
+    @Test public void partnerCodesCombineWifiPairingAndOneDriveNest() throws Exception {
+        String local = new JSONObject().put("version", 1).put("family", FAMILY).put("host", "192.168.1.10").put("port", 12345)
+            .put("pin", "A".repeat(43)).put("secret", "B".repeat(43)).put("expires", System.currentTimeMillis() + 300_000).toString();
+        PartnerInvite.Parsed both = PartnerInvite.parse(PartnerInvite.create(local, "drive1|folder1"));
+        assertEquals("drive1|folder1", both.nest()); assertEquals(FAMILY, new JSONObject(both.local()).getString("family"));
+        PartnerInvite.Parsed wifi = PartnerInvite.parse(local);
+        assertEquals("", wifi.nest()); assertEquals(local, wifi.local());
+        PartnerInvite.Parsed cloud = PartnerInvite.parse(PartnerInvite.create(null, "drive1|folder1"));
+        assertEquals(null, cloud.local()); assertEquals("drive1|folder1", cloud.nest());
+        assertEquals("drive1|folder1", PartnerInvite.parse(" drive1|folder1 ").nest());
+        String expired = new JSONObject(PartnerInvite.create(local, "drive1|folder1")).put("expires", 0).toString();
+        PartnerInvite.Parsed late = PartnerInvite.parse(expired);
+        assertEquals(null, late.local()); assertEquals("drive1|folder1", late.nest()); assertTrue(!late.localProblem().isEmpty());
+        assertThrows(IOException.class, () -> PartnerInvite.parse(new JSONObject(local).put("expires", 0).toString()));
+        assertThrows(IllegalArgumentException.class, () -> PartnerInvite.parse("{\"version\":1}"));
+        assertThrows(IllegalArgumentException.class, () -> PartnerInvite.parse("not a code"));
+        assertThrows(IllegalArgumentException.class, () -> PartnerInvite.create(local, "drive|../me"));
+    }
 }

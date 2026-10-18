@@ -6,18 +6,21 @@ private shared nest.
 
 ## Screenshots
 
-Android screenshots of the **1.4 design**, using synthetic demo data only.
-Version 1.5 retains this design and adds the planning comparisons described below.
-The Family screenshot predates the 1.6 sync changes described below.
-Select a screenshot to view it full-size.
+Android screenshots of the **1.8 "Woven day" design**, using synthetic demo data
+only. Select a screenshot to view it full-size, or see
+[every screenshot, including night mode](wiki/Screenshots.md).
 
-| Today & activity tiles | Activity history | Sleep trends |
+| Today | History | Trends |
 |:---:|:---:|:---:|
-| [<img src="docs/screenshots/today.png" alt="Today with upcoming care and feed activity tiles" width="240">](docs/screenshots/today.png) | [<img src="docs/screenshots/history.png" alt="History with search and saved activity details" width="240">](docs/screenshots/history.png) | [<img src="docs/screenshots/trends.png" alt="Trends with a sleep timeline and daily sleep chart" width="240">](docs/screenshots/trends.png) |
+| [<img src="docs/screenshots/today.png" alt="Today with the day weave, current state and coming-up care" width="240">](docs/screenshots/today.png) | [<img src="docs/screenshots/history.png" alt="History grouped by day with date controls and search" width="240">](docs/screenshots/history.png) | [<img src="docs/screenshots/trends.png" alt="Trends with a weekly summary and 7-day sleep pattern" width="240">](docs/screenshots/trends.png) |
 
-| Family & preferences | Bottle logging | Feed planning |
+| Running timer | Growth | Family |
 |:---:|:---:|:---:|
-| [<img src="docs/screenshots/family.png" alt="Family profiles, preferences and private Drive sync settings" width="240">](docs/screenshots/family.png) | [<img src="docs/screenshots/bottle-form.png" alt="Bottle entry form with amounts, units and milk components" width="240">](docs/screenshots/bottle-form.png) | [<img src="docs/screenshots/care-details.png" alt="Suggested feed window with its basis and snooze or dismiss controls" width="240">](docs/screenshots/care-details.png) |
+| [<img src="docs/screenshots/timer.png" alt="A running breastfeeding timer with pause, switch side and finish" width="240">](docs/screenshots/timer.png) | [<img src="docs/screenshots/growth.png" alt="Weight chart against WHO percentile curves" width="240">](docs/screenshots/growth.png) | [<img src="docs/screenshots/family.png" alt="Family profiles and preferences" width="240">](docs/screenshots/family.png) |
+
+| Today at night | History at night | Trends at night |
+|:---:|:---:|:---:|
+| [<img src="docs/screenshots/today-dark.png" alt="Today in the night palette" width="240">](docs/screenshots/today-dark.png) | [<img src="docs/screenshots/history-dark.png" alt="History in the night palette" width="240">](docs/screenshots/history-dark.png) | [<img src="docs/screenshots/trends-dark.png" alt="Trends in the night palette" width="240">](docs/screenshots/trends-dark.png) |
 
 ## Install on your two phones
 
@@ -43,6 +46,7 @@ Start with the **[small wiki](wiki/Home.md)**:
 - [Local pairing, OneDrive and maintainer setup](wiki/Sync-Setup.md)
 - [Import activity CSV data](wiki/Importing-CSV.md)
 - [Feed/nap windows and advance alerts](wiki/Care-Plan.md)
+- [WHO growth percentiles and interpretation](wiki/Growth-Charts.md)
 - [Feature research and coverage](wiki/Feature-Coverage.md)
 - [Build, verification and maintenance](wiki/Development.md)
 - [GitHub releases and Obtainium updates](wiki/Releases.md)
@@ -57,7 +61,10 @@ Start with the **[small wiki](wiki/Home.md)**:
   snooze/dismiss and upcoming appointments/reminders.
 - Two planning views: a moving-average daily schedule and history-adjusted
   timing after similar short/late naps or feeds.
-- Growth measurements/charts, medicines, vaccinations, temperature and visits.
+- A dedicated Plan tab with optional daily sleep, nap and milk-feed goals,
+  learned evening bedtime windows and sourced age-specific context.
+- Growth measurements with WHO weight, length/height and head-circumference
+  percentile charts; medicines, vaccinations, temperature and visits.
 - Milestones, routines, tummy time, baths, stories, journals and photos.
 - Pregnancy/postpartum mood, symptoms, vitals, meals, hydration and self-care.
 - Multiple baby/parent profiles, child comparison and caregiver attribution.
@@ -69,6 +76,36 @@ Start with the **[small wiki](wiki/Home.md)**:
 
 No ads, analytics, app backend, remote notifications, public feeds or subscriptions.
 Parent logs are shared with your partner too.
+
+## Version 1.10: a little more room to plan
+
+**Plan** brings next-care estimates, optional daily goals and age-specific
+sleep/nap/feeding context together. Evening bedtime windows learn from sleep
+explicitly labelled **Night sleep** on at least four previous days. Goals stay
+on this phone for each baby; they do not change predictions or alerts.
+
+These are gentle planning aids, not deadlines or intake recommendations.
+Today's totals are a partial calendar day, not a full 24-hour comparison.
+Follow baby's cues and your clinician's plan. See the
+[sleep and feeding guide](wiki/Care-Plan.md) for sources and limitations.
+
+## Version 1.8: Woven day design
+
+A calmer, clearer look. Each kind of care has its own thread colour, used the
+same way on every screen. **Today** opens with a 24-hour strip: what happened is
+drawn solid, suggested feed and nap times are dashed. History is a day-by-day
+timeline, Trends adds a daily comparison table, and the app follows the phone's
+dark mode with a dim night palette. Text respects the phone's font size.
+Data, storage and sync are unchanged. See [DESIGN.md](DESIGN.md).
+
+## Version 1.7: WHO growth percentiles
+
+**Trends → Growing together** shows recorded measurements against WHO
+3rd/15th/50th/85th/97th percentile curves, plus a dashed guide following the
+first entry's percentile. All history is retained, with dated text values,
+approximate percentiles and optional adjusted-age viewing.
+These are comparison references, not forecasts or required growth paths.
+See [sources, measurement assumptions and limitations](wiki/Growth-Charts.md).
 
 ## Version 1.6: local and OneDrive sync
 

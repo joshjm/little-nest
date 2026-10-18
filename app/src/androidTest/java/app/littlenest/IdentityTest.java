@@ -55,7 +55,7 @@ public class IdentityTest {
                     assertUnbranded(activity.findViewById(android.R.id.content));
                 }
                 assertNotNull(text(activity.findViewById(android.R.id.content), "Import activity CSV"));
-                assertNotNull(text(activity.findViewById(android.R.id.content), "Local Wi-Fi sync"));
+                assertNotNull(text(activity.findViewById(android.R.id.content), "Your partner"));
                 assertNotNull(text(activity.findViewById(android.R.id.content), "OneDrive sync"));
                 assertNull(text(activity.findViewById(android.R.id.content), "Google Drive sync"));
                 assertNotNull(text(activity.findViewById(android.R.id.content), "Little Nest " + BuildConfig.VERSION_NAME

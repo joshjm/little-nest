@@ -5,21 +5,38 @@ the live SQLite database or an overwritable shared backup. Profiles, parent
 logs, photos, edits, historical revisions and deletion tombstones are shared.
 Both caregivers can read everything in the nest.
 
-## Local sync: no account, no internet
+## Add your partner: one code for everything
 
-1. Install the same signed 1.6+ APK on both phones. Export backups first if you
-   already have records. Set different **Family -> Caregiver name** values.
+**Family -> Your partner** is the single place to add the second caregiver.
+One phone invites; the other joins. The same QR code sets up Wi-Fi pairing and,
+if the inviting phone already has a OneDrive nest, OneDrive sharing too.
+
+1. Install the same signed APK on both phones. Export backups first if you
+   already have records. The joining phone should not create profiles first.
 2. Connect both phones to the same private Wi-Fi network or hotspot. Some guest
    networks/hotspots isolate clients; use a network that allows phone-to-phone
-   connections.
-3. On phone one, open **Family -> Local Wi-Fi sync -> 1. Show local pairing QR**.
-4. On phone two, choose **2. Scan partner's local QR**, grant camera access if
-   requested, scan and confirm sharing. Camera access is only needed for scanning,
-   not tracking or attaching photos. Alternatively copy the code on phone one,
-   transfer it privately and use **Or paste a local pairing code** on phone two.
+   connections. (Skip this if you only use OneDrive.)
+3. Phone one: **Family -> Your partner -> Invite partner**. If no caregiver name
+   is set yet, the app asks for one first.
+4. Phone two: tap **Join partner** (on the welcome screen or in Family), scan the
+   code and confirm sharing. Camera access is only needed for scanning.
 5. Keep both apps open until **Last local sync** appears and pending changes
-   reach zero. Pairing codes expire after five minutes. Copying closes the QR
-   dialog but keeps the code valid until its deadline; Close/Back cancels it.
+   reach zero. The Wi-Fi part of the code expires after five minutes and only
+   works while the invite is on screen; Done/Back cancels it.
+
+If the inviting phone has a OneDrive nest, the joining phone remembers it and
+shows **Finish joining OneDrive nest**. The partner must first accept the
+Microsoft invitation email (see below), then tap that button and sign in.
+
+**Not in the same place?** With a OneDrive nest, use **Invite by email** in the
+invite screen. Little Nest asks OneDrive to send the Microsoft invitation, then
+opens your email app with a private join code. Your partner accepts the
+Microsoft email, then uses **Join partner -> Or paste a code they sent you**.
+Codes sent this way contain only the OneDrive nest: Wi-Fi pairing needs both
+phones together because leaving the app stops its local listener. Older
+OneDrive nest codes can also be pasted there.
+
+## Local sync: no account, no internet
 
 Pair once, not every time. While open, apps advertise/discover their paired peer,
 check every 15 seconds and after saves, and exchange only missing operations.
@@ -46,12 +63,15 @@ accounts are not supported. Neither caregiver creates a developer project.
 
 1. Phone one: **Family -> OneDrive sync -> Connect / reconnect OneDrive**.
    Sign in through your browser and review the permissions.
-2. Choose **1. Create a shared nest**. Creation and initial sync must finish.
-3. Choose **2. Invite partner by Microsoft email**. Enter the partner's personal
-   Microsoft account email. Copy **OneDrive nest code** and send it privately.
-4. Phone two: accept the invitation in a browser while signed in to the invited
-   account. Then open **Or join partner's nest**, paste the nest code and sign in
-   with that account. Joining uploads all existing local records too.
+2. Choose **Create a shared OneDrive nest**. Creation and initial sync must finish.
+3. Choose **Family -> Your partner -> Invite partner**. Together: let phone two
+   scan the code, then use **Invite by email** to send the Microsoft
+   invitation. Apart: use **Invite by email** directly. Enter the partner's
+   personal Microsoft account email.
+4. Phone two: accept the Microsoft invitation in a browser while signed in to
+   the invited account. Then tap **Finish joining OneDrive nest** (after
+   scanning) or paste the emailed code via **Join partner**, and sign in with
+   that account. Joining uploads all existing local records too.
 5. Use **Sync now** on both phones until both have caught up.
 
 If folder creation loses its network response, inspect the owner's OneDrive
@@ -97,8 +117,10 @@ cloud history. Manage those through Microsoft/OneDrive.
 
 ## Using both options
 
-Pair locally first, then let one phone create the OneDrive nest and the other
-join it. Alternatively, join the same OneDrive nest on both phones before
+Easiest: create the OneDrive nest on one phone first, then use **Invite
+partner** once; a single scan sets up both. If you paired locally first, create
+the nest later and use **Invite partner** again; the partner scans or pastes
+the new code to join OneDrive. Alternatively, join the same OneDrive nest on both phones before
 pairing locally. Do not independently create a nest on each phone.
 
 Both transports use the same family identity and operation IDs. Repeated

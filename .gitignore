@@ -8,6 +8,7 @@ tooling/jadx/
 artifacts/
 export_narababy_*.csv
 *.csv
+!app/src/main/res/raw/who_growth.csv
 *.apk
 *.aab
 *.apks
