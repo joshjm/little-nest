@@ -1,5 +1,65 @@
 # Feed and nap planning
 
+## At a glance (version 1.10)
+
+The top of each baby's **Today** screen shows the next thing coming up in
+large text, like the Pixel "At a glance" view. Underneath are the next few
+items: milk feed, nap, wet nappy, dirty nappy and any reminder or appointment
+in the next 24 hours. Tap a row for its details.
+
+- Feed and nap times use the **history-adjusted** time from *Coming up* when it
+  is available, then the normal schedule, then the interval estimate.
+- `~10:30` means the time is still ahead or its window is open. `was 10:30`
+  means the window has passed.
+
+## Next wet and dirty nappy
+
+A small **random forest** (30 decision trees) learns from this baby's own logs
+on the phone. Nothing is uploaded and there is no paid or online model.
+
+How it learns, in plain terms:
+
+1. Every 30 minutes between logged nappies becomes one example: "what did the
+   day look like right then?" and "how long until the next wet (or dirty)
+   nappy was logged?"
+2. "What the day looked like" is: time of day, time since the last nappy and
+   the last nappy of that kind, time since the last milk feed, milk feeds in
+   the last 3 hours, bottle ml in the last 6 hours, solids in the last 12 hours,
+   whether baby is asleep, sleep in the last 3 hours and how many of that
+   nappy kind in the last 24 hours.
+3. Each tree learns simple yes/no rules ("fed under 40 minutes ago?") from a
+   random sample of the examples. The forest's answer is the trees' average.
+
+**Babies change as they grow.** Only the last **30 days** are used, and a
+day counts half as much for every **3 days** older it is, so the newest
+routine matters most.
+
+**Honesty checks.** Before showing a time, the app trains on all but the
+newest fifth of the examples and tests on that newest fifth. If a simple
+"usual gap between nappies" guess did better, that simpler guess is used
+instead. The details screen shows the checked error. If the checked error is
+over **4 hours**, no clock time is shown, only how often that nappy usually comes.
+
+It needs at least **8 wet** or **5 dirty** nappies across **3 days**, and a
+nappy logged in the last 14 hours. *Mixed* counts as both wet and dirty.
+
+The settings (30 days, 3-day fade, 4-hour cut-off) were picked by replaying a
+real two-week export hour by hour, only letting the model see the past. Wet
+nappies were usually within about an hour (a simple average was about
+2¾ hours off). Dirty nappies in that export were too irregular for a useful
+clock time. Your baby may differ.
+
+This is a guess, not a health check. Speak to your clinician if wet nappies
+drop off or stools change.
+
+To replay your own private export on a computer (prints only summary numbers):
+
+```bash
+./gradlew :app:testDebugUnitTest --tests '*NappyBacktest*' -PnaraCsv=/absolute/path.csv -i
+```
+
+## Feed and nap comparisons
+
 **Coming up** on each baby's Today screen now shows two planning comparisons
 for **Next milk feed** and **Nap sweet spot** (version 1.5):
 

@@ -45,7 +45,7 @@ Start with the **[small wiki](wiki/Home.md)**:
 - [Install and everyday use](wiki/Getting-Started.md)
 - [Local pairing, OneDrive and maintainer setup](wiki/Sync-Setup.md)
 - [Import activity CSV data](wiki/Importing-CSV.md)
-- [Feed/nap windows and advance alerts](wiki/Care-Plan.md)
+- [At a glance, nappy predictions, feed/nap windows and alerts](wiki/Care-Plan.md)
 - [WHO growth percentiles and interpretation](wiki/Growth-Charts.md)
 - [Feature research and coverage](wiki/Feature-Coverage.md)
 - [Build, verification and maintenance](wiki/Development.md)
