@@ -78,8 +78,26 @@ values and the night palette was checked by hand (lowest 6.0:1).
 
 ## Motion
 
-Minimal. Native ripples on press. No decorative animation; the running timer
-is the only thing that changes on its own.
+Quiet, brief and optional. Native ripples on press and a 180ms selected-tab
+settle connect navigation to its destination. Saving care on Today earns one
+700ms wing flutter and rising heart in the nest illustration, not confetti,
+scores or a blocking celebration. Background refreshes do not replay it.
+Both effects honor Android's Remove animations setting; illustration motion
+stops when the window hides or the view detaches. There are no looping GIFs,
+network image requests, sounds or new animation dependencies.
+
+## Nursery illustrations
+
+`NestScene` draws original little birds, woven twigs and leafy branches in the
+existing thread palette. Today has one chick in its nest, Plan a resting chick
+under a moon, and Family/first use two birds sheltering a chick. Today switches
+to moonlight in dark mode. These are compact header companions, never a layer
+over care data or actions. They are decorative and hidden from TalkBack.
+
+`NestIcon` gives each activity a recognizable symbol rather than a generic
+heart: a bowl for food, bubbles for bath, a star for milestones, and dedicated
+medicine, vaccination and thermometer marks. Activity tiles use 44dp tinted
+icon patches; timers and planning rows repeat their matching care symbols.
 
 ## Do not
 

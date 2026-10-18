@@ -1,6 +1,8 @@
 # Screenshots
 
-Little Nest 1.8 "Woven day" design. Every screenshot uses **synthetic demo data
+Little Nest's "Woven day" design, with the 1.12 illustrated nursery additions
+on Today, Plan, Family, first use and activity tiles. Other views retain their
+existing screenshots. Every screenshot uses **synthetic demo data
 only**: a baby called Ada, two caregivers called Sam and Alex, and two weeks of
 made-up feeds, sleep, nappies and growth measurements. Select an image to see it
 full size.
@@ -10,7 +12,12 @@ full size.
 | Today | Activity tiles | Running timer |
 |:---:|:---:|:---:|
 | [<img src="../docs/screenshots/today.png" alt="Today with the day weave, current state and coming-up care" width="240">](../docs/screenshots/today.png) | [<img src="../docs/screenshots/today-tiles.png" alt="Feed activity tiles with time since last feed" width="240">](../docs/screenshots/today-tiles.png) | [<img src="../docs/screenshots/timer.png" alt="A running breastfeeding timer with pause, switch side and finish" width="240">](../docs/screenshots/timer.png) |
-| The day weave shows the last 18 hours as solid threads and suggested times as dashed outlines. Below it: last feed, awake time and today's nappies. | One tap logs a feed. Each tile shows how long ago it last happened. | Timers sit at the top of Today with large, steady numbers. |
+| A chick in a woven nest accompanies the day weave. Solid threads are logged care; dashed outlines are suggested times. | Larger, original activity symbols help distinguish each kind of care. Each tile shows how long ago it last happened. | Timers repeat their care symbol and keep large, steady numbers. |
+
+| First use | Plan |
+|:---:|:---:|
+| [<img src="../docs/screenshots/welcome.png" alt="First use with two birds sheltering a chick and create or join actions" width="240">](../docs/screenshots/welcome.png) | [<img src="../docs/screenshots/plan.png" alt="Plan with a resting chick and moon illustration above timing estimates" width="240">](../docs/screenshots/plan.png) |
+| A little family in a woven nest welcomes you. Create a profile or join your partner. | A quiet moonlit illustration leaves the estimates and safety guidance in focus. |
 
 | Bottle logging | Nap planning details | History |
 |:---:|:---:|:---:|
@@ -35,6 +42,16 @@ low-glare for 3 a.m. feeds, and keeps text contrast above 6:1.
 | Today | History | Trends | Family |
 |:---:|:---:|:---:|:---:|
 | [<img src="../docs/screenshots/today-dark.png" alt="Today in the night palette" width="200">](../docs/screenshots/today-dark.png) | [<img src="../docs/screenshots/history-dark.png" alt="History in the night palette" width="200">](../docs/screenshots/history-dark.png) | [<img src="../docs/screenshots/trends-dark.png" alt="Trends in the night palette" width="200">](../docs/screenshots/trends-dark.png) | [<img src="../docs/screenshots/family-dark.png" alt="Family in the night palette" width="200">](../docs/screenshots/family-dark.png) |
+
+[<img src="../docs/screenshots/plan-dark.png" alt="Plan with its moonlit chick in the night palette" width="240">](../docs/screenshots/plan-dark.png)
+
+## Motion
+
+Logging care on Today gives the chick one brief wing flutter and a rising
+heart. Switching tabs gives the selected destination a gentle settle. These
+native animations do not loop, download images or play sound, and both honor
+Android's **Remove animations** setting. The artwork remains visible when
+motion is disabled.
 
 ## Make new screenshots
 
