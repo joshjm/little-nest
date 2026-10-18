@@ -50,6 +50,7 @@ Start with the **[small wiki](wiki/Home.md)**:
 - [Feature research and coverage](wiki/Feature-Coverage.md)
 - [Build, verification and maintenance](wiki/Development.md)
 - [GitHub releases and Obtainium updates](wiki/Releases.md)
+- [Terraform infrastructure and TerraVision architecture views](wiki/Infrastructure.md)
 
 ## Included
 

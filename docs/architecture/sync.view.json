@@ -1,0 +1,46 @@
+{
+  "outfile": "sync",
+  "title": "Little Nest - runtime sync (logical view, no app backend)",
+  "graph": {
+    "azurerm_group.microsoft_services": ["tv_azurerm_server.sign_in", "tv_azurerm_server.graph", "tv_azurerm_database.onedrive"],
+    "tv_azurerm_client.phone_a": ["tv_azurerm_database.local_a", "tv_azurerm_client.phone_b", "tv_azurerm_server.sign_in", "tv_azurerm_server.graph"],
+    "tv_azurerm_client.phone_b": ["tv_azurerm_database.local_b", "tv_azurerm_server.sign_in", "tv_azurerm_server.graph"],
+    "tv_azurerm_database.local_a": [],
+    "tv_azurerm_database.local_b": [],
+    "tv_azurerm_server.sign_in": [],
+    "tv_azurerm_server.graph": ["tv_azurerm_database.onedrive"],
+    "tv_azurerm_database.onedrive": []
+  },
+  "attributes": {
+    "azurerm_group.microsoft_services": {"label": "External Microsoft services - NOT Terraform-managed"},
+    "tv_azurerm_client.phone_a": {"label": "Android phone A"},
+    "tv_azurerm_client.phone_b": {"label": "Android phone B"},
+    "tv_azurerm_database.local_a": {"label": "On-device SQLite A"},
+    "tv_azurerm_database.local_b": {"label": "On-device SQLite B"},
+    "tv_azurerm_server.sign_in": {"label": "Microsoft sign-in"},
+    "tv_azurerm_server.graph": {"label": "Microsoft Graph API"},
+    "tv_azurerm_database.onedrive": {"label": "Personal OneDrive nest"}
+  },
+  "edge_labels": {
+    "tv_azurerm_client.phone_a -> tv_azurerm_database.local_a": "Local reads / writes",
+    "tv_azurerm_client.phone_b -> tv_azurerm_database.local_b": "Local reads / writes",
+    "tv_azurerm_client.phone_a -> tv_azurerm_client.phone_b": "Two-way pinned mTLS / same Wi-Fi",
+    "tv_azurerm_client.phone_a -> tv_azurerm_server.sign_in": "OAuth code + PKCE",
+    "tv_azurerm_client.phone_b -> tv_azurerm_server.sign_in": "OAuth code + PKCE",
+    "tv_azurerm_client.phone_a -> tv_azurerm_server.graph": "HTTPS upload / download",
+    "tv_azurerm_client.phone_b -> tv_azurerm_server.graph": "HTTPS upload / download",
+    "tv_azurerm_server.graph -> tv_azurerm_database.onedrive": "Immutable operation files / invitations"
+  },
+  "flows": {
+    "sync": {
+      "description": "Both transports merge the same operation IDs; arrows represent exchanges, not one-way replication.",
+      "steps": [
+        {"resource": "tv_azurerm_database.local_a", "detail": "Save locally first; no account or internet needed."},
+        {"resource": "tv_azurerm_client.phone_a -> tv_azurerm_client.phone_b", "detail": "After private QR pairing, exchange missing operations with both apps open."},
+        {"resource": "tv_azurerm_server.sign_in", "detail": "Optional OneDrive: each caregiver consents using the publisher's client ID."},
+        {"resource": "tv_azurerm_server.graph -> tv_azurerm_database.onedrive", "detail": "The owner creates a nest and invites one partner; apps transfer while apart."},
+        {"resource": "tv_azurerm_database.local_b", "detail": "Merge operations idempotently; background cloud delivery is best-effort."}
+      ]
+    }
+  }
+}

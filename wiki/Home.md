@@ -19,6 +19,8 @@ Optional OneDrive sharing keeps phones up to date while apart.
    adjusted-age viewing, research and interpretation.
 9. **[Screenshots](Screenshots.md)** — every screen in day and night mode, and
    how to make new screenshots with synthetic demo data.
+10. **[Infrastructure and architecture](Infrastructure.md)** — import-first
+    Terraform for the publisher registration and TerraVision interaction views.
 
 ## Important before you start
 
