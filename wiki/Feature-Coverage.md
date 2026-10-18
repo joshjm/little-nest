@@ -97,8 +97,8 @@ not reverse-engineering observations of Nara. See [verification](Development.md)
   Generic JSON restore supports Little Nest's format, not a Nara JSON format.
 - No Apple Watch, Siri, iOS widgets or live activities. These are out of scope
   for Android and some require online features excluded by the request.
-- No Android home-screen widget or wearable companion. Public research did not
-  establish these as part of Nara's Android feature set.
+- No wearable companion. Android home-screen widgets cover one-tap nappy and
+  sleep logs and an at-a-glance summary only.
 - No clinician portal, medical recommendations,
   age-based milestone recommendations, automatic scheduling, PDF report or AI.
 - No multi-grandparent sharing, chat, social features, ads, analytics,

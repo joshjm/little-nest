@@ -22,10 +22,8 @@ final class AtAGlance {
         ZoneId zone = ZoneId.systemDefault();
         List<Item> items = new ArrayList<>();
         for (CarePredictor.Window window : plans) {
-            // Prefer the history-adjusted time shown on Plan, then the normal schedule, then the interval estimate.
             var comparison = CareComparison.predict(events, window.type(), now, zone);
-            CarePredictor.Window best = comparison.adjusted().available() ? comparison.adjusted()
-                : comparison.schedule().available() ? comparison.schedule() : window;
+            CarePredictor.Window best = best(comparison, window);
             if (best.available()) items.add(new Item(best.target(), best.latest(), window.title(), best.status(now), window.type().equals("nap") ? Ui.SLEEP : Ui.FEED,
                 () -> CarePlanUi.details(activity, profile, window, comparison)));
         }
@@ -55,6 +53,12 @@ final class AtAGlance {
         body.addView(card);
     }
 
+    /** Prefer the history-adjusted time shown on Plan, then the normal schedule, then the interval estimate. */
+    static CarePredictor.Window best(CareComparison.Comparison comparison, CarePredictor.Window window) {
+        return comparison.adjusted().available() ? comparison.adjusted()
+            : comparison.schedule().available() ? comparison.schedule() : window;
+    }
+
     private static void clickable(MainActivity activity, LinearLayout view, Item item) {
         view.setMinimumHeight(Ui.dp(activity, 48)); view.setFocusable(true);
         view.setBackground(Ui.ripple(activity, android.graphics.Color.TRANSPARENT, 12));
@@ -66,7 +70,7 @@ final class AtAGlance {
     static String clock(long when, long latest, long now, ZoneId zone) {
         return (latest < now ? "was " : "~") + time(when, now, zone);
     }
-    private static String time(long when, long now, ZoneId zone) {
+    static String time(long when, long now, ZoneId zone) {
         var time = Instant.ofEpochMilli(when).atZone(zone);
         boolean today = time.toLocalDate().equals(Instant.ofEpochMilli(now).atZone(zone).toLocalDate());
         return time.format(DateTimeFormatter.ofPattern(today ? "HH:mm" : "EEE HH:mm"));

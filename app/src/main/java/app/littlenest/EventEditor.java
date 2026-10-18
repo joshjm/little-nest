@@ -39,6 +39,8 @@ final class EventEditor {
     private AlertDialog dialog;
     private final String profileId;
     private final long initialStart, initialEnd;
+    /** Things like nappies happen at one moment, so they get one Time field instead of Start and End. */
+    private final boolean pointInTime;
 
     EventEditor(MainActivity activity, String profileId, Catalog.Kind kind, JSONObject existing) {
         this.activity = activity; this.profileId = profileId; this.kind = kind;
@@ -46,14 +48,15 @@ final class EventEditor {
         initialStart = source.optLong("start", System.currentTimeMillis());
         initialEnd = source.optLong("end", initialStart);
         photo = source.optString("photo");
+        pointInTime = !kind.timer() && initialEnd == initialStart;
     }
 
     void show() {
         LinearLayout content = Ui.column(activity);
         int pad = Ui.dp(activity, 20); content.setPadding(pad, pad, pad, pad);
         content.addView(Ui.text(activity, "Local time \u00b7 Tap a time to change it", 11, Ui.MUTED));
-        start = timeInput(content, "Start", initialStart);
-        end = timeInput(content, "End", initialEnd);
+        start = timeInput(content, pointInTime ? "Time" : "Start", initialStart);
+        if (!pointInTime) end = timeInput(content, "End", initialEnd);
         if (source.optBoolean("importIncomplete")) {
             incomplete = new CheckBox(activity); incomplete.setText(R.string.import_needs_review);
             incomplete.setChecked(true); content.addView(incomplete);
@@ -109,7 +112,7 @@ final class EventEditor {
         notes.setSingleLine(false); notes.setMinLines(2); content.addView(notes);
         content.addView(Ui.text(activity, "Optional reminder (blank = none)", 13, Ui.MUTED));
         reminder = Ui.input(activity, "yyyy-MM-dd HH:mm", source.optLong("remindAt") > 0 ? format(source.optLong("remindAt")) : "", false);
-        reminder.setFocusable(false); reminder.setOnClickListener(v -> pick(reminder));
+        reminder.setFocusable(false); reminder.setOnClickListener(v -> pickDateAndTime(reminder));
         content.addView(reminder);
         content.addView(Ui.button(activity, "Clear reminder", () -> reminder.setText("")));
         repeat = Ui.input(activity, "Repeat every N minutes (blank = once)", source.optLong("repeatMinutes") > 0 ? Long.toString(source.optLong("repeatMinutes")) : "", true);
@@ -147,22 +150,43 @@ final class EventEditor {
         EditText input = Ui.input(activity, label, format(value), false);
         input.setTextSize(13); input.setGravity(android.view.Gravity.END | android.view.Gravity.CENTER_VERTICAL);
         input.setBackground(Ui.shape(activity, Ui.night ? Ui.BG : Ui.SAGE, 12));
-        input.setFocusable(false); input.setOnClickListener(v -> pick(input));
+        input.setFocusable(false);
+        input.setOnClickListener(v -> { if (kind.id().equals("appointment")) pickDateAndTime(input); else pickTime(input); });
         row.addView(input, new LinearLayout.LayoutParams(0, Ui.dp(activity, 48), 2));
         content.addView(row); Ui.divider(content); return input;
     }
 
-    private void pick(EditText target) {
-        LocalDateTime current;
-        try { current = LocalDateTime.parse(target.getText().toString(), FORMAT); }
-        catch (java.time.format.DateTimeParseException e) { current = LocalDateTime.now(); }
-        LocalDateTime initial = current;
-        new DatePickerDialog(activity, (view, year, month, day) ->
-            pickTime(target, year, month + 1, day, initial.getHour(), initial.getMinute()),
-            current.getYear(), current.getMonthValue() - 1, current.getDayOfMonth()).show();
+    private static LocalDateTime current(EditText target) {
+        try { return LocalDateTime.parse(target.getText().toString(), FORMAT); }
+        catch (java.time.format.DateTimeParseException e) { return LocalDateTime.now().withSecond(0).withNano(0); }
     }
 
-    private void pickTime(EditText target, int year, int month, int day, int initialHour, int initialMinute) {
+    /** Planned things (reminders, appointments) can be on another day, so they still ask for a date first. */
+    private void pickDateAndTime(EditText target) {
+        LocalDateTime initial = current(target);
+        new DatePickerDialog(activity, (view, year, month, day) ->
+            timeWheels(initial.getHour(), initial.getMinute(), (hour, minute) ->
+                target.setText(LocalDateTime.of(year, month + 1, day, hour, minute).format(FORMAT))),
+            initial.getYear(), initial.getMonthValue() - 1, initial.getDayOfMonth()).show();
+    }
+
+    /**
+     * Care logs only ask for a time, starting on the time already in the field (now, for a new log).
+     * The day stays the same, except a time that is still ahead today means last night.
+     */
+    private void pickTime(EditText target) {
+        LocalDateTime initial = current(target);
+        timeWheels(initial.getHour(), initial.getMinute(), (hour, minute) -> {
+            LocalDateTime chosen = initial.withHour(hour).withMinute(minute);
+            if (chosen.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli() > System.currentTimeMillis() + 60_000)
+                chosen = chosen.minusDays(1);
+            target.setText(chosen.format(FORMAT));
+        });
+    }
+
+    private interface TimeChoice { void chosen(int hour, int minute); }
+
+    private void timeWheels(int initialHour, int initialMinute, TimeChoice choice) {
         boolean use24Hour = android.text.format.DateFormat.is24HourFormat(activity);
         LinearLayout wheels = Ui.row(activity);
         wheels.setGravity(android.view.Gravity.CENTER);
@@ -182,7 +206,7 @@ final class EventEditor {
             .setPositiveButton("Set", (dialog, which) -> {
                 int selectedHour = hour.getValue();
                 if (!use24Hour) selectedHour = selectedHour % 12 + (period.getValue() == 1 ? 12 : 0);
-                target.setText(LocalDateTime.of(year, month, day, selectedHour, minute.getValue()).format(FORMAT));
+                choice.chosen(selectedHour, minute.getValue());
             }).setNegativeButton("Cancel", null).show();
     }
 
@@ -227,7 +251,7 @@ final class EventEditor {
     JSONObject draft() {
         JSONObject data = Records.copy(source);
         Records.put(data, "entity", "event"); Records.put(data, "profileId", profileId); Records.put(data, "kind", kind.id());
-        Records.put(data, "start", readTime(start, initialStart)); Records.put(data, "end", readTime(end, initialEnd));
+        Records.put(data, "start", readTime(start, initialStart)); Records.put(data, "end", pointInTime ? data.optLong("start") : readTime(end, initialEnd));
         for (Map.Entry<String, View> input : inputs.entrySet()) {
             String value = input.getValue() instanceof Spinner spinner ? spinner.getSelectedItem().toString()
                 : input.getValue() instanceof Button button ? button.getTag().toString()

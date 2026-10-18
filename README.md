@@ -56,6 +56,8 @@ Start with the **[small wiki](wiki/Home.md)**:
 
 - Breastfeeding with left/right timers, bottle amounts, pumping, and first foods.
 - Wet/dirty/mixed/dry nappies, rash and stool details.
+- One-tap wet nappy, poo nappy and sleep start/end on Today and on a home-screen
+  widget, plus a widget with the last nappy, last sleep and next estimates.
 - Sleep timers, pauses, wake windows, daily/weekly charts and a sleep timeline.
 - Personalized milk-feed/nap windows, opt-in advance alerts, quiet hours,
   snooze/dismiss and upcoming appointments/reminders.
@@ -76,6 +78,14 @@ Start with the **[small wiki](wiki/Home.md)**:
 
 No ads, analytics, app backend, remote notifications, public feeds or subscriptions.
 Parent logs are shared with your partner too.
+
+## Version 1.15: one-tap logs and home-screen widgets
+
+The top of **Today** has **Wet nappy**, **Poo nappy** and **Start sleep / End
+sleep** buttons that save straight away. Two home-screen widgets do the same
+from outside the app: a quick-log row, and an at-a-glance card with the last
+nappy, last sleep and the estimated next sleep and feed. Nappies and other
+one-moment logs now ask for a single time on a scroll wheel that starts at now.
 
 ## Version 1.13: one "what's next" card
 

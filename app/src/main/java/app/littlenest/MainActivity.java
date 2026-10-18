@@ -145,11 +145,14 @@ public final class MainActivity extends Activity {
         localSync.start(); handler.postDelayed(localTick, 1500);
         if (pendingPairing != null) { localSync.join(pendingPairing); pendingPairing = null; }
         CareReminders.refresh(this);
+        // Widgets can log while the app is in the background, so show their entries on return.
+        if (editor == null && !importing && !working && !renderedTab.isEmpty()) render();
         handler.postDelayed(careTick, 60_000);
     }
     @Override protected void onPause() {
         handler.removeCallbacks(ticker); handler.removeCallbacks(autoSync); handler.removeCallbacks(careTick); handler.removeCallbacks(localTick);
         if (localSync != null) { localSync.close(); localSync = null; }
+        NestWidgets.refresh(this);
         super.onPause();
     }
     @Override protected void onDestroy() { executor.shutdown(); authorization.dispose(); super.onDestroy(); }
@@ -159,6 +162,7 @@ public final class MainActivity extends Activity {
     void changed() {
         render();
         CareReminders.refresh(this);
+        NestWidgets.refresh(this);
         if (localSync != null) { handler.removeCallbacks(localTick); handler.postDelayed(localTick, 1500); }
         if (!prefs.getString("oneDriveFolder", "").isEmpty()) {
             handler.removeCallbacks(autoSync); handler.postDelayed(autoSync, 1500);
@@ -325,6 +329,7 @@ public final class MainActivity extends Activity {
         List<JSONObject> events = store.events(profileId);
         long now = System.currentTimeMillis();
         boolean parent = profile.optString("role").equals("Parent");
+        if (!parent) quickLogs(events);
         body.addView(Ui.illustratedHeading(this, "A day at a time", 22, "nest", careSaved));
         careSaved = false;
         for (JSONObject event : events) if (event.optBoolean("running") || event.optBoolean("timerPaused")) timerCard(event);
@@ -370,6 +375,27 @@ public final class MainActivity extends Activity {
         LinearLayout list = Ui.panel(this);
         for (JSONObject event : recent) eventCard(list, event);
         if (!recent.isEmpty()) body.addView(list);
+    }
+    /** One-tap logs at the top of Today. They save straight away; tap the entry in Recent moments to change it. */
+    private void quickLogs(List<JSONObject> events) {
+        boolean sleeping = events.stream().anyMatch(e -> e.optString("kind").equals("sleep") && (e.optBoolean("running") || e.optBoolean("timerPaused")));
+        LinearLayout row = Ui.row(this); row.setPadding(0, Ui.dp(this, 4), 0, Ui.dp(this, 2));
+        quickButton(row, "Wet nappy", "diaper", Ui.SAND, Ui.NAPPY, QuickLog.WET);
+        quickButton(row, "Poo nappy", "diaper", Ui.SAND, Ui.NAPPY, QuickLog.POO);
+        quickButton(row, sleeping ? "End sleep" : "Start sleep", "sleep", Ui.BLUE, Ui.SLEEP, QuickLog.SLEEP);
+        body.addView(row);
+    }
+    private void quickButton(LinearLayout row, String label, String icon, int fill, int thread, String action) {
+        Button button = Ui.button(this, label, () -> {
+            try { Toast.makeText(this, QuickLog.log(this, profileId, action), Toast.LENGTH_SHORT).show(); logged(); }
+            catch (RuntimeException e) { error("Could not save: " + e.getMessage()); }
+        });
+        button.setBackground(Ui.ripple(this, fill, 20)); button.setTextColor(Ui.INK); button.setTextSize(14);
+        button.setPadding(Ui.dp(this, 6), Ui.dp(this, 10), Ui.dp(this, 6), Ui.dp(this, 10));
+        button.setCompoundDrawables(null, new NestIcon(this, icon, thread, fill, 24), null, null);
+        button.setCompoundDrawablePadding(Ui.dp(this, 2));
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, -2, 1);
+        params.setMargins(Ui.dp(this, 3), 0, Ui.dp(this, 3), 0); row.addView(button, params);
     }
     /** One dot per thread colour actually drawn in the weave, so the key never claims a lane is a single colour. */
     private TextView legend(List<JSONObject> shown) {

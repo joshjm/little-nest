@@ -52,11 +52,36 @@ deduplicated by name.
 
 ## Log care
 
+For the most common logs, use the buttons at the top of **Today**:
+**Wet nappy**, **Poo nappy** and **Start sleep** (it changes to **End sleep**
+while baby sleeps). They save straight away with the current time. To change or
+remove one, tap it under **Recent moments**.
+
+For anything else:
+
 1. On **Today**, tap an activity.
-2. Tap its start/end times to choose a date and time.
+2. Tap a time to change it with the hour and minute wheels, which start at the
+   current time. Nappies and other one-moment logs have a single **Time**;
+   timed activities such as sleep have **Start** and **End**. A time later than
+   now is taken as yesterday, for example logging last night's 23:50 feed
+   after midnight. Appointments and reminders also ask for a date.
 3. Fill in the relevant fields. Numeric values cannot be negative.
 4. Add optional notes and a photo, then tap **Save**.
 5. For a live session, tap **Start timer** instead.
+
+### Home-screen widgets
+
+Touch and hold the home screen, choose **Widgets**, then **Little Nest**:
+
+- **Quick log**: Wet nappy, Poo nappy and Start/End sleep buttons. Each tap
+  saves straight away and shows a short confirmation.
+- **At a glance**: last nappy, last sleep, and the estimated next sleep and
+  feed (shown with `~`, or "was" once the window has passed). Tap it to open
+  the app.
+
+Widgets use the baby selected in the app (or the first baby if a parent
+profile is selected). Widget logs sync the next time the app or background
+sync runs.
 
 ### Timers
 

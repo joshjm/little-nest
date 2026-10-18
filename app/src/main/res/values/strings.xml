@@ -4,6 +4,15 @@
     <string name="import_needs_review">Imported entry still needs review</string>
     <string name="care_feed_alert">Advance milk-feed alerts</string>
     <string name="care_nap_alert">Advance nap alerts</string>
+    <string name="quick_wet">Wet nappy</string>
+    <string name="quick_poo">Poo nappy</string>
+    <string name="quick_sleep">Start sleep</string>
+    <string name="widget_last_nappy">Last nappy</string>
+    <string name="widget_last_sleep">Last sleep</string>
+    <string name="widget_next_sleep">Next sleep</string>
+    <string name="widget_next_feed">Next feed</string>
+    <string name="widget_quick_description">Log a wet nappy, a poo nappy, or start and end sleep with one tap</string>
+    <string name="widget_status_description">Last nappy and sleep, with estimated next sleep and feed</string>
     <plurals name="import_continue_sleep">
         <item quantity="one">Continue %1$d ongoing sleep timer from its original start time</item>
         <item quantity="other">Continue %1$d ongoing sleep timers from their original start times</item>

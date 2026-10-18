@@ -59,6 +59,12 @@ values and the night palette was checked by hand (lowest 6.0:1).
   pills. Every touch target is at least 48dp.
 - Bottom navigation: Today, Plan, History, Trends, Family, with a tinted indicator
   behind the selected icon.
+- Quick logs: three equal tinted buttons at the very top of Today (nappy sand,
+  sleep blue, each with its care icon). They save with no form and confirm with
+  a short toast plus the usual saved moment.
+- Home-screen widgets reuse the paper surface, hairline edge and thread colours
+  through `widget_*` colour resources, with night variants. Estimates keep the
+  `~` / "was" wording used by At a glance.
 
 ## Signature components
 

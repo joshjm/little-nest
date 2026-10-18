@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/quick_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_background"
+    android:gravity="center"
+    android:orientation="horizontal"
+    android:padding="8dp">
+
+    <Button
+        android:id="@+id/quick_wet"
+        style="@style/WidgetButton"
+        android:background="@drawable/widget_nappy_button"
+        android:text="@string/quick_wet" />
+
+    <Button
+        android:id="@+id/quick_poo"
+        style="@style/WidgetButton"
+        android:layout_marginStart="6dp"
+        android:background="@drawable/widget_nappy_button"
+        android:text="@string/quick_poo" />
+
+    <Button
+        android:id="@+id/quick_sleep"
+        style="@style/WidgetButton"
+        android:layout_marginStart="6dp"
+        android:background="@drawable/widget_sleep_button"
+        android:text="@string/quick_sleep" />
+</LinearLayout>
