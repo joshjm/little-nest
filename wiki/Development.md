@@ -29,6 +29,8 @@ Source layout:
 | `app/src/main/java/app/littlenest/Reminders.java` | Local notification and alarm scheduling |
 | `app/src/main/java/app/littlenest/CarePredictor.java` | Deterministic recent-history feed/nap windows |
 | `app/src/main/java/app/littlenest/CareComparison.java` | Moving-average clock schedules and comparable-history adjustments |
+| `app/src/main/java/app/littlenest/NappyPredictor.java` | On-device random forest for next wet/dirty nappy, with recency weighting and a simple-average check |
+| `app/src/main/java/app/littlenest/AtAGlance.java` | Today's "At a glance" card: the next feed, nap, nappy or reminder |
 | `app/src/main/java/app/littlenest/CareReminders.java` | Per-phone options, revalidated alarms, snooze/dismiss |
 | `app/src/main/java/app/littlenest/CarePlanUi.java` | Coming up, settings and upcoming explicit care |
 | `app/src/main/java/app/littlenest/CarePlanner.java` | Optional goals, partial-day totals, sourced age context and evening clock patterns |

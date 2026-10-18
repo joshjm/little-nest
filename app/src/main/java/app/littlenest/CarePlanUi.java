@@ -183,7 +183,7 @@ final class CarePlanUi {
         content.addView(Ui.text(activity, window.available() ? range(window) + "\nTypical time: " + EventEditor.format(window.target())
             + "\n" + window.status(now) + "\n\n" + window.basis() : window.message(), 14, Ui.INK));
     }
-    private static void details(MainActivity activity, JSONObject profile, CarePredictor.Window window, CareComparison.Comparison comparison) {
+    static void details(MainActivity activity, JSONObject profile, CarePredictor.Window window, CareComparison.Comparison comparison) {
         long now = System.currentTimeMillis(); String id = profile.optString("id");
         LinearLayout content = Ui.column(activity); int pad = Ui.dp(activity, 18); content.setPadding(pad, pad, pad, pad);
         comparisonDetails(activity, content, "Normal schedule · moving average", comparison.schedule(), now);
