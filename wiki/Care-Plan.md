@@ -1,4 +1,70 @@
-# Feed and nap planning
+# Sleep and feeding planning
+
+## Plan tab, daily goals and age context
+
+Open **Plan** for the selected baby. Today still shows **Coming up**, with a
+shortcut to Plan. Parent profiles explain how to switch to a baby instead of
+showing baby guidance.
+
+**Edit daily goals** optionally sets total sleep hours (up to 24), daytime naps
+(up to 12), and milk-feed sessions (up to 30). These are input limits, **not
+recommended amounts**. Leave fields blank or use zero to remove a goal.
+Goals are never prefilled from age guidance, never change predictions or
+alerts, and never prescribe catch-up care. They are per baby/per phone and are
+not synced or included in backups.
+
+Totals cover **local midnight to now**, not a full 24 hours. Overnight sleep is
+split at midnight; actual sleep segments exclude pauses and overlapping sleep
+is counted once. Running sleep contributes so far. Milk top-ups within 30
+minutes and split naps within 15 minutes are grouped on the session's start day.
+Solids and pumping are not milk feeds. Naps are explicitly labelled **Nap**, or
+otherwise unlabelled sleep starting 05:00–20:00; **Night sleep** is excluded.
+Incomplete entries are excluded with a warning. Missing logs can still make
+totals incomplete. A partially logged calendar day should not be judged against
+population sleep/feeding ranges for a complete 24 hours.
+
+Plan expands the same feed/nap predictions used on Today, including the
+interval estimate and reasons for unavailable comparisons. Tap a prediction
+for full evidence and existing logging/snooze/dismiss actions.
+
+**Evening bedtime pattern** is a separate, non-alerting clock-time estimate.
+It averages the first completed sleep explicitly labelled **Night sleep**
+starting 17:00–23:59 on at least 4 previous local days in the last 14 days, using
+at most the latest 7 matching days. Its descriptive middle-half window is at
+least ±15 minutes. It never infers night sleep from an unlabelled nap, projects
+another bedtime once tonight's Night sleep is logged, or rolls a passed window
+forward. Active/paused sleep and today's or latest incomplete sleep block it;
+historical days containing incomplete sleep are excluded. Overnight waking,
+sleep duration and the need for night feeds are not predicted.
+
+Age context uses the saved birth date, **not adjusted age**. Missing, invalid or
+future dates show a request to edit the profile, not a guessed age. Preterm
+babies and individual feeding/growth concerns need clinician guidance. There
+is no age-based fallback prediction or automatically recommended goal.
+
+### Guidance sources
+
+Reviewed 18 October 2026; available from **Sources & how planning works** in
+the app. The text is a brief factual summary, not a clinical assessment:
+
+- [CDC sleep by age](https://www.cdc.gov/sleep/about/index.html):
+  12–16 hours for 4–11 months, 11–14 for 1–2 years and 10–13 for 3–5 years,
+  all including naps.
+- [NHS baby sleep patterns](https://www.nhs.uk/best-start-in-life/baby/baby-basics/newborn-and-baby-sleeping-advice-for-parents/your-babys-sleep-patterns/):
+  wide newborn variation, around 8–18 hours.
+- [NHS sleep and safer sleep](https://www.nhs.uk/baby/caring-for-a-newborn/helping-your-baby-to-sleep/):
+  changing routines, night waking and room sharing.
+- [HSE naps](https://www2.hse.ie/babies-children/sleep/naps-babies-and-toddlers/):
+  movement towards two naps in later infancy and one around 12–15 months,
+  with individual variation. No fixed newborn nap quota.
+- [CDC breastfeeding](https://www.cdc.gov/infant-toddler-nutrition/breastfeeding/how-much-and-how-often.html)
+  and [formula feeding](https://www.cdc.gov/infant-toddler-nutrition/formula-feeding/how-much-and-how-often.html):
+  newborn/early-month patterns, hunger/fullness cues and changes with solids.
+  The 6–12-month formula guidance describes **5–6 formula or solid-food
+  occasions**, not a requirement for 5–6 milk feeds. Breastfeeding duration
+  does not measure intake; mixed feeding has no single count target.
+
+The following sections describe the existing feed/nap models and alerts.
 
 **Coming up** on each baby's Today screen now shows two planning comparisons
 for **Next milk feed** and **Nap sweet spot** (version 1.5):
@@ -79,7 +145,8 @@ care over 18 hours old suppress comparisons. Today's care must be logged; the
 model does not roll yesterday's schedule into tomorrow. Feed comparisons cover
 05:00–22:00 and nap starts 05:00–20:00 local time. An adjusted target outside
 today's daytime range is not shown. Bedtime and overnight comparisons are not
-predicted.
+predicted by these two feed/nap comparison models. Plan's separate evening
+clock-time pattern is described above.
 
 ## Existing interval estimate and alerts (unchanged)
 

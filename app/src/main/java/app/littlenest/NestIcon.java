@@ -69,6 +69,10 @@ final class NestIcon extends Drawable {
                 canvas.drawRoundRect(8, 2, 16, 6, 1, 1, paint);
                 line(canvas, 8, 13, 16, 13); line(canvas, 12, 9, 12, 17);
             }
+            case "Plan" -> {
+                canvas.drawCircle(12, 12, 9, paint);
+                line(canvas, 12, 6, 12, 12); line(canvas, 12, 12, 17, 15);
+            }
             case "History", "appointment" -> {
                 canvas.drawRoundRect(3, 5, 21, 22, 1, 1, paint);
                 line(canvas, 3, 10, 21, 10); line(canvas, 8, 2, 8, 7); line(canvas, 16, 2, 16, 7);

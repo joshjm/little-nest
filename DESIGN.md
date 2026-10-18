@@ -57,7 +57,7 @@ values and the night palette was checked by hand (lowest 6.0:1).
 - `Ui.rowButton`: a full-width list row with a chevron, at least 52dp tall.
 - Primary actions are forest-green pills; secondary actions are quiet tinted
   pills. Every touch target is at least 48dp.
-- Bottom navigation: Today, History, Trends, Family, with a tinted indicator
+- Bottom navigation: Today, Plan, History, Trends, Family, with a tinted indicator
   behind the selected icon.
 
 ## Signature components
@@ -71,6 +71,10 @@ values and the night palette was checked by hand (lowest 6.0:1).
 - **Trends**: a week-on-week summary, a 7-day sleep pattern, small charts in
   thread colours, and a daily comparison table. WHO growth charts
   (`GrowthUi`, `GrowthChartView`) sit in the same panels.
+- **Plan**: optional daily sleep/nap/milk-session goals alongside partial-day
+  logged totals, expanded prediction evidence, a learned evening bedtime
+  pattern and age-specific context with source links. No scores or catch-up
+  amounts; goals and guidance never drive predictions or alerts.
 
 ## Motion
 
