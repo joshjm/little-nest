@@ -77,6 +77,12 @@ Start with the **[small wiki](wiki/Home.md)**:
 No ads, analytics, app backend, remote notifications, public feeds or subscriptions.
 Parent logs are shared with your partner too.
 
+## Version 1.12: one "what's next" card
+
+Today now has a single **At a glance** card for the next feed, nap and
+nappies. The detailed **Coming up** timing comparison and **Care plan &
+advance alerts** moved to **Plan** (tap any glance row to see the comparison). Reminders stay in their own list, so nothing appears twice.
+
 ## Version 1.10: a little more room to plan
 
 **Plan** brings next-care estimates, optional daily goals and age-specific

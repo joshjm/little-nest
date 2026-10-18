@@ -183,12 +183,13 @@ public class CarePlanTest {
         Records.put(appointment, "start", System.currentTimeMillis() + CarePredictor.DAY); Records.put(appointment, "end", appointment.optLong("start"));
         store().save(null, appointment, false);
         try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
-            require(By.text("Coming up"));
+            require(By.text("Plan")).click();
             require(By.text("Care plan & advance alerts")).click();
             var interval = require(By.desc("Manual milk-feed interval (minutes)")); interval.setText("180");
             require(By.res("android:id/button1")).click();
-            require(By.textStartsWith("Next milk feed \u00b7"));
+            require(By.textStartsWith("Next milk feed"));
             assertEquals(180, CareReminders.options(context(), id).intervals().feedMinutes()); assertFalse(CareReminders.options(context(), id).feed());
+            require(By.text("Today")).click(); require(By.text("A day at a time"));
             scenario.onActivity(activity -> scrollBottom(activity.findViewById(android.R.id.content)));
             assertTrue(device().wait(Until.hasObject(By.textContains("Care test appointment")), 5000));
             require(By.textContains("Care test appointment")).click();
@@ -208,7 +209,7 @@ public class CarePlanTest {
             assertEquals(second, context().getSharedPreferences("settings", Context.MODE_PRIVATE).getString("profile", ""));
         }
     }
-    @Test public void nativeTodayShowsBothPredictionsAndEvidenceWithoutChangingAlerts() throws Exception {
+    @Test public void nativePlanShowsBothPredictionsAndEvidenceWithoutChangingAlerts() throws Exception {
         String id = profile("Comparison test baby", "Baby");
         ZoneId zone = ZoneId.systemDefault();
         java.time.LocalDate today = java.time.LocalDate.now(zone);
@@ -232,6 +233,9 @@ public class CarePlanTest {
         }
         var comparison = CareComparison.predict(store().events(id), "feed", now, zone);
         try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            scenario.onActivity(activity -> assertFalse(hasText(activity.findViewById(android.R.id.content), "Normal schedule: ")));
+            require(By.text("Plan")).click();
+            require(By.text("Coming up"));
             scenario.onActivity(activity -> {
                 View root = activity.findViewById(android.R.id.content);
                 assertTrue(hasText(root, "Normal schedule: "));

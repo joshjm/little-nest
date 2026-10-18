@@ -127,6 +127,7 @@ if args.care_plan:
     tap("Add sleep", "content-desc")
     tap("android:id/button3", "resource-id")
     tap("Finish")
+    tap("Plan")
     tap("Care plan & advance alerts")
     tap("Advance milk-feed alerts")
 
@@ -142,7 +143,7 @@ if args.care_plan:
     fill("Quiet hours start (0–23)", "0")
     fill("Quiet hours end (0–23)", "0")
     tap("android:id/button1", "resource-id")
-    find("Next milk feed ·", prefix=True)
+    find("Next milk feed", prefix=True)
     deadline = time.monotonic() + 45
     while True:
         notifications = adb("shell", "cmd", "notification", "list").decode()
@@ -152,7 +153,7 @@ if args.care_plan:
             raise AssertionError("Suggested-care notification did not arrive")
         time.sleep(1)
     screenshot("care-plan.png")
-    tap("Next milk feed ·", prefix=True)
+    tap("Next milk feed", prefix=True)
     find("Your manual interval: 30 min", contains=True)
     screenshot("care-details.png")
     tap("Dismiss this cycle")
@@ -164,7 +165,7 @@ if args.care_plan:
     tap("Care plan & advance alerts")
     tap("Advance milk-feed alerts")
     tap("android:id/button1", "resource-id")
-    find("Next milk feed ·", prefix=True)
+    find("Next milk feed", prefix=True)
     print("Signed care-plan smoke passed: manual windows, real alarm/notification, details and dismiss.")
 if args.planner:
     tap("Plan")

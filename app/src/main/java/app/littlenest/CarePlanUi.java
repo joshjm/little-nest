@@ -15,10 +15,7 @@ import java.util.Comparator;
 import java.util.List;
 
 final class CarePlanUi {
-    static void addToday(MainActivity activity, LinearLayout body, JSONObject profile, List<JSONObject> events) {
-        addPredictions(activity, body, profile, events, false);
-    }
-    private static void addPredictions(MainActivity activity, LinearLayout body, JSONObject profile, List<JSONObject> events, boolean expanded) {
+    private static void addPredictions(MainActivity activity, LinearLayout body, JSONObject profile, List<JSONObject> events) {
         if (!profile.optString("role").equals("Baby")) return;
         String id = profile.optString("id");
         long now = System.currentTimeMillis();
@@ -38,7 +35,7 @@ final class CarePlanUi {
             column.addView(Ui.figures(Ui.text(activity, window.available()
                 ? "Interval estimate: " + shortTime(window.target()) + "\n" + window.status(now)
                 : window.message(), 14, Ui.INK)));
-            if (expanded && window.available()) column.addView(Ui.text(activity, range(window), 13, Ui.MUTED));
+            if (window.available()) column.addView(Ui.text(activity, range(window), 13, Ui.MUTED));
             column.addView(Ui.figures(Ui.text(activity, comparisonLine("Normal schedule", comparison.schedule(), now), 14, Ui.INK)));
             column.addView(Ui.figures(Ui.text(activity, comparisonLine("History-adjusted", comparison.adjusted(), now), 14, Ui.INK)));
             if (!comparison.shift().isEmpty()) column.addView(Ui.text(activity, comparison.shift(), 13, Ui.GREEN));
@@ -50,7 +47,6 @@ final class CarePlanUi {
                 + ". " + comparison.shift() + ". Tap for details.");
             card.addView(row); Ui.divider(card);
         }
-        if (!expanded) card.addView(Ui.rowButton(activity, "Open Plan · goals & age guidance", activity::showPlan));
         card.addView(Ui.rowButton(activity, "Care plan & advance alerts", () -> settings(activity, profile)));
         card.addView(Ui.text(activity, "Estimates, not deadlines. Follow baby's cues; never delay a feed. Only interval estimates drive alerts.", 13, Ui.MUTED));
         body.addView(card);
@@ -66,7 +62,7 @@ final class CarePlanUi {
         String id = profile.optString("id");
         CarePlanner.Progress progress = CarePlanner.progress(events, now, zone);
         CarePlanner.Goals goals = goals(activity, id);
-        addPredictions(activity, body, profile, events, true);
+        addPredictions(activity, body, profile, events);
         body.addView(Ui.section(activity, "Today · since midnight"));
         LinearLayout daily = Ui.panel(activity);
         daily.addView(Ui.figures(Ui.medium(activity, "Sleep  " + Insights.duration(progress.sleepMs())
