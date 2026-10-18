@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-/** "At a glance" on Today: the next thing coming up in large text, with the few after it underneath. */
+/** "At a glance" on Today: the next feed, nap or nappy in large text, with the others underneath. */
 final class AtAGlance {
     record Item(long when, long latest, String title, String status, int color, Runnable open) {}
 
@@ -22,7 +22,7 @@ final class AtAGlance {
         ZoneId zone = ZoneId.systemDefault();
         List<Item> items = new ArrayList<>();
         for (CarePredictor.Window window : plans) {
-            // Prefer the history-adjusted time shown in Coming up, then the normal schedule, then the interval estimate.
+            // Prefer the history-adjusted time shown on Plan, then the normal schedule, then the interval estimate.
             var comparison = CareComparison.predict(events, window.type(), now, zone);
             CarePredictor.Window best = comparison.adjusted().available() ? comparison.adjusted()
                 : comparison.schedule().available() ? comparison.schedule() : window;
@@ -31,14 +31,6 @@ final class AtAGlance {
         }
         for (NappyPredictor.Prediction prediction : NappyPredictor.predict(events, now, zone)) if (prediction.available())
             items.add(new Item(prediction.target(), prediction.latest(), prediction.title(), prediction.status(now), Ui.DIAPER, () -> nappy(activity, prediction)));
-        for (JSONObject event : events) {
-            long when = Reminders.nextTime(event, now);
-            if (event.optString("kind").equals("appointment") && event.optLong("start") > now) when = when > 0 ? Math.min(when, event.optLong("start")) : event.optLong("start");
-            if (when <= 0 || when - now > 24 * NappyPredictor.HOUR) continue;
-            String title = event.optString("name"); if (title.isBlank()) title = Catalog.get(event.optString("kind")).title();
-            items.add(new Item(when, when, title, "In about " + Insights.duration(when - now), Ui.HEALTH,
-                () -> activity.openEditor(Catalog.get(event.optString("kind")), event)));
-        }
         if (items.isEmpty()) return;
         items.sort(Comparator.comparingLong(Item::when));
         LinearLayout card = Ui.panel(activity);
@@ -59,7 +51,7 @@ final class AtAGlance {
             clickable(activity, row, item);
             card.addView(row);
         }
-        card.addView(Ui.text(activity, "Estimates from your own logs. Follow baby's cues.", 11, Ui.MUTED));
+        card.addView(Ui.text(activity, "Estimates from your own logs. Tap one to compare timings. Follow baby's cues.", 11, Ui.MUTED));
         body.addView(card);
     }
 

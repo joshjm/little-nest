@@ -11,7 +11,7 @@ full size.
 
 | Today | Activity tiles | Running timer |
 |:---:|:---:|:---:|
-| [<img src="../docs/screenshots/today.png" alt="Today with the day weave, current state and coming-up care" width="240">](../docs/screenshots/today.png) | [<img src="../docs/screenshots/today-tiles.png" alt="Feed activity tiles with time since last feed" width="240">](../docs/screenshots/today-tiles.png) | [<img src="../docs/screenshots/timer.png" alt="A running breastfeeding timer with pause, switch side and finish" width="240">](../docs/screenshots/timer.png) |
+| [<img src="../docs/screenshots/today.png" alt="Today with At a glance, the day weave and current state" width="240">](../docs/screenshots/today.png) | [<img src="../docs/screenshots/today-tiles.png" alt="Feed activity tiles with time since last feed" width="240">](../docs/screenshots/today-tiles.png) | [<img src="../docs/screenshots/timer.png" alt="A running breastfeeding timer with pause, switch side and finish" width="240">](../docs/screenshots/timer.png) |
 | A chick in a woven nest accompanies the day weave. Solid threads are logged care; dashed outlines are suggested times. | Larger, original activity symbols help distinguish each kind of care. Each tile shows how long ago it last happened. | Timers repeat their care symbol and keep large, steady numbers. |
 
 | First use | Plan |

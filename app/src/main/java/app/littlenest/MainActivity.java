@@ -354,7 +354,6 @@ public final class MainActivity extends Activity {
         if ((!prefs.getString("oneDriveFolder", "").isEmpty() && !prefs.getString("syncError", "").isEmpty())
             || (!prefs.getString("localPeer", "").isEmpty() && !prefs.getString("localError", "").isEmpty()))
             body.addView(Ui.button(this, "Sync needs attention - open Family", () -> { tab = "Family"; render(); }));
-        CarePlanUi.addToday(this, body, profile, events);
         Set<String> hidden = prefs.getStringSet("hidden", Set.of());
         List<Catalog.Kind> visible = Catalog.KINDS.stream().filter(k -> !hidden.contains(k.id())
             && (parent ? k.group().equals("Parent") || List.of("pump", "journal", "appointment", "routine", "medical", "medicine", "vaccine", "temperature").contains(k.id())

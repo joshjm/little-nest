@@ -2,8 +2,8 @@
 
 ## Plan tab, daily goals and age context
 
-Open **Plan** for the selected baby. Today still shows **Coming up**, with a
-shortcut to Plan. Parent profiles explain how to switch to a baby instead of
+Open **Plan** for the selected baby. **Coming up**, with its timing
+comparisons, is on Plan. Today shows the simpler **At a glance** card instead. Parent profiles explain how to switch to a baby instead of
 showing baby guidance.
 
 **Edit daily goals** optionally sets total sleep hours (up to 24), daytime naps
@@ -66,12 +66,17 @@ the app. The text is a brief factual summary, not a clinical assessment:
 
 The following sections describe the existing feed/nap models and alerts.
 
-## At a glance (version 1.11)
+## At a glance (version 1.11, simplified in 1.13)
 
 The top of each baby's **Today** screen shows the next thing coming up in
-large text, like the Pixel "At a glance" view. Underneath are the next few
-items: milk feed, nap, wet nappy, dirty nappy and any reminder or appointment
-in the next 24 hours. Tap a row for its details.
+large text, like the Pixel "At a glance" view. Underneath are the others:
+milk feed, nap, wet nappy and dirty nappy. Tap a row to compare its timings.
+The card is hidden until there is enough recent history to predict something.
+**Care plan & advance alerts** is on **Plan** and in each row's details.
+
+It is the only "what's next" card on Today. The detailed **Coming up**
+comparison lives on **Plan**, and reminders and appointments stay in
+**Upcoming reminders & plans** further down Today, so nothing is shown twice.
 
 - Feed and nap times use the **history-adjusted** time from *Coming up* when it
   is available, then the normal schedule, then the interval estimate.
@@ -126,7 +131,7 @@ To replay your own private export on a computer (prints only summary numbers):
 
 ## Feed and nap comparisons
 
-**Coming up** on each baby's Today screen now shows two planning comparisons
+**Coming up** on each baby's Plan screen shows two planning comparisons
 for **Next milk feed** and **Nap sweet spot** (version 1.5):
 
 1. **Normal schedule:** a moving average of clock times.
