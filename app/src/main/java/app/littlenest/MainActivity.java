@@ -101,7 +101,7 @@ public final class MainActivity extends Activity {
     };
     private final Runnable careTick = new Runnable() {
         @Override public void run() {
-            if (tab.equals("Today") && editor == null && !importing && !working) render();
+            if ((tab.equals("Today") || tab.equals("Plan")) && editor == null && !importing && !working) render();
             handler.postDelayed(this, 60_000);
         }
     };
@@ -251,6 +251,7 @@ public final class MainActivity extends Activity {
         else switch (tab) {
             case "History" -> history();
             case "Trends" -> trends();
+            case "Plan" -> CarePlanUi.plan(this, body, profile, store.events(profileId));
             case "Family" -> family();
             default -> today();
         }
@@ -258,9 +259,9 @@ public final class MainActivity extends Activity {
         root.addView(navEdge, new LinearLayout.LayoutParams(-1, Ui.dp(this, 1)));
         LinearLayout nav = Ui.row(this); nav.setBackgroundColor(Ui.SURFACE);
         nav.setPadding(Ui.dp(this, 4), Ui.dp(this, 10), Ui.dp(this, 4), Ui.dp(this, 12));
-        for (String item : List.of("Today", "History", "Trends", "Family")) {
+        for (String item : List.of("Today", "Plan", "History", "Trends", "Family")) {
             boolean selected = tab.equals(item);
-            Button button = new Button(this); button.setText(item); button.setAllCaps(false); button.setTextSize(12);
+            Button button = new Button(this); button.setText(item); button.setAllCaps(false); button.setTextSize(11);
             button.setOnClickListener(v -> { tab = item; filter = ""; historyPage = 0; render(); });
             button.setTypeface(android.graphics.Typeface.create("sans-serif-medium", selected ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL));
             button.setTextColor(selected ? Ui.INK : Ui.MUTED);
@@ -275,13 +276,15 @@ public final class MainActivity extends Activity {
             indicator.setBounds(0, 0, Ui.dp(this, 64), Ui.dp(this, 32));
             button.setCompoundDrawables(null, indicator, null, null);
             button.setCompoundDrawablePadding(Ui.dp(this, 4));
-            button.setPadding(0, 0, 0, 0); button.setMinHeight(Ui.dp(this, 56)); button.setMinimumHeight(Ui.dp(this, 56));
+            button.setPadding(Ui.dp(this, 4), 0, Ui.dp(this, 4), 0); button.setMinHeight(Ui.dp(this, 56)); button.setMinimumHeight(Ui.dp(this, 56));
             button.setSelected(selected);
             nav.addView(button, new LinearLayout.LayoutParams(0, -2, 1));
         }
         root.addView(nav);
         scroll.post(() -> scroll.scrollTo(0, scrollPosition));
     }
+
+    void showPlan() { tab = "Plan"; render(); }
 
     private String age(JSONObject profile) {
         if (profile.optString("role").equals("Parent")) return profile.optString("stage", "Parent");

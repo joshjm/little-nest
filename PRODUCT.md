@@ -49,7 +49,7 @@ medical advice.
   milestones, routines, journal/photos, parent sleep/mood/vitals/meals,
   appointments and reminders.
 - Multiple baby and parent profiles; caregiver attribution.
-- Today, History, Trends and Family are the four destinations.
+- Today, Plan, History, Trends and Family are the five destinations.
 - Preserve storage keys, import identity seeds (`nara*`) and backup formats.
 - Never show competitor branding in visible text.
 - Planning text must keep its safety framing: estimates, not deadlines.
