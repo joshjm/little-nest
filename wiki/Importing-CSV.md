@@ -54,7 +54,7 @@ the APK, and importing does not contact the source app or upload data to an app 
 - Pump left/right quantities with independent ml/fl oz units, or total-only
   output. An explicit total overrides components in volume totals; otherwise
   components are summed after conversion. The editor explains this precedence.
-- Wet, dirty, mixed and dry diapers, rash, blowout, multiple stool colors and
+- Wet, dirty, mixed and dry nappies, rash, blowout, multiple stool colors and
   multiple textures. Missing details are not assumed to mean "No".
 - Weight, length and head size with independent units; milestone text; profile
   birth date, adjusted birth date and sex. Adjusted age is shown in Family when
@@ -110,6 +110,6 @@ records for review rather than discarding them or inventing missing care.
 
 Features added from import testing: mixed bottle components and formula names,
 total-only pumping and per-side volume units, breastfeeding beginning/ending
-sides and manual duration editing, diaper blowouts and multi-select stool
+sides and manual duration editing, nappy blowouts and multi-select stool
 details, profile sex/adjusted date, ongoing sleep restoration, provenance, and
 large-history pagination/indexing.

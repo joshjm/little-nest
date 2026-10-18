@@ -51,7 +51,7 @@ not reverse-engineering observations of Nara. See [verification](Development.md)
 | Solids and preloaded first foods | 40+ foods/allergens, Other, portion and reaction fields |
 | Feeding patterns and schedules | Charts, learned milk-feed windows, manual intervals and opt-in advance alerts |
 | Feeding notes and photos | Notes and one resized photo on every event |
-| Wet, dirty and dry diapers; rash | Wet/dirty/mixed/dry, rash, blowout and multi-select stool colors/textures |
+| Wet, dirty and dry nappies; rash | Wet/dirty/mixed/dry, rash, blowout and multi-select stool colors/textures |
 | Handoff and bowel history | Caregiver attribution, timestamps, search, CSV |
 | Nap/night sleep timer and manual sessions | Sleep type, timer, manual start/end, persisted paused intervals |
 | Sleep patterns by day/week | Seven-day charts, 24-hour sleep timeline, previous-week totals |

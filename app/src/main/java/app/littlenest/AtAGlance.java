@@ -30,7 +30,7 @@ final class AtAGlance {
                 () -> CarePlanUi.details(activity, profile, window, comparison)));
         }
         for (NappyPredictor.Prediction prediction : NappyPredictor.predict(events, now, zone)) if (prediction.available())
-            items.add(new Item(prediction.target(), prediction.latest(), prediction.title(), prediction.status(now), Ui.DIAPER, () -> nappy(activity, prediction)));
+            items.add(new Item(prediction.target(), prediction.latest(), prediction.title(), prediction.status(now), Ui.NAPPY, () -> nappy(activity, prediction)));
         if (items.isEmpty()) return;
         items.sort(Comparator.comparingLong(Item::when));
         LinearLayout card = Ui.panel(activity);
@@ -38,7 +38,7 @@ final class AtAGlance {
         Item next = items.get(0);
         LinearLayout hero = Ui.column(activity);
         hero.addView(Ui.figures(Ui.title(activity, next.title + " · " + clock(next.when, next.latest, now, zone), 24)));
-        hero.addView(Ui.medium(activity, next.status, 16, next.color == Ui.DIAPER ? Ui.INK : next.color));
+        hero.addView(Ui.medium(activity, next.status, 16, next.color == Ui.NAPPY ? Ui.INK : next.color));
         clickable(activity, hero, next);
         card.addView(hero);
         for (Item item : items.subList(1, Math.min(items.size(), 4))) {

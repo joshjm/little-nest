@@ -344,7 +344,7 @@ public final class MainActivity extends Activity {
             if (latestBreast != null) feedFact.addView(Ui.text(this, "Last breast side: " + latestBreast.optString("side", "Not recorded"), 13, Ui.MUTED));
             JSONObject sleep = events.stream().filter(e -> e.optString("kind").equals("sleep") && !e.optBoolean("importIncomplete")).findFirst().orElse(null);
             fact(weave, Ui.SLEEP, sleep == null ? "No sleep logged yet" : sleep.optBoolean("running") ? "Sleeping now" : "Awake for " + Insights.duration(now - sleep.optLong("end")));
-            fact(weave, Ui.DIAPER, day.wet() + " wet, " + day.dirty() + " dirty today");
+            fact(weave, Ui.NAPPY, day.wet() + " wet, " + day.dirty() + " dirty today");
         }
         TextView totals = Ui.figures(Ui.text(this, parent
             ? events.stream().filter(e -> Insights.date(e.optLong("start")).equals(LocalDate.now())).count() + " moments logged today  \u00b7  " + Insights.duration(day.sleepMs()) + " sleep"
@@ -359,7 +359,7 @@ public final class MainActivity extends Activity {
             && (parent ? k.group().equals("Parent") || List.of("pump", "journal", "appointment", "routine", "medical", "medicine", "vaccine", "temperature").contains(k.id())
                 : !k.group().equals("Parent"))).toList();
         for (String group : parent ? List.of("Pump", "Parent", "Health", "Routines", "Memories", "Planning")
-            : List.of("Feed", "Sleep", "Pump", "Diaper", "Growth", "Health", "Routines", "Memories", "Planning")) {
+            : List.of("Feed", "Sleep", "Pump", "Nappy", "Growth", "Health", "Routines", "Memories", "Planning")) {
             List<Catalog.Kind> kinds = visible.stream().filter(k -> activitySection(k).equals(group)).toList();
             if (!kinds.isEmpty()) activityCard(group, kinds, events);
         }
@@ -405,7 +405,7 @@ public final class MainActivity extends Activity {
         return switch (kind.id()) {
             case "breast", "bottle", "solids" -> "Feed";
             case "pump" -> "Pump";
-            case "diaper" -> "Diaper";
+            case "diaper" -> "Nappy";
             case "growth" -> "Growth";
             default -> kind.group();
         };
@@ -678,7 +678,7 @@ public final class MainActivity extends Activity {
         addChart("Bottle milk", prefs.getBoolean("imperial", false) ? "fl oz" : "ml",
             days.stream().map(d -> new ChartView.Point(d.date().format(DateTimeFormatter.ofPattern("EE")), d.milkMl() / (prefs.getBoolean("imperial", false) ? 29.5735295625 : 1))).toList(), Ui.FEED, false);
         LinearLayout table = Ui.panel(this);
-        table.addView(chartTitle("Daily comparison", "per day", Ui.DIAPER));
+        table.addView(chartTitle("Daily comparison", "per day", Ui.NAPPY));
         tableRow(table, true, "Day", "Feeds", "Wet", "Dirty", "Sleep");
         for (int i = days.size() - 1; i >= 0; i--) {
             Insights.Day day = days.get(i);

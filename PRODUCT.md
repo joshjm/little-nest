@@ -45,7 +45,7 @@ medical advice.
 ## Capabilities and Constraints
 
 - Activities: breastfeeding (left/right timer), bottle, pumping, solids,
-  diapers, sleep, growth, medicine, vaccines, temperature, visits,
+  nappies, sleep, growth, medicine, vaccines, temperature, visits,
   milestones, routines, journal/photos, parent sleep/mood/vitals/meals,
   appointments and reminders.
 - Multiple baby and parent profiles; caregiver attribution.

@@ -55,7 +55,7 @@ Start with the **[small wiki](wiki/Home.md)**:
 ## Included
 
 - Breastfeeding with left/right timers, bottle amounts, pumping, and first foods.
-- Wet/dirty/mixed/dry diapers, rash and stool details.
+- Wet/dirty/mixed/dry nappies, rash and stool details.
 - Sleep timers, pauses, wake windows, daily/weekly charts and a sleep timeline.
 - Personalized milk-feed/nap windows, opt-in advance alerts, quiet hours,
   snooze/dismiss and upcoming appointments/reminders.
@@ -176,7 +176,7 @@ app without uninstalling.
 
 Choose **Family → Import activity CSV**. The importer was checked locally against
 a large private export, which is not included in this repository. It preserves source columns and adds
-mixed-bottle/formula details, total/per-side pumping units, multi-select diaper
+mixed-bottle/formula details, total/per-side pumping units, multi-select nappy
 details, manual breastfeeding side durations and profile sex/adjusted date.
 Ongoing sleep can continue from its original start time. Review destination
 profiles before importing; profile-less pumping logs get their own

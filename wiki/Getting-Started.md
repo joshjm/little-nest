@@ -77,7 +77,7 @@ Keep automatic date/time enabled on both phones for meaningful timer displays.
 
 ### Activities and units
 
-Choose bottle milk type and ml/fl oz, wet/dirty/mixed/dry diapers, stool/rash
+Choose bottle milk type and ml/fl oz, wet/dirty/mixed/dry nappies, stool/rash
 details, sleep type, food/reaction, growth units, medications and more.
 The food list includes common foods and allergens with an **Other** option.
 It is a logging convenience, not feeding or allergy guidance.
@@ -99,8 +99,8 @@ see an attached photo. Full-resolution originals are not retained.
 ## History, growth and patterns
 
 - **Today:** feeds, bottle milk, wet and dirty counts, sleep, last-care intervals,
-  last breast side, wake window and recent activity. A mixed diaper contributes
-  once to each of wet/dirty; those numbers are not a total diaper count.
+  last breast side, wake window and recent activity. A mixed nappy contributes
+  once to each of wet/dirty; those numbers are not a total nappy count.
 - **History:** all dates or a selected calendar day, plus text search. Tap an
   entry for full details, editing or confirmed deletion. Large histories have
   previous/next controls, 100 entries per page; search covers all pages.
@@ -159,7 +159,7 @@ This is not a forensic erasure of operation history or older backups.
 
 ## Little Nest appearance
 
-Today groups activities into **Feed, Sleep, Pump, Diaper, Growth,
+Today groups activities into **Feed, Sleep, Pump, Nappy, Growth,
 Health, Routines and Memories** sections. Tap an activity tile to log care, or
 **Add** next to a section heading to choose an activity. Hidden
 activities stay hidden. Parent profiles have the corresponding parent sections.

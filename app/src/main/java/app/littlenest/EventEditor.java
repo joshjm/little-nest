@@ -2,7 +2,6 @@ package app.littlenest;
 
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
-import android.app.TimePickerDialog;
 import android.graphics.BitmapFactory;
 import android.util.Base64;
 import android.view.View;
@@ -12,6 +11,7 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.NumberPicker;
 import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -20,7 +20,9 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.text.DateFormatSymbols;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 
 final class EventEditor {
@@ -156,10 +158,52 @@ final class EventEditor {
         catch (java.time.format.DateTimeParseException e) { current = LocalDateTime.now(); }
         LocalDateTime initial = current;
         new DatePickerDialog(activity, (view, year, month, day) ->
-            new TimePickerDialog(activity, (time, hour, minute) ->
-                target.setText(LocalDateTime.of(year, month + 1, day, hour, minute).format(FORMAT)),
-                initial.getHour(), initial.getMinute(), android.text.format.DateFormat.is24HourFormat(activity)).show(),
+            pickTime(target, year, month + 1, day, initial.getHour(), initial.getMinute()),
             current.getYear(), current.getMonthValue() - 1, current.getDayOfMonth()).show();
+    }
+
+    private void pickTime(EditText target, int year, int month, int day, int initialHour, int initialMinute) {
+        boolean use24Hour = android.text.format.DateFormat.is24HourFormat(activity);
+        LinearLayout wheels = Ui.row(activity);
+        wheels.setGravity(android.view.Gravity.CENTER);
+        NumberPicker hour = numberWheel("Hour", use24Hour ? 0 : 1, use24Hour ? 23 : 12,
+            use24Hour ? initialHour : initialHour % 12 == 0 ? 12 : initialHour % 12, null);
+        NumberPicker minute = numberWheel("Minute", 0, 59, initialMinute, null);
+        addTimeWheel(wheels, "Hour", hour);
+        addTimeWheel(wheels, "Minute", minute);
+        NumberPicker amPm = null;
+        if (!use24Hour) {
+            String[] labels = DateFormatSymbols.getInstance().getAmPmStrings();
+            amPm = numberWheel("AM or PM", 0, 1, initialHour < 12 ? 0 : 1, labels);
+            addTimeWheel(wheels, "AM / PM", amPm);
+        }
+        NumberPicker period = amPm;
+        new AlertDialog.Builder(activity).setTitle("Choose time").setView(wheels)
+            .setPositiveButton("Set", (dialog, which) -> {
+                int selectedHour = hour.getValue();
+                if (!use24Hour) selectedHour = selectedHour % 12 + (period.getValue() == 1 ? 12 : 0);
+                target.setText(LocalDateTime.of(year, month, day, selectedHour, minute.getValue()).format(FORMAT));
+            }).setNegativeButton("Cancel", null).show();
+    }
+
+    private NumberPicker numberWheel(String description, int min, int max, int value, String[] displayedValues) {
+        NumberPicker picker = new NumberPicker(activity);
+        picker.setMinValue(min); picker.setMaxValue(max); picker.setValue(value);
+        picker.setWrapSelectorWheel(true); picker.setContentDescription(description);
+        if (displayedValues != null) picker.setDisplayedValues(displayedValues);
+        else if (description.equals("Minute")) picker.setFormatter(number -> String.format(Locale.ROOT, "%02d", number));
+        return picker;
+    }
+
+    private void addTimeWheel(LinearLayout parent, String label, NumberPicker picker) {
+        LinearLayout column = Ui.column(activity);
+        TextView caption = Ui.text(activity, label, 13, Ui.MUTED);
+        caption.setGravity(android.view.Gravity.CENTER);
+        column.addView(caption);
+        column.addView(picker, new LinearLayout.LayoutParams(-1, Ui.dp(activity, 176)));
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, -2, 1);
+        params.setMargins(Ui.dp(activity, 3), 0, Ui.dp(activity, 3), 0);
+        parent.addView(column, params);
     }
 
     static String format(long value) { return Instant.ofEpochMilli(value).atZone(ZoneId.systemDefault()).format(FORMAT); }
