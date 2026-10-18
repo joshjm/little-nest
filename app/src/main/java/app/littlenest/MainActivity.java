@@ -326,6 +326,7 @@ public final class MainActivity extends Activity {
         Insights.Day day = Insights.day(events, LocalDate.now(), ZoneId.systemDefault(), now);
         List<CarePredictor.Window> plans = parent ? List.of()
             : CarePredictor.predict(events, CareReminders.options(this, profileId).intervals(), now, ZoneId.systemDefault());
+        AtAGlance.add(this, body, profile, events, plans, now);
         LinearLayout weave = Ui.panel(this);
         weave.addView(new DayWeaveView(this, events, plans, now), new LinearLayout.LayoutParams(-1, Ui.dp(this, 112)));
         weave.addView(legend(DayWeaveView.visible(events, now)));

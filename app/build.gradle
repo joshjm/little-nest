@@ -11,8 +11,8 @@ android {
         applicationId 'app.littlenest'
         minSdk 28
         targetSdk 35
-        versionCode 11
-        versionName '1.10.0'
+        versionCode 12
+        versionName '1.11.0'
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
         def oneDriveClient = providers.gradleProperty('oneDriveClientId').orElse(providers.environmentVariable('ONEDRIVE_CLIENT_ID')).getOrElse('')
         if (oneDriveClient && !(oneDriveClient ==~ /[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/))
