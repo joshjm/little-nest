@@ -199,6 +199,14 @@ final class Ui {
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2); params.setMargins(0, dp(context, 18), 0, dp(context, 2));
         title.setLayoutParams(params); return title;
     }
+    static LinearLayout illustratedHeading(Context context, String label, int size, String scene, boolean saved) {
+        LinearLayout row = row(context);
+        row.addView(title(context, label, size), new LinearLayout.LayoutParams(0, -2, 1));
+        LinearLayout.LayoutParams art = new LinearLayout.LayoutParams(dp(context, 112), dp(context, 80));
+        art.setMarginStart(dp(context, 8));
+        row.addView(new NestScene(context, scene, saved), art);
+        return row;
+    }
     static View dot(Context context, int color, int size) {
         View dot = new View(context); GradientDrawable oval = new GradientDrawable(); oval.setShape(GradientDrawable.OVAL); oval.setColor(color);
         dot.setBackground(oval); dot.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);

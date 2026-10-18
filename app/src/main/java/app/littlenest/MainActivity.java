@@ -64,6 +64,7 @@ public final class MainActivity extends Activity {
     private String profileId = "", tab = "Today", filter = "";
     private ScrollView mainScroll;
     private boolean scrollTop;
+    private boolean careSaved;
     private String renderedTab = "";
     private LocalDate historyDay;
     private int historyPage;
@@ -154,7 +155,7 @@ public final class MainActivity extends Activity {
     @Override protected void onDestroy() { executor.shutdown(); authorization.dispose(); super.onDestroy(); }
 
     /** After the user logs care on Today, show the top so the new entry is visible in the weave. */
-    void logged() { scrollTop = true; changed(); }
+    void logged() { scrollTop = true; careSaved = tab.equals("Today"); changed(); }
     void changed() {
         render();
         CareReminders.refresh(this);
@@ -186,6 +187,7 @@ public final class MainActivity extends Activity {
     private void selectProfile(String id) { profileId = id; historyPage = 0; prefs.edit().putString("profile", id).apply(); }
 
     private void render() {
+        boolean navigating = !renderedTab.isEmpty() && !renderedTab.equals(tab);
         int scrollPosition = mainScroll != null && renderedTab.equals(tab) && !(scrollTop && tab.equals("Today")) ? mainScroll.getScrollY() : 0;
         scrollTop = false;
         renderedTab = tab;
@@ -279,6 +281,11 @@ public final class MainActivity extends Activity {
             button.setPadding(Ui.dp(this, 4), 0, Ui.dp(this, 4), 0); button.setMinHeight(Ui.dp(this, 56)); button.setMinimumHeight(Ui.dp(this, 56));
             button.setSelected(selected);
             nav.addView(button, new LinearLayout.LayoutParams(0, -2, 1));
+            if (selected && navigating && android.animation.ValueAnimator.areAnimatorsEnabled()) {
+                button.setScaleX(.92f); button.setScaleY(.92f);
+                button.animate().scaleX(1).scaleY(1).setDuration(180)
+                    .setInterpolator(new android.view.animation.DecelerateInterpolator()).start();
+            }
         }
         root.addView(nav);
         scroll.post(() -> scroll.scrollTo(0, scrollPosition));
@@ -298,10 +305,8 @@ public final class MainActivity extends Activity {
     }
 
     private void welcome() {
-        Ui.gap(body, 28);
-        ImageView mark = new ImageView(this); mark.setImageDrawable(new NestIcon(this, "nest", Ui.GREEN, Ui.PEACH, 64));
-        mark.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-        body.addView(mark, new LinearLayout.LayoutParams(Ui.dp(this, 64), Ui.dp(this, 64)));
+        Ui.gap(body, 12);
+        body.addView(new NestScene(this, "family", false), new LinearLayout.LayoutParams(-1, Ui.dp(this, 144)));
         Ui.gap(body, 12);
         body.addView(Ui.title(this, "Small moments.\nA little more peace.", 32));
         TextView intro = Ui.text(this, "A calm place for feeds, sleep, little firsts, and you. Private, offline, and shared with just your person.", 17, Ui.MUTED);
@@ -320,8 +325,8 @@ public final class MainActivity extends Activity {
         List<JSONObject> events = store.events(profileId);
         long now = System.currentTimeMillis();
         boolean parent = profile.optString("role").equals("Parent");
-        TextView heading = Ui.title(this, "A day at a time", 22);
-        heading.setPadding(0, Ui.dp(this, 6), 0, Ui.dp(this, 2)); body.addView(heading);
+        body.addView(Ui.illustratedHeading(this, "A day at a time", 22, "nest", careSaved));
+        careSaved = false;
         for (JSONObject event : events) if (event.optBoolean("running") || event.optBoolean("timerPaused")) timerCard(event);
         Insights.Day day = Insights.day(events, LocalDate.now(), ZoneId.systemDefault(), now);
         List<CarePredictor.Window> plans = parent ? List.of()
@@ -439,10 +444,10 @@ public final class MainActivity extends Activity {
             tile.setBackground(new android.graphics.drawable.RippleDrawable(android.content.res.ColorStateList.valueOf(Ui.RIPPLE), face, null));
             JSONObject latest = events.stream().filter(e -> e.optString("kind").equals(kind.id())).findFirst().orElse(null);
             LinearLayout top = Ui.row(this);
-            ImageView icon = new ImageView(this); icon.setImageDrawable(new NestIcon(this, kind.id(), thread, Ui.activityColor(kind), 22));
+            ImageView icon = new ImageView(this); icon.setImageDrawable(new NestIcon(this, kind.id(), thread, Ui.activityColor(kind), 28));
             icon.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-            icon.setBackground(Ui.shape(this, Ui.activityColor(kind), 12)); icon.setPadding(Ui.dp(this, 7), Ui.dp(this, 7), Ui.dp(this, 7), Ui.dp(this, 7));
-            top.addView(icon, new LinearLayout.LayoutParams(Ui.dp(this, 36), Ui.dp(this, 36)));
+            icon.setBackground(Ui.shape(this, Ui.activityColor(kind), 16)); icon.setPadding(Ui.dp(this, 8), Ui.dp(this, 8), Ui.dp(this, 8), Ui.dp(this, 8));
+            top.addView(icon, new LinearLayout.LayoutParams(Ui.dp(this, 44), Ui.dp(this, 44)));
             String value = latest == null ? "" : latest.optBoolean("importIncomplete") ? "Review"
                 : kind.id().equals("bottle") ? milk(Insights.bottleMl(latest))
                 : kind.id().equals("pump") ? milk(Insights.pumpMl(latest))
@@ -474,8 +479,12 @@ public final class MainActivity extends Activity {
         boolean running = event.optBoolean("running");
         LinearLayout card = Ui.card(this, Ui.activityColor(kind));
         LinearLayout heading = Ui.row(this);
-        heading.addView(Ui.dot(this, Ui.thread(kind), 10));
-        heading.addView(Ui.medium(this, kind.title() + (running ? " \u00b7 running" : " \u00b7 paused"), 16, Ui.INK));
+        ImageView icon = new ImageView(this);
+        icon.setImageDrawable(new NestIcon(this, kind.id(), Ui.thread(kind), Ui.activityColor(kind), 28));
+        icon.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(Ui.dp(this, 32), Ui.dp(this, 32));
+        iconParams.setMarginEnd(Ui.dp(this, 10)); heading.addView(icon, iconParams);
+        heading.addView(Ui.medium(this, kind.title() + (running ? " \u00b7 running" : " \u00b7 paused"), 16, Ui.INK), new LinearLayout.LayoutParams(0, -2, 1));
         card.addView(heading);
         TextView label = Ui.figures(Ui.title(this, timerText(event), 40)); label.setLetterSpacing(-0.02f); card.addView(label);
         timerLabels.add(label); timerEvents.add(event);
@@ -511,7 +520,8 @@ public final class MainActivity extends Activity {
         } else {
             Records.put(event, "side", source.optString("side", "Left").equals("Left") ? "Right" : "Left");
         }
-        store.save(event.optString("id"), event, false); changed();
+        store.save(event.optString("id"), event, false);
+        if (action.equals("finish")) logged(); else changed();
     }
 
     private void history() {
@@ -778,7 +788,7 @@ public final class MainActivity extends Activity {
     }
 
     private void family() {
-        TextView heading = Ui.title(this, "Your people. Your data.", 26); heading.setPadding(0, Ui.dp(this, 6), 0, 0); body.addView(heading);
+        body.addView(Ui.illustratedHeading(this, "Your people. Your data.", 26, "family", false));
         body.addView(Ui.text(this, "Two caregivers, one private nest. Pair over Wi-Fi without an account, or use optional OneDrive sharing. No app backend.", 15, Ui.MUTED));
         partnerCard();
         body.addView(Ui.section(this, "Profiles & preferences"));
