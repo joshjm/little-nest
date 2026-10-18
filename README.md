@@ -77,7 +77,7 @@ Start with the **[small wiki](wiki/Home.md)**:
 No ads, analytics, app backend, remote notifications, public feeds or subscriptions.
 Parent logs are shared with your partner too.
 
-## Version 1.12: one "what's next" card
+## Version 1.13: one "what's next" card
 
 Today now has a single **At a glance** card for the next feed, nap and
 nappies. The detailed **Coming up** timing comparison and **Care plan &

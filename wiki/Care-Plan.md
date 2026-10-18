@@ -66,7 +66,7 @@ the app. The text is a brief factual summary, not a clinical assessment:
 
 The following sections describe the existing feed/nap models and alerts.
 
-## At a glance (version 1.11, simplified in 1.12)
+## At a glance (version 1.11, simplified in 1.13)
 
 The top of each baby's **Today** screen shows the next thing coming up in
 large text, like the Pixel "At a glance" view. Underneath are the others:

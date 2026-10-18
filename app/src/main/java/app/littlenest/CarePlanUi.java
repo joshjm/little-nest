@@ -27,8 +27,12 @@ final class CarePlanUi {
             LinearLayout row = Ui.row(activity); row.setGravity(android.view.Gravity.TOP);
             row.setMinimumHeight(Ui.dp(activity, 60)); row.setPadding(0, Ui.dp(activity, 8), 0, Ui.dp(activity, 8));
             row.setBackground(Ui.ripple(activity, android.graphics.Color.TRANSPARENT, 12));
-            android.view.View dot = Ui.dot(activity, window.type().equals("nap") ? Ui.SLEEP : Ui.FEED, 10);
-            ((LinearLayout.LayoutParams) dot.getLayoutParams()).topMargin = Ui.dp(activity, 6); row.addView(dot);
+            boolean nap = window.type().equals("nap");
+            android.widget.ImageView icon = new android.widget.ImageView(activity);
+            icon.setImageDrawable(new NestIcon(activity, nap ? "sleep" : "bottle", nap ? Ui.SLEEP : Ui.FEED, nap ? Ui.BLUE : Ui.PEACH, 24));
+            icon.setImportantForAccessibility(android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+            LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(Ui.dp(activity, 28), Ui.dp(activity, 28));
+            iconParams.topMargin = Ui.dp(activity, 4); iconParams.setMarginEnd(Ui.dp(activity, 12)); row.addView(icon, iconParams);
             LinearLayout column = Ui.column(activity); row.addView(column, new LinearLayout.LayoutParams(0, -2, 1));
             String text = window.title() + " · Compare timings";
             column.addView(Ui.medium(activity, text, 16, Ui.INK));
@@ -52,7 +56,7 @@ final class CarePlanUi {
         body.addView(card);
     }
     static void plan(MainActivity activity, LinearLayout body, JSONObject profile, List<JSONObject> events) {
-        body.addView(Ui.title(activity, "Room for a rhythm", 22));
+        body.addView(Ui.illustratedHeading(activity, "Room for a rhythm", 22, "rhythm", false));
         if (!profile.optString("role").equals("Baby")) {
             body.addView(Ui.text(activity, "Sleep and milk-feed planning is for baby profiles. Switch to your baby using the name above. Parent sleep and wellbeing stay on Today and Trends.", 16, Ui.MUTED));
             return;
